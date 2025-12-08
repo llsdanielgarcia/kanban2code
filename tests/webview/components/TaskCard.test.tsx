@@ -61,8 +61,9 @@ describe('TaskCard', () => {
     });
 
     it('should render "Inbox" for tasks without project', () => {
-      const { getByText } = render(<TaskCard {...defaultProps} task={inboxTask} />);
-      expect(getByText('Inbox')).toBeInTheDocument();
+      const { container } = render(<TaskCard {...defaultProps} task={inboxTask} />);
+      const locationElement = container.querySelector('.task-card__location');
+      expect(locationElement).toHaveTextContent('Inbox');
     });
 
     it('should render tags (max 3)', () => {

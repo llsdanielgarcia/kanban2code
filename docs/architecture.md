@@ -37,10 +37,11 @@ kanban2code/
 │   └── webview/                  # React webview UI
 │       ├── BoardPanel.ts         # Board webview host
 │       ├── SidebarProvider.ts    # Sidebar webview host
+│       ├── Board.tsx             # Main board React component (Phase 4)
 │       ├── Sidebar.tsx           # Main sidebar React component (Phase 3)
-│       ├── sidebarMain.tsx      # Sidebar entry point (Phase 3)
+│       ├── sidebarMain.tsx       # Sidebar entry point (Phase 3)
 │       ├── App.tsx               # React root component
-│       ├── main.tsx              # Webview entry point
+│       ├── main.tsx              # Webview entry point (renders Board)
 │       ├── theme.tsx             # Theme support (Phase 3)
 │       ├── messaging/            # Host-webview communication
 │       │   ├── types.ts          # Message type definitions
@@ -49,10 +50,12 @@ kanban2code/
 │       │   ├── taskStore.ts      # Task state
 │       │   └── uiStore.ts        # UI state
 │       ├── components/           # React components
+│       │   ├── BoardColumn.tsx   # Kanban column with tasks (Phase 4)
+│       │   ├── TaskCard.tsx      # Task card for board view (Phase 4)
 │       │   ├── FilterPanel.tsx   # Search, project/stage/tag filters (Phase 3)
 │       │   ├── TaskTree.tsx      # Inbox/project/phase tree with task items (Phase 3)
-│       │   ├── TaskModal.tsx     # Full task creation form (Phase 3)
-│       │   ├── ContextMenu.tsx   # Right-click menu (Phase 3)
+│       │   ├── TaskModal.tsx     # Full task creation form (Phase 3/4)
+│       │   ├── ContextMenu.tsx   # Right-click menu (Phase 3/4)
 │       │   └── KeyboardHelp.tsx  # Shortcut help overlay (Phase 3)
 │       └── hooks/                # React hooks
 │           └── useKeyboardNavigation.ts # Keyboard shortcuts (Phase 3)
@@ -71,6 +74,9 @@ kanban2code/
 │   │   └── validation.test.ts
 │   ├── webview/                  # Webview tests
 │   │   ├── messaging.test.ts
+│   │   ├── components/           # Component tests (Phase 4)
+│   │   │   ├── TaskCard.test.tsx
+│   │   │   └── BoardColumn.test.tsx
 │   │   ├── hooks/                # Webview hook tests
 │   │   │   └── useKeyboardNavigation.test.ts # Phase 3
 │   │   └── stores/               # Webview store tests
@@ -415,6 +421,74 @@ The sidebar provides a comprehensive task management interface with the followin
 - Added `createOpenBoardMessage` to protocol.ts
 - Enhanced communication between sidebar and board webviews
 
+## Board Webview (Phase 4)
+
+The board webview provides a full kanban board view with drag-and-drop task management.
+
+### Board Layout
+- **Board.tsx**: Main board component with 5-column kanban layout
+- **BoardColumn.tsx**: Individual column component with header, task list, and drag-drop zone
+- Columns: Inbox, Plan, Code, Audit, Completed
+- Each column shows stage description, task count, and collapse toggle
+
+### TaskCard Component
+- **TaskCard.tsx**: Card component for board view tasks
+- Displays: title, location crumb (project › phase or "Inbox"), tags (max 3), stage pill
+- Follow-up count badge when task has children
+- Hover actions: Copy XML, Open, Follow-up, More
+- Keyboard shortcuts: c (copy), Enter (open), 1-5 (move to stage)
+- Draggable with visual feedback
+
+### Drag-and-Drop
+- TaskCard is draggable with `data-task-id` attribute
+- BoardColumn has `onDragOver`/`onDrop` handlers
+- Visual feedback during drag operations
+- Sends `task:move` message on drop to change stage
+
+### Filter Synchronization
+Filter sync uses a broadcast registry pattern to keep sidebar and board in sync:
+
+```typescript
+// Shared filter state for cross-webview persistence
+let sharedFilters: { search?: string; project?: string | null; tags?: string[]; stages?: Stage[] } = {};
+
+// Registry for active webview bridges
+const webviewBridges: Map<string, HostMessageBridge> = new Map();
+
+// Broadcast filter changes to all webviews except sender
+export function broadcastFiltersSync(filters: typeof sharedFilters, excludeId?: string) {
+  sharedFilters = { ...sharedFilters, ...filters };
+  for (const [id, bridge] of webviewBridges) {
+    if (id !== excludeId) {
+      bridge.send(createFiltersSyncMessage(sharedFilters));
+    }
+  }
+}
+```
+
+- Both SidebarProvider and BoardPanel register with the bridge registry on init
+- When either view changes filters, it sends `filters:changed` to the host
+- The host broadcasts `filters:sync` to all other registered webviews
+- FiltersSyncPayload includes: search, project, tags, stages
+
+### Follow-up Tasks
+- TaskCard hover action to add follow-up
+- TaskModal accepts `parentTask` prop for creating child tasks
+- **Follow-up tasks are enforced to go to inbox** - location and stage selection are hidden in the UI
+- TaskModal uses `effectiveLocationType` and `effectiveStage` forced to 'inbox' when `isFollowUp` is true
+- Parent ID is passed via `createTaskCreateMessage` and persisted in frontmatter `parent` field
+- ContextMenu includes "Add Follow-up in Inbox" option
+
+### Board Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+N | New task modal |
+| ? | Toggle keyboard help |
+| / | Focus search |
+| Escape | Close modal/clear selection |
+| Ctrl+R | Refresh tasks |
+| 1-5 | Move selected task to stage |
+
 ## Build System
 
 Uses esbuild via Bun for fast bundling:
@@ -440,12 +514,15 @@ bun run format         # Prettier format
 - **Framework**: Vitest for fast, ESM-native testing
 - **Fixtures**: Sample task files in `tests/fixtures/`
 
-**Phase 3 Test Coverage:**
-- `taskStore.test.ts`: 21 tests for task state management
+**Phase 4 Test Coverage:**
+
+- `TaskCard.test.tsx`: 20 tests for task card rendering, interactions, accessibility
+- `BoardColumn.test.tsx`: 21 tests for column rendering, collapsed state, drag-drop
+- `TaskModal.test.tsx`: 16 tests for task/follow-up creation, validation, interactions
+- `taskStore.test.ts`: 25 tests for task state management
 - `uiStore.test.ts`: 19 tests for UI state management
-- `useKeyboardNavigation.test.ts`: 7 tests for keyboard shortcuts
-- Total: 243 passing tests, 2 failing (pre-existing vscode mock issues)
-- 578 expect() calls across 15 test files
+- `useKeyboardNavigation.test.ts`: 8 tests for keyboard shortcuts
+- Total: 313 passing tests across 18 test files
 
 ## Security
 

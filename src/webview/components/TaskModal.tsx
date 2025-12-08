@@ -25,7 +25,7 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
   // Determine if this is a follow-up creation
   const isFollowUp = !!parentTask;
 
-  // Form state - prefill from parent if creating follow-up
+  // Form state - follow-ups are forced to inbox location and stage
   const [title, setTitle] = useState('');
   const [locationType, setLocationType] = useState<LocationType>('inbox');
   const [selectedProject, setSelectedProject] = useState<string>('');
@@ -39,6 +39,10 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // For follow-ups, the effective location and stage are always inbox (enforced)
+  const effectiveLocationType = isFollowUp ? 'inbox' : locationType;
+  const effectiveStage = isFollowUp ? 'inbox' : stage;
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -132,11 +136,11 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
           .map((t) => t.trim())
           .filter(Boolean);
 
-        // Build create options
+        // Build create options - follow-ups always go to inbox with inbox stage
         const createOptions: Parameters<typeof createTaskCreateMessage>[1] = {
-          project: locationType === 'project' ? selectedProject || undefined : undefined,
-          phase: selectedPhase || undefined,
-          stage,
+          project: effectiveLocationType === 'project' ? selectedProject || undefined : undefined,
+          phase: effectiveLocationType === 'project' ? selectedPhase || undefined : undefined,
+          stage: effectiveStage,
           content: content || undefined,
           tags,
           agent: agent || undefined,
@@ -157,7 +161,7 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
         setIsSubmitting(false);
       }
     },
-    [title, locationType, selectedProject, selectedPhase, stage, tagsInput, content, onClose],
+    [title, effectiveLocationType, selectedProject, selectedPhase, effectiveStage, tagsInput, content, agent, template, isFollowUp, parentTask, onClose],
   );
 
   return (
@@ -188,31 +192,33 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
         <form className="task-modal__form" onSubmit={handleSubmit}>
           {error && <div className="task-modal__error">{error}</div>}
 
-          {/* Location */}
-          <div className="task-modal__field">
-            <label className="task-modal__label">Location</label>
-            <div className="task-modal__location-toggle">
-              <button
-                type="button"
-                className={`task-modal__location-btn ${locationType === 'inbox' ? 'task-modal__location-btn--active' : ''}`}
-                onClick={() => handleLocationChange('inbox')}
-              >
-                <InboxIcon />
-                Inbox
-              </button>
-              <button
-                type="button"
-                className={`task-modal__location-btn ${locationType === 'project' ? 'task-modal__location-btn--active' : ''}`}
-                onClick={() => handleLocationChange('project')}
-              >
-                <FolderIcon />
-                Project
-              </button>
+          {/* Location - hidden for follow-ups since they always go to inbox */}
+          {!isFollowUp && (
+            <div className="task-modal__field">
+              <label className="task-modal__label">Location</label>
+              <div className="task-modal__location-toggle">
+                <button
+                  type="button"
+                  className={`task-modal__location-btn ${locationType === 'inbox' ? 'task-modal__location-btn--active' : ''}`}
+                  onClick={() => handleLocationChange('inbox')}
+                >
+                  <InboxIcon />
+                  Inbox
+                </button>
+                <button
+                  type="button"
+                  className={`task-modal__location-btn ${locationType === 'project' ? 'task-modal__location-btn--active' : ''}`}
+                  onClick={() => handleLocationChange('project')}
+                >
+                  <FolderIcon />
+                  Project
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Project/Phase Selection */}
-          {locationType === 'project' && (
+          {/* Project/Phase Selection - hidden for follow-ups */}
+          {!isFollowUp && locationType === 'project' && (
             <div className="task-modal__field-group">
               <div className="task-modal__field">
                 <label className="task-modal__label" htmlFor="project-select">
@@ -289,22 +295,24 @@ export function TaskModal({ onClose, parentTask }: TaskModalProps) {
             />
           </div>
 
-          {/* Stage */}
-          <div className="task-modal__field">
-            <label className="task-modal__label">Stage</label>
-            <div className="task-modal__stages">
-              {STAGES.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  className={`task-modal__stage-btn ${stage === s.key ? 'task-modal__stage-btn--active' : ''}`}
-                  onClick={() => setStage(s.key)}
-                >
-                  {s.label}
-                </button>
-              ))}
+          {/* Stage - hidden for follow-ups since they always start in inbox */}
+          {!isFollowUp && (
+            <div className="task-modal__field">
+              <label className="task-modal__label">Stage</label>
+              <div className="task-modal__stages">
+                {STAGES.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    className={`task-modal__stage-btn ${stage === s.key ? 'task-modal__stage-btn--active' : ''}`}
+                    onClick={() => setStage(s.key)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Tags */}
           <div className="task-modal__field">

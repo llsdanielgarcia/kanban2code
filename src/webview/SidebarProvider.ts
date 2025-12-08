@@ -17,6 +17,7 @@ import {
   createTaskDeletedMessage,
   createErrorMessage,
 } from './messaging/protocol';
+import { broadcastFiltersSync, registerWebviewBridge, unregisterWebviewBridge } from './BoardPanel';
 import type { Task, Stage } from '../types/task';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
@@ -25,6 +26,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private workspaceRoot: string | null = null;
   private messageBridge?: HostMessageBridge;
   private fileWatcher?: vscode.FileSystemWatcher;
+  private readonly bridgeId = 'sidebar';
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -39,6 +41,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     // Set up message bridge
     this.messageBridge = new HostMessageBridge(webviewView.webview);
+    registerWebviewBridge(this.bridgeId, this.messageBridge);
     this.setupMessageHandlers();
     this.context.subscriptions.push(this.messageBridge.subscribe());
 
@@ -53,6 +56,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     // Clean up on dispose
     webviewView.onDidDispose(() => {
+      unregisterWebviewBridge(this.bridgeId);
       this.fileWatcher?.dispose();
     });
   }
@@ -83,8 +87,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       await this.loadAndSendTasks();
     });
 
-    // Filters changed (currently handled in webview only, no host action required)
-    this.messageBridge.on('filters:changed', () => undefined);
+    // Filters changed - broadcast to other webviews
+    this.messageBridge.on('filters:changed', (message) => {
+      const filters = message.payload as {
+        search?: string;
+        project?: string | null;
+        tags?: string[];
+        stages?: Stage[];
+      };
+      broadcastFiltersSync(filters, this.bridgeId);
+    });
 
     // Handle task:open request
     this.messageBridge.on('task:open', async (message) => {
@@ -117,7 +129,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     // Handle task:create request
     this.messageBridge.on('task:create', async (message) => {
-      const { title, project, phase, stage, content, tags, agent, template } = message.payload as {
+      const { title, project, phase, stage, content, tags, agent, template, parent } = message.payload as {
         title: string;
         project?: string;
         phase?: string;
@@ -126,6 +138,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         tags?: string[];
         agent?: string;
         template?: string;
+        parent?: string;
       };
 
       if (!this.workspaceRoot) {
@@ -143,6 +156,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           tags,
           agent,
           template,
+          parent,
         });
 
         if (task) {
@@ -373,10 +387,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     tags?: string[];
     agent?: string;
     template?: string;
+    parent?: string;
   }): Promise<Task | null> {
     if (!this.workspaceRoot) return null;
 
-    const { title, project, phase, stage, content, tags, agent, template } = options;
+    const { title, project, phase, stage, content, tags, agent, template, parent } = options;
 
     // Generate filename
     const timestamp = Date.now();
@@ -424,6 +439,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       created: new Date().toISOString(),
       ...(agent ? { agent } : {}),
       ...(tags && tags.length ? { tags } : {}),
+      ...(parent ? { parent } : {}),
     };
 
     const fileContent = stringifyTask(task);

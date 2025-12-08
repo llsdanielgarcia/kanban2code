@@ -302,3 +302,132 @@
 ### Next Phase Preparation
 - Expand UI test coverage (component rendering/interaction) and document Phase 3 architecture updates.
 - Consider surfacing template/agent lists from host services to the modal instead of free-text entry.
+
+---
+
+## Phase 4 - Board Webview
+
+### Phase Information
+- **Phase Number:** 4
+- **Phase Name:** Board Webview
+- **Date Completed:** 2025-12-08
+- **Completed By:** Claude (assistant)
+
+### Task Summary
+- **Total Tasks:** 6
+- **Completed Tasks:** 6
+- **Completion Rate:** 100%
+
+### File Changes
+
+#### Files Created
+| File Path | Purpose/Function |
+|-----------|------------------|
+| src/webview/Board.tsx | Main board component with 5-column kanban layout, drag-drop, keyboard shortcuts |
+| src/webview/components/BoardColumn.tsx | Kanban column with header, collapse toggle, task rendering, drag-drop zones |
+| src/webview/components/TaskCard.tsx | Task card with title, location crumb, tags, stage pill, hover actions, follow-up indicator |
+| tests/webview/components/TaskCard.test.tsx | 20 tests for TaskCard rendering, interactions, hover actions, accessibility |
+| tests/webview/components/BoardColumn.test.tsx | 21 tests for BoardColumn rendering, collapsed state, drag-drop, stages |
+
+#### Files Modified
+| File Path | Purpose/Function | Changes Made |
+|-----------|------------------|--------------|
+| src/webview/main.tsx | Webview entry point | Changed from rendering `<App>` to `<Board>` |
+| src/webview/components/TaskModal.tsx | Task creation modal | Added `parentTask?: Task` prop for follow-up tasks, parent info display |
+| src/webview/components/ContextMenu.tsx | Task context menu | Added `onFollowUp` handler and "Add Follow-up in Inbox" menu item |
+| src/webview/messaging/types.ts | Message contracts | Added `filters:sync` to HostMessageType, `FiltersSyncPayload`, `parent` field to TaskCreatePayload |
+| src/webview/messaging/protocol.ts | Message builders | Added `createFiltersSyncMessage`, `parent` option to `createTaskCreateMessage` |
+| src/webview/Sidebar.tsx | Sidebar component | Added `filters:sync` message handler to sync filters with board |
+| vitest.config.ts | Test configuration | Added @vitejs/plugin-react, jsdom environment, setupFiles |
+| tests/setup.ts | Test setup | Added jest-dom matchers, window.matchMedia mock, ResizeObserver mock |
+
+#### Files Analyzed
+| File Path | Purpose/Function | Analysis Notes |
+|-----------|------------------|----------------|
+| kanban2code_roadmap/phase-4-board-webview/task-4.{1-6}.md | Phase requirements | Used as acceptance criteria for board layout, TaskCard, drag-drop, filter sync, follow-up, tests |
+| docs/architecture.md | Architecture overview | Verified current docs reflect Phases 1-3; Phase 4 board webview not yet documented |
+
+### Task Details
+
+#### Task 4.1: Implement Board Layout and Data Flow
+- **Status:** Completed
+- **Files:** src/webview/Board.tsx; src/webview/components/BoardColumn.tsx
+- **Key Changes:** 5-column kanban board (inbox/plan/code/audit/completed), stage descriptions, task counts, collapsible columns, search filtering, keyboard shortcuts (Ctrl+N, ?, /, Escape, Ctrl+R), message handling for tasks:loaded/task:updated/task:created/task:deleted/filters:sync.
+
+#### Task 4.2: Implement TaskCard Component
+- **Status:** Completed
+- **Files:** src/webview/components/TaskCard.tsx
+- **Key Changes:** Card displays title, location crumb (project › phase or "Inbox"), tags (max 3 with +N overflow), stage pill with color, follow-up count badge, hover actions (Copy XML, Open, Follow-up, More), keyboard shortcuts (c for copy, Enter for open, 1-5 for stage), draggable with visual feedback.
+
+#### Task 4.3: Implement Drag-and-Drop Stage Changes
+- **Status:** Completed
+- **Files:** src/webview/Board.tsx; src/webview/components/TaskCard.tsx
+- **Key Changes:** TaskCard is draggable with `data-task-id`, Board columns have `onDragOver`/`onDrop` handlers, visual feedback for dragging state, sends `task:move` message on drop.
+
+#### Task 4.4: Sync Filters Between Sidebar and Board
+- **Status:** Completed
+- **Files:** src/webview/messaging/types.ts; src/webview/messaging/protocol.ts; src/webview/Board.tsx; src/webview/Sidebar.tsx
+- **Key Changes:** Added `filters:sync` message type with `FiltersSyncPayload` (search, project, tags, stages), both Board and Sidebar handle incoming filter sync messages to update their stores.
+
+#### Task 4.5: Implement Add Follow-up in Inbox from Board
+- **Status:** Completed
+- **Files:** src/webview/components/TaskCard.tsx; src/webview/components/TaskModal.tsx; src/webview/components/ContextMenu.tsx; src/webview/messaging/types.ts
+- **Key Changes:** TaskCard has follow-up hover action, TaskModal accepts `parentTask` prop and shows parent info section, ContextMenu has "Add Follow-up in Inbox" option, `task:create` payload includes optional `parent` field.
+
+#### Task 4.6: Implement Webview Component Tests
+- **Status:** Completed
+- **Files:** tests/webview/components/TaskCard.test.tsx; tests/webview/components/BoardColumn.test.tsx; vitest.config.ts; tests/setup.ts
+- **Key Changes:** Added @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom dependencies; configured vitest for jsdom environment with React plugin; TaskCard tests cover rendering, interactions, hover actions, follow-up indicator, type tags, accessibility; BoardColumn tests cover rendering, collapsed state, interactions, different stages, accessibility.
+
+### Quality Assurance
+- **Code Review Status:** Self-reviewed
+- **Testing Status:** Completed (313 tests passing across 18 test files)
+- **Documentation Status:** Completed (architecture.md updated for Phase 4)
+
+### Notes & Observations
+- Board uses same Zustand stores (taskStore, uiStore) as Sidebar for consistent state.
+- Filter sync broadcasts to all registered webview bridges (sidebar and board) via shared registry.
+- Follow-up tasks maintain parent relationship via `parent` field in frontmatter.
+- Follow-up creation enforces inbox location and stage (UI hides location/stage selectors for follow-ups).
+- Component tests use @testing-library/react with jsdom environment for DOM testing.
+
+### Issues Found and Fixed (Post-Audit Review)
+
+#### 1. BoardPanel Host Wiring (Critical)
+**Issue:** BoardPanel.ts only handled `refresh-root` and `scaffold` messages, not full HostMessageBridge wiring.
+**Fix:** Complete rewrite to use HostMessageBridge with all message handlers:
+- Added shared filter state and webview bridge registry
+- Implemented handlers: scaffold, refresh, filters:changed, task:open, task:move, task:create, task:archive, task:delete, context:copy
+- Added file watcher for auto-refresh
+- Added createTaskFile method with parent support
+
+#### 2. Filter Sync Implementation (Critical)
+**Issue:** Filter sync was declared in types but not actually implemented between sidebar and board.
+**Fix:** Implemented broadcast system in BoardPanel.ts:
+- `sharedFilters` state for cross-webview filter persistence
+- `webviewBridges` registry for all active webviews
+- `broadcastFiltersSync()` function to push filter changes to all webviews except sender
+- Both SidebarProvider and BoardPanel register/unregister from the registry
+- Both handle `filters:changed` messages and broadcast to others
+
+#### 3. Follow-up Creation (Critical)
+**Issue:** Follow-up tasks did not enforce inbox location/stage, and parent field was not persisted.
+**Fix:** Updated TaskModal.tsx:
+- Added `effectiveLocationType` and `effectiveStage` that force 'inbox' when `isFollowUp` is true
+- Hidden location toggle and stage selection UI for follow-ups
+- Submit uses effective values ensuring follow-ups always go to inbox
+- Parent field passed through createTaskCreateMessage and persisted in frontmatter
+
+#### 4. Test Coverage
+**Issue:** TaskModal follow-up behavior was not tested.
+**Fix:** Created TaskModal.test.tsx with 16 tests covering:
+- Regular task creation (title, location, stage)
+- Follow-up creation (parent info display, inbox enforcement, parent persistence)
+- Form validation (disabled submit when empty)
+- Modal interactions (Cancel, Escape key)
+
+### Outstanding Issues
+- None identified after fixes.
+
+### Next Phase Preparation
+- Phase 4 complete; proceed to Phase 5 (Host Integration) to wire board webview into extension host.
