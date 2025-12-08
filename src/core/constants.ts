@@ -12,4 +12,11 @@ export const FOLDERS = {
   stageTemplates: '_templates/stages',
   taskTemplates: '_templates/tasks',
   archive: '_archive',
+  contexts: '_contexts',
+};
+
+export const GLOBAL_CONTEXT_FILES = {
+  howItWorks: 'how-it-works.md',
+  architecture: 'architecture.md',
+  projectDetails: 'project-details.md',
 };

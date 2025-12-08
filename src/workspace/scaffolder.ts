@@ -42,6 +42,7 @@ export async function scaffoldWorkspace(): Promise<string> {
     FOLDERS.stageTemplates,
     FOLDERS.taskTemplates,
     FOLDERS.archive,
+    FOLDERS.contexts,
   ];
 
   await Promise.all(
@@ -64,7 +65,7 @@ export async function scaffoldWorkspace(): Promise<string> {
 
   await writeFileIfMissing(
     path.join(root, 'architecture.md'),
-    `# Architecture\n\n- Inbox: ${FOLDERS.inbox}\n- Projects: ${FOLDERS.projects}\n- Agents: ${FOLDERS.agents}\n- Templates: ${FOLDERS.templates}\n- Archive: ${FOLDERS.archive}\n`,
+    `# Architecture\n\n- Inbox: ${FOLDERS.inbox}\n- Projects: ${FOLDERS.projects}\n- Agents: ${FOLDERS.agents}\n- Templates: ${FOLDERS.templates}\n- Contexts: ${FOLDERS.contexts}\n- Archive: ${FOLDERS.archive}\n`,
   );
 
   await writeFileIfMissing(
