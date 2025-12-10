@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detailed Task Creation</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/glassmorphic.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: 90%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .modal-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--vscode-editor-foreground);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--vscode-descriptionForeground);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--vscode-editor-foreground);
+    }
+    .modal-body {
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+    .form-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: var(--spacing-xs);
+    }
+    .form-label .required {
+      color: var(--vscode-errorForeground);
+      margin-left: 2px;
+    }
+    .form-hint {
+      display: block;
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--vscode-focusBorder);
+      box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+    }
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .form-select {
+      cursor: pointer;
+    }
+    /* Multi-select context list */
+    .context-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--vscode-input-border);
+      border-radius: var(--radius-sm);
+      background: var(--vscode-input-background);
+    }
+    .context-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .context-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .context-item input[type="checkbox"] {
+      cursor: pointer;
+    }
+    .context-item-content {
+      flex: 1;
+    }
+    .context-item-name {
+      font-size: var(--font-size-sm);
+      color: var(--vscode-editor-foreground);
+    }
+    .context-item-description {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 2px;
+    }
+    /* Tags input */
+    .tags-input-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: var(--radius-sm);
+      min-height: 38px;
+      cursor: text;
+    }
+    .tags-input-container:focus-within {
+      border-color: var(--vscode-focusBorder);
+      box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+    }
+    .tag-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      background: rgba(139, 92, 246, 0.2);
+      color: #c4b5fd;
+      border-radius: 3px;
+    }
+    .tag-chip button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    .tags-input {
+      flex: 1;
+      min-width: 100px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--vscode-input-foreground);
+      font-size: var(--font-size-sm);
+      padding: 4px;
+    }
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-lg);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .keyboard-hint {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .kbd {
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      color: var(--vscode-editor-foreground);
+    }
+    .modal-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+    .section-header {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-xs);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal glass-panel">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor" style="width: 20px; height: 20px;">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          New Task
+        </div>
+        <button class="modal-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="taskForm">
+          <!-- Basic Info Section -->
+          <div class="section-header">Basic Information</div>
+
+          <!-- Title (Required) -->
+          <div class="form-group">
+            <label class="form-label">
+              Task Title<span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Fix auth token refresh bug"
+              autofocus
+              required
+            >
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea
+              class="form-input form-textarea"
+              placeholder="Detailed description of the task..."
+            ></textarea>
+          </div>
+
+          <!-- Location Section -->
+          <div class="section-header">Location</div>
+
+          <div class="form-row">
+            <!-- Project -->
+            <div class="form-group">
+              <label class="form-label">Project</label>
+              <select class="form-select">
+                <option value="">Inbox (No Project)</option>
+                <option value="auth-system">auth-system</option>
+                <option value="navbar-redesign">navbar-redesign</option>
+                <option value="api-refactor">api-refactor</option>
+              </select>
+              <span class="form-hint">Leave empty to send to Inbox</span>
+            </div>
+
+            <!-- Phase -->
+            <div class="form-group">
+              <label class="form-label">Phase</label>
+              <select class="form-select" disabled>
+                <option value="">Select project first</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <!-- Stage -->
+            <div class="form-group">
+              <label class="form-label">Stage</label>
+              <select class="form-select">
+                <option value="inbox">📥 Inbox</option>
+                <option value="plan">📋 Plan</option>
+                <option value="code">💻 Code</option>
+                <option value="audit">🔍 Audit</option>
+                <option value="completed">✅ Completed</option>
+              </select>
+              <span class="form-hint">Defaults to Inbox</span>
+            </div>
+
+            <!-- Template -->
+            <div class="form-group">
+              <label class="form-label">Template</label>
+              <select class="form-select">
+                <option value="">None</option>
+                <option value="bug-fix">🐛 Bug Fix</option>
+                <option value="feature">✨ Feature Development</option>
+                <option value="refactor">♻️ Refactoring</option>
+                <option value="audit">🔍 Code Audit</option>
+                <option value="spike">🔬 Research Spike</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Context Section -->
+          <div class="section-header">Context Files</div>
+
+          <div class="form-group">
+            <label class="form-label">Select Context Files</label>
+            <div class="context-list">
+              <label class="context-item">
+                <input type="checkbox" value="architecture">
+                <div class="context-item-content">
+                  <div class="context-item-name">architecture.md</div>
+                  <div class="context-item-description">File tree, tech stack, project structure</div>
+                </div>
+              </label>
+              <label class="context-item">
+                <input type="checkbox" value="phase-1">
+                <div class="context-item-content">
+                  <div class="context-item-name">phase-1-context.md</div>
+                  <div class="context-item-description">Authentication system implementation</div>
+                </div>
+              </label>
+              <label class="context-item">
+                <input type="checkbox" value="phase-2">
+                <div class="context-item-content">
+                  <div class="context-item-name">phase-2-context.md</div>
+                  <div class="context-item-description">Navbar redesign and navigation</div>
+                </div>
+              </label>
+              <label class="context-item">
+                <input type="checkbox" value="design">
+                <div class="context-item-content">
+                  <div class="context-item-name">design-system.md</div>
+                  <div class="context-item-description">Color palette, components, spacing</div>
+                </div>
+              </label>
+            </div>
+            <span class="form-hint">
+              <a href="#" style="color: var(--vscode-textLink-foreground); text-decoration: underline;">
+                Create new context file
+              </a>
+            </span>
+          </div>
+
+          <!-- AI Agent Section -->
+          <div class="section-header">AI Agent</div>
+
+          <div class="form-group">
+            <label class="form-label">Agent (Optional)</label>
+            <select class="form-select">
+              <option value="">No Agent</option>
+              <option value="ncoder">🤖 Ncoder - Next.js Expert</option>
+              <option value="react-dev">⚛️ React Dev - Component Specialist</option>
+              <option value="api-builder">🔌 API Builder - Backend Expert</option>
+              <option value="reviewer">🔍 Code Reviewer - Quality Assurance</option>
+            </select>
+            <span class="form-hint">
+              <a href="#" style="color: var(--vscode-textLink-foreground); text-decoration: underline;">
+                Create new agent
+              </a>
+            </span>
+          </div>
+
+          <!-- Tags Section -->
+          <div class="section-header">Tags</div>
+
+          <div class="form-group">
+            <label class="form-label">Tags</label>
+            <div class="tags-input-container">
+              <span class="tag-chip">
+                bug
+                <button type="button">
+                  <svg class="icon" viewBox="0 0 16 16" fill="currentColor" style="width: 10px; height: 10px;">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                  </svg>
+                </button>
+              </span>
+              <span class="tag-chip">
+                urgent
+                <button type="button">
+                  <svg class="icon" viewBox="0 0 16 16" fill="currentColor" style="width: 10px; height: 10px;">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                  </svg>
+                </button>
+              </span>
+              <input type="text" class="tags-input" placeholder="Add tag...">
+            </div>
+            <span class="form-hint">Press Enter to add tag. Suggestions: bug, feature, mvp, urgent, idea, spike</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <div class="keyboard-hint">
+          <span class="kbd">Esc</span> to close • <span class="kbd">Ctrl+Enter</span> to create
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Create Task
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+Enter to submit
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        console.log('Create task');
+      }
+      // Esc to close
+      if (e.key === 'Escape') {
+        console.log('Close modal');
+      }
+    });
+
+    // Enable phase dropdown when project selected
+    document.querySelector('select[class="form-select"]').addEventListener('change', (e) => {
+      const phaseSelect = document.querySelectorAll('.form-select')[1];
+      if (e.target.value) {
+        phaseSelect.disabled = false;
+        phaseSelect.innerHTML = `
+          <option value="">No Phase</option>
+          <option value="phase-0">Phase 0 - Foundation</option>
+          <option value="phase-1">Phase 1 - Core Features</option>
+          <option value="phase-2">Phase 2 - Enhancements</option>
+          <option value="phase-3">Phase 3 - Polish</option>
+        `;
+      } else {
+        phaseSelect.disabled = true;
+        phaseSelect.innerHTML = '<option value="">Select project first</option>';
+      }
+    });
+
+    // Tags input handling
+    const tagsInput = document.querySelector('.tags-input');
+    const tagsContainer = document.querySelector('.tags-input-container');
+
+    tagsInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && tagsInput.value.trim()) {
+        e.preventDefault();
+        const tagChip = document.createElement('span');
+        tagChip.className = 'tag-chip';
+        tagChip.innerHTML = `
+          ${tagsInput.value.trim()}
+          <button type="button">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor" style="width: 10px; height: 10px;">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </button>
+        `;
+        tagChip.querySelector('button').addEventListener('click', () => tagChip.remove());
+        tagsContainer.insertBefore(tagChip, tagsInput);
+        tagsInput.value = '';
+      }
+    });
+
+    // Click container to focus input
+    tagsContainer.addEventListener('click', () => tagsInput.focus());
+  </script>
+</body>
+</html>

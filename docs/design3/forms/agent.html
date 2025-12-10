@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Creation</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/glassmorphic.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: 90%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .modal-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--vscode-editor-foreground);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .modal-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--vscode-descriptionForeground);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--vscode-editor-foreground);
+    }
+    .modal-body {
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+    .form-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: var(--spacing-xs);
+    }
+    .form-label .required {
+      color: var(--vscode-errorForeground);
+      margin-left: 2px;
+    }
+    .form-hint {
+      display: block;
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+    }
+    .form-input {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus {
+      border-color: var(--vscode-focusBorder);
+      box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+    }
+    .form-textarea {
+      min-height: 200px;
+      resize: vertical;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      line-height: 1.6;
+    }
+    .section-header {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-xs);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* Agent templates */
+    .agent-templates {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    .agent-template {
+      padding: var(--spacing-md);
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .agent-template:hover {
+      background: rgba(0, 0, 0, 0.3);
+      border-color: var(--vscode-focusBorder);
+    }
+    .agent-template.active {
+      background: rgba(0, 127, 212, 0.15);
+      border-color: var(--vscode-focusBorder);
+    }
+    .agent-template-icon {
+      font-size: 24px;
+      margin-bottom: var(--spacing-xs);
+    }
+    .agent-template-name {
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: 4px;
+    }
+    .agent-template-desc {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+    }
+    /* Preview */
+    .agent-preview {
+      padding: var(--spacing-md);
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      font-family: monospace;
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .agent-preview pre {
+      margin: 0;
+      white-space: pre-wrap;
+    }
+    .agent-preview-tag {
+      color: #c4b5fd;
+      font-weight: 600;
+    }
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-lg);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .keyboard-hint {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .kbd {
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      color: var(--vscode-editor-foreground);
+    }
+    .modal-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal glass-panel">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor" style="width: 20px; height: 20px;">
+              <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+              <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+            </svg>
+            New Agent
+          </div>
+          <div class="modal-subtitle">
+            Create an AI agent with specific behavior and instructions
+          </div>
+        </div>
+        <button class="modal-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="agentForm">
+          <!-- Templates Section -->
+          <div class="section-header">Quick Templates</div>
+
+          <div class="agent-templates">
+            <div class="agent-template">
+              <div class="agent-template-icon">💻</div>
+              <div class="agent-template-name">Ncoder</div>
+              <div class="agent-template-desc">Next.js expert, server components</div>
+            </div>
+
+            <div class="agent-template">
+              <div class="agent-template-icon">⚛️</div>
+              <div class="agent-template-name">React Dev</div>
+              <div class="agent-template-desc">Component specialist</div>
+            </div>
+
+            <div class="agent-template">
+              <div class="agent-template-icon">🔌</div>
+              <div class="agent-template-name">API Builder</div>
+              <div class="agent-template-desc">Backend and REST APIs</div>
+            </div>
+
+            <div class="agent-template">
+              <div class="agent-template-icon">🔍</div>
+              <div class="agent-template-name">Code Reviewer</div>
+              <div class="agent-template-desc">Quality assurance and best practices</div>
+            </div>
+
+            <div class="agent-template">
+              <div class="agent-template-icon">🎨</div>
+              <div class="agent-template-name">UI/UX Dev</div>
+              <div class="agent-template-desc">Styling and user experience</div>
+            </div>
+
+            <div class="agent-template">
+              <div class="agent-template-icon">✨</div>
+              <div class="agent-template-name">Custom</div>
+              <div class="agent-template-desc">Start from scratch</div>
+            </div>
+          </div>
+
+          <!-- Basic Info Section -->
+          <div class="section-header">Agent Configuration</div>
+
+          <!-- Name (Required) -->
+          <div class="form-group">
+            <label class="form-label">
+              Agent Name<span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="ncoder"
+              autofocus
+              required
+            >
+            <span class="form-hint">Unique identifier for this agent (lowercase, no spaces)</span>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label">
+              Description<span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Next.js expert specializing in server components and App Router"
+              required
+            >
+            <span class="form-hint">Brief description of agent's expertise</span>
+          </div>
+
+          <!-- Instructions -->
+          <div class="form-group">
+            <label class="form-label">
+              Agent Instructions<span class="required">*</span>
+            </label>
+            <textarea
+              class="form-input form-textarea"
+              placeholder="You're a Next.js expert developer with deep knowledge of:
+
+- Next.js App Router and server components
+- Use server components by default, only use client components when necessary (interactivity, hooks, browser APIs)
+- Implement proper data fetching patterns with async components
+- Follow Next.js best practices for performance and SEO
+- Use TypeScript with strict type checking
+- Write clean, maintainable code with proper error handling
+
+When writing code:
+1. Always prefer server components unless client-side features are needed
+2. Use proper TypeScript types for all props and data
+3. Implement proper loading and error states
+4. Follow the project's existing patterns and conventions
+5. Write comments only when logic isn't self-evident"
+              required
+            ></textarea>
+            <span class="form-hint">Detailed instructions that define the agent's behavior and expertise</span>
+          </div>
+
+          <!-- Preview Section -->
+          <div class="section-header">XML Output Preview</div>
+
+          <div class="form-group">
+            <div class="agent-preview">
+              <pre><span class="agent-preview-tag">&lt;agent&gt;</span>
+You're a Next.js expert developer with deep knowledge of:
+
+- Next.js App Router and server components
+- Use server components by default, only use client components when necessary
+- Implement proper data fetching patterns with async components
+- Follow Next.js best practices for performance and SEO
+- Use TypeScript with strict type checking
+- Write clean, maintainable code with proper error handling
+
+When writing code:
+1. Always prefer server components unless client-side features are needed
+2. Use proper TypeScript types for all props and data
+3. Implement proper loading and error states
+4. Follow the project's existing patterns and conventions
+5. Write comments only when logic isn't self-evident
+<span class="agent-preview-tag">&lt;/agent&gt;</span></pre>
+            </div>
+            <span class="form-hint">This is how the agent will appear in the XML context output</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <div class="keyboard-hint">
+          <span class="kbd">Esc</span> to close • <span class="kbd">Ctrl+Enter</span> to create
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Create Agent
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        console.log('Create agent');
+      }
+      if (e.key === 'Escape') {
+        console.log('Close modal');
+      }
+    });
+
+    // Template selection
+    document.querySelectorAll('.agent-template').forEach(template => {
+      template.addEventListener('click', () => {
+        // Remove active class from all
+        document.querySelectorAll('.agent-template').forEach(t => t.classList.remove('active'));
+        // Add active to clicked
+        template.classList.add('active');
+
+        const name = template.querySelector('.agent-template-name').textContent.toLowerCase();
+        const desc = template.querySelector('.agent-template-desc').textContent;
+
+        // Pre-fill based on template
+        if (name !== 'custom') {
+          document.querySelector('input[placeholder="ncoder"]').value = name.replace(/\s+/g, '-');
+          document.querySelector('input[placeholder*="Next.js expert"]').value = desc;
+
+          // Set template instructions
+          const instructions = getTemplateInstructions(name);
+          document.querySelector('.form-textarea').value = instructions;
+        }
+      });
+    });
+
+    function getTemplateInstructions(name) {
+      const templates = {
+        'ncoder': `You're a Next.js expert developer with deep knowledge of:
+
+- Next.js App Router and server components
+- Use server components by default, only use client components when necessary (interactivity, hooks, browser APIs)
+- Implement proper data fetching patterns with async components
+- Follow Next.js best practices for performance and SEO
+- Use TypeScript with strict type checking
+- Write clean, maintainable code with proper error handling
+
+When writing code:
+1. Always prefer server components unless client-side features are needed
+2. Use proper TypeScript types for all props and data
+3. Implement proper loading and error states
+4. Follow the project's existing patterns and conventions
+5. Write comments only when logic isn't self-evident`,
+
+        'react-dev': `You're a React specialist focused on building reusable, maintainable components:
+
+- Expert in React hooks and component composition
+- Build accessible, semantic HTML components
+- Implement proper prop types and TypeScript interfaces
+- Follow React best practices and performance optimization
+- Create flexible, composable component APIs
+
+When building components:
+1. Keep components focused and single-purpose
+2. Use proper TypeScript types for all props
+3. Implement accessibility features (ARIA, semantic HTML)
+4. Consider component reusability and composition
+5. Add prop documentation for complex components`,
+
+        'api-builder': `You're a backend and API development expert:
+
+- Design RESTful APIs with proper HTTP methods and status codes
+- Implement proper authentication and authorization
+- Write secure, validated API endpoints
+- Follow API best practices and conventions
+- Handle errors gracefully with meaningful messages
+
+When building APIs:
+1. Use proper HTTP status codes (200, 201, 400, 401, 404, 500)
+2. Validate all input data before processing
+3. Implement proper error handling and logging
+4. Use middleware for cross-cutting concerns
+5. Document endpoints with clear contracts`,
+
+        'code-reviewer': `You're a code quality expert focused on best practices and maintainability:
+
+- Review code for bugs, security issues, and performance problems
+- Ensure code follows project conventions and style guides
+- Check for proper error handling and edge cases
+- Verify code is readable, maintainable, and well-documented
+- Suggest improvements and refactoring opportunities
+
+When reviewing code:
+1. Look for potential bugs and logical errors
+2. Check for security vulnerabilities
+3. Verify proper error handling
+4. Ensure code is maintainable and follows conventions
+5. Suggest specific improvements with examples`,
+
+        'ui/ux-dev': `You're a UI/UX developer focused on creating beautiful, user-friendly interfaces:
+
+- Expert in modern CSS, animations, and responsive design
+- Build accessible, inclusive user interfaces
+- Implement smooth interactions and micro-animations
+- Follow design systems and maintain visual consistency
+- Optimize for mobile and desktop experiences
+
+When building UI:
+1. Ensure responsive design across all screen sizes
+2. Implement proper accessibility features
+3. Use CSS variables and design tokens
+4. Create smooth, performant animations
+5. Follow the project's design system`
+      };
+
+      return templates[name] || '';
+    }
+
+    // Update preview when textarea changes
+    document.querySelector('.form-textarea').addEventListener('input', (e) => {
+      const preview = document.querySelector('.agent-preview pre');
+      preview.innerHTML = `<span class="agent-preview-tag">&lt;agent&gt;</span>
+${e.target.value}
+<span class="agent-preview-tag">&lt;/agent&gt;</span>`;
+    });
+  </script>
+</body>
+</html>

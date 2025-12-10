@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Context Creation</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/glassmorphic.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .modal-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--vscode-editor-foreground);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .modal-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--vscode-descriptionForeground);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--vscode-editor-foreground);
+    }
+    .modal-body {
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+    .form-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: var(--spacing-xs);
+    }
+    .form-label .required {
+      color: var(--vscode-errorForeground);
+      margin-left: 2px;
+    }
+    .form-hint {
+      display: block;
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--vscode-focusBorder);
+      box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+    }
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    .section-header {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--vscode-editor-foreground);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-xs);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    /* File references list */
+    .file-references {
+      border: 1px solid var(--vscode-input-border);
+      border-radius: var(--radius-sm);
+      background: var(--vscode-input-background);
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .file-reference-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .file-reference-item:last-child {
+      border-bottom: none;
+    }
+    .file-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--vscode-descriptionForeground);
+    }
+    .file-reference-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .file-reference-path {
+      font-size: var(--font-size-sm);
+      color: var(--vscode-editor-foreground);
+      font-family: monospace;
+    }
+    .file-reference-note {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+    }
+    .file-reference-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .file-reference-remove {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--vscode-descriptionForeground);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .file-reference-remove:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--vscode-errorForeground);
+    }
+    .empty-state {
+      padding: var(--spacing-lg);
+      text-align: center;
+      color: var(--vscode-descriptionForeground);
+      font-size: var(--font-size-sm);
+    }
+    .add-file-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      background: rgba(0, 127, 212, 0.15);
+      border: 1px solid rgba(0, 127, 212, 0.3);
+      border-radius: var(--radius-sm);
+      color: var(--vscode-focusBorder);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .add-file-btn:hover {
+      background: rgba(0, 127, 212, 0.25);
+    }
+    /* Metadata preview */
+    .metadata-preview {
+      padding: var(--spacing-md);
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      font-family: monospace;
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+    }
+    .metadata-preview pre {
+      margin: 0;
+      white-space: pre-wrap;
+    }
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-lg);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .keyboard-hint {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .kbd {
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      color: var(--vscode-editor-foreground);
+    }
+    .modal-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal glass-panel">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor" style="width: 20px; height: 20px;">
+              <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v1h14V2a1 1 0 0 0-1-1H2zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+              <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+            New Context
+          </div>
+          <div class="modal-subtitle">
+            Create a context file to provide codebase information to AI agents
+          </div>
+        </div>
+        <button class="modal-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="contextForm">
+          <!-- Basic Info Section -->
+          <div class="section-header">Basic Information</div>
+
+          <div class="form-row">
+            <!-- Name (Required) -->
+            <div class="form-group">
+              <label class="form-label">
+                Context Name<span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-input"
+                placeholder="phase-2-context"
+                autofocus
+                required
+              >
+              <span class="form-hint">Filename will be: context-name.md</span>
+            </div>
+
+            <!-- Scope -->
+            <div class="form-group">
+              <label class="form-label">Scope</label>
+              <select class="form-select">
+                <option value="global">Global (All Projects)</option>
+                <option value="project">Project Specific</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label">
+              Description<span class="required">*</span>
+            </label>
+            <textarea
+              class="form-input"
+              placeholder="Navigation redesign with new navbar and routing structure"
+              style="min-height: 60px; font-family: inherit;"
+              required
+            ></textarea>
+          </div>
+
+          <!-- File References Section -->
+          <div class="section-header">
+            File References
+            <button type="button" class="add-file-btn">
+              <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+              </svg>
+              Add File
+            </button>
+          </div>
+
+          <div class="form-group">
+            <div class="file-references">
+              <!-- File reference items -->
+              <div class="file-reference-item">
+                <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+                </svg>
+                <div class="file-reference-content">
+                  <div class="file-reference-path">src/components/Navbar.tsx</div>
+                  <div class="file-reference-note">Main navigation component</div>
+                </div>
+                <div class="file-reference-actions">
+                  <button type="button" class="file-reference-remove">
+                    <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="file-reference-item">
+                <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+                </svg>
+                <div class="file-reference-content">
+                  <div class="file-reference-path">src/app/layout.tsx</div>
+                  <div class="file-reference-note">Root layout with navigation</div>
+                </div>
+                <div class="file-reference-actions">
+                  <button type="button" class="file-reference-remove">
+                    <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="file-reference-item">
+                <svg class="file-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
+                </svg>
+                <div class="file-reference-content">
+                  <div class="file-reference-path">docs/architecture/routing.md</div>
+                  <div class="file-reference-note">App router configuration and structure</div>
+                </div>
+                <div class="file-reference-actions">
+                  <button type="button" class="file-reference-remove">
+                    <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <span class="form-hint">Add files that provide important context for this phase/feature</span>
+          </div>
+
+          <!-- Content Section -->
+          <div class="section-header">Content</div>
+
+          <div class="form-group">
+            <label class="form-label">Context Content</label>
+            <textarea
+              class="form-input form-textarea"
+              placeholder="# Phase 2: Navbar Redesign
+
+## Overview
+Redesigning navigation system with new component structure...
+
+## Key Components
+- Navbar: Main navigation bar
+- NavLinks: Dynamic link generation
+- MobileMenu: Responsive mobile navigation
+
+## Technical Requirements
+- Use Next.js App Router
+- Server Components where possible
+- Implement proper SEO metadata"
+            ></textarea>
+            <span class="form-hint">Markdown content that will be included in the XML context</span>
+          </div>
+
+          <!-- Metadata Preview -->
+          <div class="section-header">Metadata Preview</div>
+
+          <div class="form-group">
+            <div class="metadata-preview">
+              <pre>---
+name: phase-2-context
+description: Navigation redesign with new navbar and routing structure
+scope: project
+created: 2025-12-10
+file_references:
+  - src/components/Navbar.tsx
+  - src/app/layout.tsx
+  - docs/architecture/routing.md
+---</pre>
+            </div>
+            <span class="form-hint">This metadata will be added to the top of the context file</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <div class="keyboard-hint">
+          <span class="kbd">Esc</span> to close • <span class="kbd">Ctrl+Enter</span> to create
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Create Context
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        console.log('Create context');
+      }
+      if (e.key === 'Escape') {
+        console.log('Close modal');
+      }
+    });
+
+    // Remove file reference
+    document.querySelectorAll('.file-reference-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.closest('.file-reference-item').remove();
+      });
+    });
+
+    // Add file button
+    document.querySelector('.add-file-btn').addEventListener('click', () => {
+      console.log('Open file picker');
+    });
+  </script>
+</body>
+</html>
