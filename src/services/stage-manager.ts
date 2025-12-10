@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import { Task, Stage } from '../types/task';
-import { parseTaskFile, serializeTask } from './frontmatter';
+import { parseTaskFile, stringifyTaskFile } from './frontmatter';
 import { isTransitionAllowed } from '../core/rules';
 import { findTaskById } from './scanner';
 import { WorkspaceState } from '../workspace/state';
@@ -13,17 +13,16 @@ export class StageUpdateError extends Error {
 }
 
 export async function updateTaskStage(task: Task, newStage: Stage): Promise<Task> {
-  // 1. Validate Transition
-  if (!isTransitionAllowed(task.stage, newStage)) {
-    throw new StageUpdateError(`Transition from '${task.stage}' to '${newStage}' is not allowed.`);
-  }
-
-  // 2. Read fresh content (to avoid race conditions/stale data)
-  // We re-parse to ensure we have the latest file content for serialization
+  // 1. Read fresh content (to avoid race conditions/stale data)
   const freshTask = await parseTaskFile(task.filePath);
   
   if (freshTask.id !== task.id) {
     throw new StageUpdateError('Task ID mismatch in file. File might have been overwritten.');
+  }
+
+  // 2. Validate Transition using current on-disk stage
+  if (!isTransitionAllowed(freshTask.stage, newStage)) {
+    throw new StageUpdateError(`Transition from '${freshTask.stage}' to '${newStage}' is not allowed.`);
   }
 
   // 3. Update Stage
@@ -31,7 +30,7 @@ export async function updateTaskStage(task: Task, newStage: Stage): Promise<Task
 
   // 4. Serialize and Write
   const originalContent = await fs.readFile(task.filePath, 'utf-8');
-  const newContent = serializeTask(freshTask, originalContent);
+  const newContent = stringifyTaskFile(freshTask, originalContent);
   
   await fs.writeFile(task.filePath, newContent, 'utf-8');
 

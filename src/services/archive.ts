@@ -3,6 +3,7 @@ import * as path from 'path';
 import { Task } from '../types/task';
 import { ARCHIVE_FOLDER, PROJECTS_FOLDER } from '../core/constants';
 import { updateTaskStage } from './stage-manager';
+import { ensureSafePath } from '../workspace/validation';
 
 export async function archiveTask(task: Task, kanbanRoot: string): Promise<void> {
   if (task.stage !== 'completed') {
@@ -23,6 +24,9 @@ export async function archiveTask(task: Task, kanbanRoot: string): Promise<void>
   const targetPath = path.join(kanbanRoot, ARCHIVE_FOLDER, relativePath);
   const targetDir = path.dirname(targetPath);
 
+  await ensureSafePath(kanbanRoot, task.filePath);
+  await ensureSafePath(kanbanRoot, targetPath);
+
   await fs.mkdir(targetDir, { recursive: true });
   await fs.rename(task.filePath, targetPath);
 }
@@ -30,6 +34,9 @@ export async function archiveTask(task: Task, kanbanRoot: string): Promise<void>
 export async function archiveProject(kanbanRoot: string, projectName: string): Promise<void> {
   const projectPath = path.join(kanbanRoot, PROJECTS_FOLDER, projectName);
   const targetPath = path.join(kanbanRoot, ARCHIVE_FOLDER, PROJECTS_FOLDER, projectName);
+
+  await ensureSafePath(kanbanRoot, projectPath);
+  await ensureSafePath(kanbanRoot, targetPath);
 
   try {
     await fs.access(projectPath);

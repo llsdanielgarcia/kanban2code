@@ -28,7 +28,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
-test('updateTaskStage updates stage in file', async () => {
+test('updateTaskStage moves forward one stage', async () => {
   const task = await parseTaskFile(TASK_PATH);
   
   const updated = await updateTaskStage(task, 'plan');
@@ -43,6 +43,17 @@ test('updateTaskStage forbids invalid transition', async () => {
   const task = await parseTaskFile(TASK_PATH);
   // Inbox -> Audit not allowed
   await expect(updateTaskStage(task, 'audit')).rejects.toThrow('not allowed');
+});
+
+test('completed tasks cannot move to other stages', async () => {
+  await fs.writeFile(TASK_PATH, `---
+stage: completed
+---
+# Task 1
+`);
+
+  const task = await parseTaskFile(TASK_PATH);
+  await expect(updateTaskStage(task, 'plan')).rejects.toThrow('not allowed');
 });
 
 test('changeStageAndReload works with ID', async () => {

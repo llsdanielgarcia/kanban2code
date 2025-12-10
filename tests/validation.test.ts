@@ -2,7 +2,7 @@ import { expect, test, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { findKanbanRoot, isSafePath, validateKanbanStructure, ensureSafePath } from '../src/workspace/validation';
+import { findKanbanRoot, isSafePath, validateKanbanStructure, ensureSafePath, formatValidationMessage } from '../src/workspace/validation';
 import { KANBAN_FOLDER, INBOX_FOLDER, PROJECTS_FOLDER } from '../src/core/constants';
 
 const TEST_DIR = path.join(os.tmpdir(), 'kanban2code-validation-test-' + Date.now());
@@ -27,7 +27,7 @@ test('validateKanbanStructure detects valid workspace', async () => {
   await fs.mkdir(path.join(kanbanRoot, PROJECTS_FOLDER), { recursive: true });
 
   const result = await validateKanbanStructure(TEST_DIR);
-  expect(result.status).toBe('VALID');
+  expect(result.status).toBe('valid');
 });
 
 test('validateKanbanStructure detects invalid workspace (missing subfolders)', async () => {
@@ -36,7 +36,7 @@ test('validateKanbanStructure detects invalid workspace (missing subfolders)', a
   // Missing inbox/projects
 
   const result = await validateKanbanStructure(TEST_DIR);
-  expect(result.status).toBe('INVALID');
+  expect(result.status).toBe('invalid');
   expect(result.message).toContain('Missing required folders');
 });
 
@@ -50,6 +50,11 @@ test('isSafePath detects unsafe paths', async () => {
 test('ensureSafePath throws on unsafe paths', async () => {
   const root = '/foo/bar';
   await expect(ensureSafePath(root, '/foo/baz')).rejects.toThrow('Path validation failed');
+});
+
+test('formatValidationMessage returns default copy', () => {
+  expect(formatValidationMessage({ status: 'missing' })).toContain('not found');
+  expect(formatValidationMessage({ status: 'invalid' })).toContain('missing required');
 });
 
 afterEach(async () => {

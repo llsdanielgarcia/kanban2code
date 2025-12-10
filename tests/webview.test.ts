@@ -1,10 +1,17 @@
 import { expect, test } from 'vitest';
-import { createMessage } from '../src/webview/messaging';
+import { createEnvelope, validateEnvelope, MESSAGE_VERSION, HostToWebviewMessageTypes } from '../src/webview/messaging';
 
-test('createMessage creates correct structure', () => {
-  const msg = createMessage('ALERT', { text: 'Hello' });
-  expect(msg).toEqual({
-    type: 'ALERT',
-    payload: { text: 'Hello' },
-  });
+test('createEnvelope creates versioned envelope', () => {
+  const msg = createEnvelope('TaskUpdated', { id: '1' });
+  expect(msg).toEqual({ version: MESSAGE_VERSION, type: 'TaskUpdated', payload: { id: '1' } });
+});
+
+test('validateEnvelope accepts known message types', () => {
+  const raw = { version: MESSAGE_VERSION, type: HostToWebviewMessageTypes[0], payload: { foo: 'bar' } };
+  const parsed = validateEnvelope(raw);
+  expect(parsed.type).toBe(raw.type);
+});
+
+test('validateEnvelope throws on invalid data', () => {
+  expect(() => validateEnvelope({ version: 99, type: 'NOPE', payload: {} })).toThrow('Invalid message envelope');
 });

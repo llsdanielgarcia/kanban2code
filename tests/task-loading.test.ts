@@ -59,19 +59,16 @@ test('loadAllTasks handles empty workspace', async () => {
   expect(tasks).toEqual([]);
 });
 
-test('loadAllTasks skips malformed files gracefully', async () => {
+test('loadAllTasks tolerates malformed frontmatter and applies defaults', async () => {
   const inbox = path.join(KANBAN_ROOT, INBOX_FOLDER);
   await fs.mkdir(inbox, { recursive: true });
   
-  // Valid task
   await fs.writeFile(path.join(inbox, 'valid.md'), '---\nstage: inbox\n---\n# Valid');
-  
-  // Invalid task (directory pretending to be file? or unreadable? or invalid YAML)
-  // Invalid YAML throws in frontmatter, scanner catches it.
   await fs.writeFile(path.join(inbox, 'bad.md'), '---\nstage: [unclosed\n---\n# Bad');
 
   const tasks = await loadAllTasks(KANBAN_ROOT);
   
-  expect(tasks).toHaveLength(1);
-  expect(tasks[0].id).toBe('valid');
+  expect(tasks.map((t) => t.id).sort()).toEqual(['bad', 'valid']);
+  const bad = tasks.find((t) => t.id === 'bad');
+  expect(bad?.stage).toBe('inbox');
 });

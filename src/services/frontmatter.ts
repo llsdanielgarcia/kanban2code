@@ -4,46 +4,52 @@ import * as path from 'path';
 import { Task, Stage } from '../types/task';
 import { STAGES, PROJECTS_FOLDER } from '../core/constants';
 
-export interface TaskParseResult {
-  task: Task;
-  originalContent: string;
+type WarnFn = (message: string, error?: unknown) => void;
+
+const defaultWarn: WarnFn = (message, error) => console.warn(message, error);
+
+export interface ParseOptions {
+  warn?: WarnFn;
 }
 
-export function parseTaskContent(content: string, filePath: string): Task {
-  const { data, content: body } = matter(content);
-  
-  // 1. Validate/Default Stage
-  let stage: Stage = 'inbox';
-  if (data.stage && STAGES.includes(data.stage as Stage)) {
-    stage = data.stage as Stage;
+function inferProjectAndPhase(filePath: string): { project?: string; phase?: string } {
+  const segments = filePath.split(path.sep).filter(Boolean);
+  const projectIndex = segments.lastIndexOf(PROJECTS_FOLDER);
+
+  if (projectIndex !== -1 && segments.length > projectIndex + 1) {
+    const project = segments[projectIndex + 1];
+    const fileName = segments[segments.length - 1];
+    const maybePhase = segments[projectIndex + 2];
+
+    const phase = maybePhase && maybePhase !== fileName ? maybePhase : undefined;
+
+    return { project, phase };
   }
 
-  // 2. Infer Project/Phase from Path
-  // Expected structure: .../projects/<project>/[<phase>]/<task>.md
-  // or .../inbox/<task>.md
-  let project: string | undefined;
-  let phase: string | undefined;
+  return { project: undefined, phase: undefined };
+}
 
-  // Normalize path to forward slashes for consistent parsing
-  const normalizedPath = filePath.split(path.sep).join('/');
-  const projectIndex = normalizedPath.indexOf(`/${PROJECTS_FOLDER}/`);
-  
-  if (projectIndex !== -1) {
-    const relativePart = normalizedPath.substring(projectIndex + PROJECTS_FOLDER.length + 2); // +2 for slashes
-    const parts = relativePart.split('/');
-    
-    // parts[0] is project name
-    if (parts.length >= 1) {
-      project = parts[0];
-    }
-    // if parts length > 1 and not the file itself, usually phase is the folder
-    // e.g. projects/my-app/phase-1/task.md -> parts=['my-app', 'phase-1', 'task.md']
-    if (parts.length >= 3) {
-      phase = parts[1];
-    }
+function extractTitle(content: string): string | undefined {
+  const match = content.match(/^#\s+(.+)$/m);
+  return match ? match[1].trim() : undefined;
+}
+
+export function parseTaskContent(content: string, filePath: string, options: ParseOptions = {}): Task {
+  let data: Record<string, unknown> = {};
+  let body = content;
+
+  try {
+    const parsed = matter(content);
+    data = parsed.data ?? {};
+    body = parsed.content;
+  } catch (error) {
+    const warn = options.warn ?? defaultWarn;
+    warn(`Invalid frontmatter in ${filePath}; using defaults.`, error);
   }
 
-  // 3. Construct Task
+  const stage = STAGES.includes(data.stage as Stage) ? (data.stage as Stage) : 'inbox';
+  const { project, phase } = inferProjectAndPhase(filePath);
+
   const task: Task = {
     id: path.basename(filePath, '.md'),
     filePath,
@@ -51,57 +57,61 @@ export function parseTaskContent(content: string, filePath: string): Task {
     stage,
     project,
     phase,
-    agent: data.agent,
-    parent: data.parent,
-    tags: Array.isArray(data.tags) ? data.tags : [],
-    contexts: Array.isArray(data.contexts) ? data.contexts : [],
+    agent: typeof data.agent === 'string' ? data.agent : undefined,
+    parent: typeof data.parent === 'string' ? data.parent : undefined,
+    tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+    contexts: Array.isArray(data.contexts) ? data.contexts.map(String) : [],
     order: typeof data.order === 'number' ? data.order : undefined,
-    created: data.created,
+    created: typeof data.created === 'string' ? data.created : undefined,
     content: body,
   };
 
   return task;
 }
 
-export async function parseTaskFile(filePath: string): Promise<Task> {
+export async function parseTaskFile(filePath: string, options: ParseOptions = {}): Promise<Task> {
   const content = await fs.readFile(filePath, 'utf-8');
-  return parseTaskContent(content, filePath);
+  return parseTaskContent(content, filePath, options);
 }
 
-export function serializeTask(task: Task, originalContent?: string): string {
-  // Use original content's matter options if available to preserve formatting?
-  // gray-matter doesn't easily support "preserving unknown fields" unless we pass them in.
-  // We should merge task properties back into the data object.
+export function stringifyTaskFile(task: Task, originalContent?: string, options: ParseOptions = {}): string {
+  let existingData: Record<string, unknown> = {};
 
-  // Re-parse original to get all unknown fields
-  let existingData: any = {};
   if (originalContent) {
-    const parsed = matter(originalContent);
-    existingData = parsed.data;
+    try {
+      const parsed = matter(originalContent);
+      existingData = parsed.data ?? {};
+    } catch (error) {
+      const warn = options.warn ?? defaultWarn;
+      warn(`Invalid frontmatter while serializing ${task.filePath}; preserving known fields only.`, error);
+    }
   }
 
-  // Update known fields
-  const data = {
+  const data: Record<string, unknown> = {
     ...existingData,
     stage: task.stage,
-    // Project/Phase are NOT stored in frontmatter, they are file-location based.
-    // So we do NOT write them back to frontmatter.
     agent: task.agent,
     parent: task.parent,
-    tags: task.tags,
-    contexts: task.contexts,
+    tags: task.tags ?? [],
+    contexts: task.contexts ?? [],
     order: task.order,
     created: task.created,
   };
 
-  // Remove undefined keys to keep it clean
-  Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
+  // project/phase are inferred from the path and should never be written to frontmatter
+  delete data.project;
+  delete data.phase;
 
-  // Gray-matter stringify
+  Object.keys(data).forEach((key) => {
+    if (data[key] === undefined) {
+      delete data[key];
+    }
+  });
+
   return matter.stringify(task.content, data);
 }
 
-function extractTitle(content: string): string | undefined {
-  const match = content.match(/^#\s+(.+)$/m);
-  return match ? match[1].trim() : undefined;
+// Backward compatibility for existing imports
+export function serializeTask(task: Task, originalContent?: string, options: ParseOptions = {}): string {
+  return stringifyTaskFile(task, originalContent, options);
 }

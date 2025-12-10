@@ -1,7 +1,11 @@
-import { expect, test } from 'vitest';
-import { parseTaskContent, serializeTask } from '../src/services/frontmatter';
+import { expect, test, vi, afterEach } from 'vitest';
+import { parseTaskContent, stringifyTaskFile } from '../src/services/frontmatter';
 import { Task } from '../src/types/task';
 import * as path from 'path';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const SAMPLE_CONTENT = `--- 
 stage: plan
@@ -49,21 +53,21 @@ body without frontmatter
   expect(task.title).toBe('The Title');
 });
 
-test('serializeTask preserves unknown fields', () => {
+test('stringifyTaskFile preserves unknown fields', () => {
   const filePath = '/workspace/projects/kanban/phase-1/task-1.md';
   const originalTask = parseTaskContent(SAMPLE_CONTENT, filePath);
   
   // Modify a known field
   originalTask.stage = 'code';
   
-  const serialized = serializeTask(originalTask, SAMPLE_CONTENT);
+  const serialized = stringifyTaskFile(originalTask, SAMPLE_CONTENT);
   
   expect(serialized).toContain('stage: code');
   expect(serialized).toContain('extra_field: preserved');
   expect(serialized).toContain('# My Task Title');
 });
 
-test('serializeTask does not write project/phase to frontmatter', () => {
+test('stringifyTaskFile does not write project/phase to frontmatter', () => {
   const task: Task = {
     id: 'foo',
     filePath: '/projects/p1/t1.md',
@@ -73,21 +77,26 @@ test('serializeTask does not write project/phase to frontmatter', () => {
     content: 'Body',
   };
   
-  const serialized = serializeTask(task);
+  const serialized = stringifyTaskFile(task);
   expect(serialized).not.toContain('project:');
   expect(serialized).toContain('stage: inbox');
 });
 
-test('parseTaskContent throws on invalid YAML', () => {
+test('parseTaskContent warns but does not throw on invalid YAML', () => {
   const content = `---
 stage: [unclosed list
 ---
 # Title`;
-  
-  expect(() => parseTaskContent(content, 'foo.md')).toThrow();
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+  const task = parseTaskContent(content, 'foo.md');
+
+  expect(task.stage).toBe('inbox');
+  expect(task.title).toBe('Title');
+  expect(warn).toHaveBeenCalled();
 });
 
-test('serializeTask handles special characters', () => {
+test('stringifyTaskFile handles special characters', () => {
   const task: Task = {
     id: 'special',
     filePath: 's.md',
@@ -97,10 +106,9 @@ test('serializeTask handles special characters', () => {
     tags: ['c++', 'c#']
   };
 
-  const serialized = serializeTask(task);
+  const serialized = stringifyTaskFile(task);
   // Ensure we can parse it back
   const parsed = parseTaskContent(serialized, 's.md');
   expect(parsed.title).toBe('Special: "Quotes" & symbols');
   expect(parsed.tags).toEqual(['c++', 'c#']);
 });
-
