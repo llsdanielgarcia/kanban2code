@@ -1,0 +1,124 @@
+/* Design 2: Cyber-Glass Effects */
+
+/* Base glass */
+.glass {
+  background: rgba(13, 17, 23, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Card Glass - Darker, cleaner */
+.glass-card {
+  background: linear-gradient(
+    180deg,
+    rgba(22, 27, 34, 0.9) 0%,
+    rgba(13, 17, 23, 0.8) 100%
+  );
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-normal);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(240, 246, 252, 0.2);
+  box-shadow: 
+    0 8px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Panel Glass */
+.glass-panel {
+  background: rgba(1, 4, 9, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(240, 246, 252, 0.1);
+}
+
+/* Button Glass */
+.glass-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  color: var(--vscode-foreground);
+}
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Neon Column Styles */
+.glass-column-inbox {
+  background: linear-gradient(180deg, rgba(0, 243, 255, 0.03) 0%, rgba(13, 17, 23, 0) 100%);
+  border: 1px solid var(--stage-inbox-border);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.05), inset 0 0 20px rgba(0, 243, 255, 0.02);
+}
+
+.glass-column-plan {
+  background: linear-gradient(180deg, rgba(255, 0, 255, 0.03) 0%, rgba(13, 17, 23, 0) 100%);
+  border: 1px solid var(--stage-plan-border);
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.05), inset 0 0 20px rgba(255, 0, 255, 0.02);
+}
+
+.glass-column-code {
+  background: linear-gradient(180deg, rgba(204, 255, 0, 0.03) 0%, rgba(13, 17, 23, 0) 100%);
+  border: 1px solid var(--stage-code-border);
+  box-shadow: 0 0 15px rgba(204, 255, 0, 0.05), inset 0 0 20px rgba(204, 255, 0, 0.02);
+}
+
+.glass-column-audit {
+  background: linear-gradient(180deg, rgba(255, 170, 0, 0.03) 0%, rgba(13, 17, 23, 0) 100%);
+  border: 1px solid var(--stage-audit-border);
+  box-shadow: 0 0 15px rgba(255, 170, 0, 0.05), inset 0 0 20px rgba(255, 170, 0, 0.02);
+}
+
+.glass-column-completed {
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.03) 0%, rgba(13, 17, 23, 0) 100%);
+  border: 1px solid var(--stage-completed-border);
+  box-shadow: 0 0 15px rgba(148, 163, 184, 0.05), inset 0 0 20px rgba(148, 163, 184, 0.02);
+}
+
+/* Hover Intensify */
+.glass-column-inbox:hover { box-shadow: 0 0 25px rgba(0, 243, 255, 0.1); border-color: var(--stage-inbox); }
+.glass-column-plan:hover { box-shadow: 0 0 25px rgba(255, 0, 255, 0.1); border-color: var(--stage-plan); }
+.glass-column-code:hover { box-shadow: 0 0 25px rgba(204, 255, 0, 0.1); border-color: var(--stage-code); }
+.glass-column-audit:hover { box-shadow: 0 0 25px rgba(255, 170, 0, 0.1); border-color: var(--stage-audit); }
+.glass-column-completed:hover { box-shadow: 0 0 25px rgba(148, 163, 184, 0.1); border-color: var(--stage-completed); }
+
+/* Inputs */
+.glass-input {
+  background: rgba(13, 17, 23, 0.8);
+  border: 1px solid rgba(48, 54, 61, 0.8);
+  color: var(--vscode-input-foreground);
+}
+.glass-input:focus {
+  background: #0d1117;
+  border-color: var(--vscode-focusBorder);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  border: 2px solid transparent; /* padding around scrollbar thumb */
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}

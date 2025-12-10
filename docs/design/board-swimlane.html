@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban2Code - Board (Swimlane)</title>
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/glassmorphic.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/board.css">
+  <link rel="stylesheet" href="styles/card.css">
+  <style>
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="board-container">
+      <!-- Board Header (same as horizontal) -->
+      <div class="board-header glass-panel">
+        <div class="board-search search-input">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+          </svg>
+          <input type="text" class="input glass-input" placeholder="Search tasks...">
+        </div>
+
+        <div class="board-filters">
+          <select class="project-select glass-input">
+            <option value="all">All Projects</option>
+            <option value="inbox">Inbox Only</option>
+            <option value="auth-system">auth-system</option>
+            <option value="navbar-redesign">navbar-redesign</option>
+          </select>
+
+          <div class="stage-filters">
+            <button class="stage-filter active inbox">
+              <span class="dot" style="background: var(--stage-inbox); width: 6px; height: 6px; border-radius: 50%;"></span>
+              Inbox
+            </button>
+            <button class="stage-filter active plan">
+              <span class="dot" style="background: var(--stage-plan); width: 6px; height: 6px; border-radius: 50%;"></span>
+              Plan
+            </button>
+            <button class="stage-filter active code">
+              <span class="dot" style="background: var(--stage-code); width: 6px; height: 6px; border-radius: 50%;"></span>
+              Code
+            </button>
+            <button class="stage-filter active audit">
+              <span class="dot" style="background: var(--stage-audit); width: 6px; height: 6px; border-radius: 50%;"></span>
+              Audit
+            </button>
+            <button class="stage-filter completed">
+              <span class="dot" style="background: var(--stage-completed); width: 6px; height: 6px; border-radius: 50%;"></span>
+              Done
+            </button>
+          </div>
+        </div>
+
+        <div class="layout-toggle">
+          <button class="tooltip" data-tooltip="Columns">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
+              <path d="M5 0v16M10 0v16"/>
+            </svg>
+          </button>
+          <button class="active tooltip" data-tooltip="Swimlanes">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
+              <path d="M0 5h16M0 10h16"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="board-actions">
+          <button class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            New Task
+          </button>
+        </div>
+      </div>
+
+      <!-- Swimlane Board -->
+      <div class="board-swimlane">
+        <!-- Inbox Swimlane (Floating Tasks) -->
+        <div class="swimlane glass">
+          <div class="swimlane-header">
+            <div class="swimlane-title">
+              <svg class="project-icon" viewBox="0 0 16 16" fill="var(--stage-inbox)">
+                <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4H4.98zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438L14.933 9z"/>
+              </svg>
+              <span>Inbox</span>
+              <span class="badge">3</span>
+            </div>
+            <div class="swimlane-meta">
+              <span>Floating tasks without a project</span>
+            </div>
+          </div>
+          <div class="swimlane-body">
+            <!-- Stage columns within swimlane -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-inbox);">Inbox</div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Fix auth token refresh</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag bug">bug</span>
+                  <span class="card-tag urgent">urgent</span>
+                </div>
+              </div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Add dark mode toggle</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Research caching</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag spike">spike</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- auth-system Project Swimlane -->
+        <div class="swimlane glass">
+          <div class="swimlane-header">
+            <div class="swimlane-title">
+              <svg class="project-icon" viewBox="0 0 16 16" fill="var(--vscode-focusBorder)">
+                <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3z"/>
+              </svg>
+              <span>auth-system</span>
+              <span class="badge">8</span>
+            </div>
+            <div class="swimlane-meta">
+              <span>2 phases</span>
+              <span style="margin: 0 8px; color: var(--vscode-panel-border);">|</span>
+              <span>phase-1-setup, phase-2-oauth</span>
+            </div>
+          </div>
+          <div class="swimlane-body">
+            <!-- Plan Stage -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-plan);">Plan</div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Design OAuth2 flow</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-breadcrumb">
+                  <span class="phase">phase-2</span>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Code Stage -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-code);">Code</div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Implement JWT middleware</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-breadcrumb">
+                  <span class="phase">phase-1</span>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                  <span class="card-tag mvp">mvp</span>
+                </div>
+              </div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Build login form</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-breadcrumb">
+                  <span class="phase">phase-1</span>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Audit Stage -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-audit);">Audit</div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Review session storage</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-breadcrumb">
+                  <span class="phase">phase-1</span>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Completed Stage -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-completed);">Done</div>
+              <div class="task-card compact glass-card" style="opacity: 0.6;">
+                <div class="card-header">
+                  <a href="#" class="card-title" style="text-decoration: line-through;">Setup project</a>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+              <div class="task-card compact glass-card" style="opacity: 0.6;">
+                <div class="card-header">
+                  <a href="#" class="card-title" style="text-decoration: line-through;">Configure ESLint</a>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- navbar-redesign Project Swimlane -->
+        <div class="swimlane glass">
+          <div class="swimlane-header">
+            <div class="swimlane-title">
+              <svg class="project-icon" viewBox="0 0 16 16" fill="var(--vscode-focusBorder)">
+                <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3z"/>
+              </svg>
+              <span>navbar-redesign</span>
+              <span class="badge">6</span>
+            </div>
+            <div class="swimlane-meta">
+              <span>1 phase</span>
+              <span style="margin: 0 8px; color: var(--vscode-panel-border);">|</span>
+              <span>phase-1-design</span>
+            </div>
+          </div>
+          <div class="swimlane-body">
+            <!-- Plan Stage -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-plan);">Plan</div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Create navbar specs</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Plan breakpoints</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Code Stage -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-code);">Code</div>
+              <div class="task-card compact glass-card">
+                <div class="card-header">
+                  <a href="#" class="card-title">Build navbar shell</a>
+                  <div class="card-actions">
+                    <button class="card-action danger tooltip" data-tooltip="Delete"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
+                  </div>
+                </div>
+                <div class="card-tags">
+                  <span class="card-tag feature">feature</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty Audit -->
+            <div class="swimlane-stage">
+              <div class="swimlane-stage-header" style="color: var(--stage-audit);">Audit</div>
+              <div style="padding: 12px; text-align: center; color: var(--vscode-descriptionForeground); font-size: 11px;">
+                No tasks
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

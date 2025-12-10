@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban2Code - Empty States & Notifications</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/glassmorphic.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+    }
+    .preview-wrapper {
+      position: relative;
+      padding-top: 32px;
+    }
+    .preview-label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 32px;
+      text-align: center;
+      border-radius: var(--radius-lg);
+      min-width: 300px;
+    }
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: var(--spacing-lg);
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.5;
+    }
+    .empty-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      margin-bottom: var(--spacing-sm);
+      color: var(--vscode-editor-foreground);
+    }
+    .empty-description {
+      font-size: var(--font-size-sm);
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: var(--spacing-lg);
+      max-width: 280px;
+    }
+    .toast-stack {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+    .toast {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--vscode-notifications-background);
+      border: 1px solid var(--vscode-notificationCenter-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      min-width: 300px;
+    }
+    .toast-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .toast-content {
+      flex: 1;
+    }
+    .toast-title {
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--vscode-editor-foreground);
+    }
+    .toast-message {
+      font-size: var(--font-size-xs);
+      color: var(--vscode-descriptionForeground);
+      margin-top: 2px;
+    }
+    .toast-close {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.6;
+      transition: all var(--transition-fast);
+    }
+    .toast-close:hover {
+      opacity: 1;
+      background: rgba(255,255,255,0.1);
+    }
+    .toast-success { border-left: 3px solid var(--stage-code); }
+    .toast-success .toast-icon { color: var(--stage-code); }
+    .toast-error { border-left: 3px solid var(--tag-bug); }
+    .toast-error .toast-icon { color: var(--tag-bug); }
+    .toast-warning { border-left: 3px solid var(--stage-audit); }
+    .toast-warning .toast-icon { color: var(--stage-audit); }
+    .toast-info { border-left: 3px solid var(--vscode-focusBorder); }
+    .toast-info .toast-icon { color: var(--vscode-focusBorder); }
+    .toast-action {
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+      color: var(--vscode-textLink-foreground);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    .toast-action:hover {
+      text-decoration: underline;
+    }
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: 48px;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--vscode-panel-border);
+      border-top-color: var(--vscode-focusBorder);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      font-size: var(--font-size-sm);
+      color: var(--vscode-descriptionForeground);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- No Kanban Board -->
+  <div class="preview-wrapper">
+    <span class="preview-label">No Kanban Board</span>
+    <div class="empty-state glass">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <h3 class="empty-title">No Kanban Board</h3>
+      <p class="empty-description">Create a Kanban board to start organizing your tasks and projects with AI-powered context.</p>
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Create Kanban
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty Inbox -->
+  <div class="preview-wrapper">
+    <span class="preview-label">Empty Inbox</span>
+    <div class="empty-state glass">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4.98 6a.5.5 0 0 0-.39.188L1.54 11H7a.5.5 0 0 1 .5.5 2.5 2.5 0 1 0 5 0 .5.5 0 0 1 .5-.5h5.46l-3.05-4.812A.5.5 0 0 0 15.02 6H4.98z" transform="translate(2,4)"/>
+      </svg>
+      <h3 class="empty-title">Inbox is Empty</h3>
+      <p class="empty-description">Great job! No tasks waiting to be triaged. Create a new task when something comes up.</p>
+      <button class="btn btn-secondary">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        New Task
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty Column -->
+  <div class="preview-wrapper">
+    <span class="preview-label">Empty Column (Plan)</span>
+    <div class="empty-state glass-column-plan" style="min-width: 260px; padding: 32px 24px;">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 40px; height: 40px;">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      </svg>
+      <h3 class="empty-title" style="font-size: var(--font-size-md);">No tasks in Plan</h3>
+      <p class="empty-description" style="font-size: var(--font-size-xs); margin-bottom: var(--spacing-md);">Move tasks here when they're ready for planning.</p>
+    </div>
+  </div>
+
+  <!-- Empty Project -->
+  <div class="preview-wrapper">
+    <span class="preview-label">Empty Project</span>
+    <div class="empty-state glass">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+      </svg>
+      <h3 class="empty-title">No Tasks Yet</h3>
+      <p class="empty-description">This project doesn't have any tasks. Add your first task to get started.</p>
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Add Task
+      </button>
+    </div>
+  </div>
+
+  <!-- No Search Results -->
+  <div class="preview-wrapper">
+    <span class="preview-label">No Search Results</span>
+    <div class="empty-state glass">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <h3 class="empty-title">No Results Found</h3>
+      <p class="empty-description">No tasks match your search. Try adjusting your filters or search terms.</p>
+      <button class="btn btn-secondary">Clear Filters</button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="preview-wrapper">
+    <span class="preview-label">Loading State</span>
+    <div class="loading-state glass" style="min-width: 300px;">
+      <div class="spinner"></div>
+      <span class="loading-text">Loading tasks...</span>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="preview-wrapper">
+    <span class="preview-label">Toast Notifications</span>
+    <div class="toast-stack">
+      <!-- Success Toast -->
+      <div class="toast toast-success glass">
+        <svg class="toast-icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+        </svg>
+        <div class="toast-content">
+          <div class="toast-title">Context copied!</div>
+          <div class="toast-message">Full XML context is now in your clipboard.</div>
+        </div>
+        <button class="toast-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Info Toast -->
+      <div class="toast toast-info glass">
+        <svg class="toast-icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+        </svg>
+        <div class="toast-content">
+          <div class="toast-title">Task moved to Code</div>
+          <div class="toast-message">"Fix auth token refresh" is ready for implementation.</div>
+        </div>
+        <button class="toast-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Warning Toast -->
+      <div class="toast toast-warning glass">
+        <svg class="toast-icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        <div class="toast-content">
+          <div class="toast-title">Task archived</div>
+          <div class="toast-message">"Setup project structure" moved to archive.</div>
+        </div>
+        <button class="toast-action">Undo</button>
+        <button class="toast-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Error Toast -->
+      <div class="toast toast-error glass">
+        <svg class="toast-icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+        </svg>
+        <div class="toast-content">
+          <div class="toast-title">Failed to save task</div>
+          <div class="toast-message">Could not write to file. Check permissions.</div>
+        </div>
+        <button class="toast-action">Retry</button>
+        <button class="toast-close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

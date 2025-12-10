@@ -1,0 +1,117 @@
+/* VS Code Theme Variables with Dark Mode Fallbacks */
+:root {
+  /* Core colors - maps to VS Code theme */
+  --vscode-editor-background: #1e1e1e;
+  --vscode-editor-foreground: #d4d4d4;
+  --vscode-sideBar-background: #252526;
+  --vscode-sideBar-foreground: #cccccc;
+  --vscode-panel-background: #1e1e1e;
+  --vscode-panel-border: #3c3c3c;
+
+  /* Interactive elements */
+  --vscode-button-background: #0e639c;
+  --vscode-button-foreground: #ffffff;
+  --vscode-button-hoverBackground: #1177bb;
+  --vscode-button-secondaryBackground: #3a3d41;
+  --vscode-button-secondaryForeground: #ffffff;
+  --vscode-button-secondaryHoverBackground: #45494e;
+
+  /* Input fields */
+  --vscode-input-background: #3c3c3c;
+  --vscode-input-foreground: #cccccc;
+  --vscode-input-border: #3c3c3c;
+  --vscode-input-placeholderForeground: #8c8c8c;
+  --vscode-focusBorder: #007fd4;
+
+  /* Lists and trees */
+  --vscode-list-activeSelectionBackground: #094771;
+  --vscode-list-activeSelectionForeground: #ffffff;
+  --vscode-list-hoverBackground: #2a2d2e;
+  --vscode-list-inactiveSelectionBackground: #37373d;
+
+  /* Widgets */
+  --vscode-editorWidget-background: #252526;
+  --vscode-editorWidget-border: #454545;
+  --vscode-editorWidget-foreground: #cccccc;
+
+  /* Badges */
+  --vscode-badge-background: #4d4d4d;
+  --vscode-badge-foreground: #ffffff;
+
+  /* Notifications */
+  --vscode-notificationCenter-border: #3c3c3c;
+  --vscode-notifications-background: #252526;
+  --vscode-notifications-foreground: #cccccc;
+
+  /* Scrollbar */
+  --vscode-scrollbarSlider-background: rgba(121, 121, 121, 0.4);
+  --vscode-scrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7);
+  --vscode-scrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4);
+
+  /* Text colors */
+  --vscode-descriptionForeground: #8c8c8c;
+  --vscode-errorForeground: #f48771;
+  --vscode-textLink-foreground: #3794ff;
+  --vscode-textLink-activeForeground: #3794ff;
+
+  /* Stage colors - semantic */
+  --stage-inbox: #6366f1;      /* Indigo */
+  --stage-plan: #a855f7;       /* Purple */
+  --stage-code: #22c55e;       /* Green */
+  --stage-audit: #f59e0b;      /* Amber */
+  --stage-completed: #6b7280;  /* Gray */
+
+  /* Stage backgrounds (10% opacity) */
+  --stage-inbox-bg: rgba(99, 102, 241, 0.1);
+  --stage-plan-bg: rgba(168, 85, 247, 0.1);
+  --stage-code-bg: rgba(34, 197, 94, 0.1);
+  --stage-audit-bg: rgba(245, 158, 11, 0.1);
+  --stage-completed-bg: rgba(107, 114, 128, 0.1);
+
+  /* Stage borders (20% opacity) */
+  --stage-inbox-border: rgba(99, 102, 241, 0.2);
+  --stage-plan-border: rgba(168, 85, 247, 0.2);
+  --stage-code-border: rgba(34, 197, 94, 0.2);
+  --stage-audit-border: rgba(245, 158, 11, 0.2);
+  --stage-completed-border: rgba(107, 114, 128, 0.2);
+
+  /* Tag colors */
+  --tag-bug: #ef4444;
+  --tag-feature: #3b82f6;
+  --tag-mvp: #8b5cf6;
+  --tag-urgent: #f97316;
+  --tag-idea: #06b6d4;
+  --tag-spike: #ec4899;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}

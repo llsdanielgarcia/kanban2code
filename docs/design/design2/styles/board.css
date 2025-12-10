@@ -1,0 +1,244 @@
+/* Design 2: Board Layout */
+
+.board-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top right, #161b22 0%, #0d1117 100%);
+  overflow: hidden;
+  font-family: var(--font-family);
+  color: var(--vscode-editor-foreground);
+}
+
+/* Board Header */
+.board-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  z-index: 10;
+}
+
+.board-search {
+  flex: 1;
+  max-width: 320px;
+  position: relative;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.search-input .icon {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--vscode-descriptionForeground);
+  pointer-events: none;
+}
+
+.search-input input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.board-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.project-select {
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.stage-filters {
+  display: flex;
+  gap: 8px;
+  background: rgba(0,0,0,0.2);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.stage-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  transition: all var(--transition-fast);
+}
+
+.stage-filter:hover {
+  color: var(--vscode-editor-foreground);
+  background: rgba(255,255,255,0.05);
+}
+
+.stage-filter.active {
+  background: rgba(255,255,255,0.08);
+  color: var(--vscode-editor-foreground);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Custom Neon Active States for Filters */
+.stage-filter.active.inbox { border-bottom: 2px solid var(--stage-inbox); color: var(--stage-inbox); }
+.stage-filter.active.plan { border-bottom: 2px solid var(--stage-plan); color: var(--stage-plan); }
+.stage-filter.active.code { border-bottom: 2px solid var(--stage-code); color: var(--stage-code); }
+.stage-filter.active.audit { border-bottom: 2px solid var(--stage-audit); color: var(--stage-audit); }
+.stage-filter.active.completed { border-bottom: 2px solid var(--stage-completed); color: var(--stage-completed); }
+
+.layout-toggle {
+  display: flex;
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.layout-toggle button {
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.layout-toggle button svg { width: 16px; height: 16px; }
+
+.layout-toggle button.active {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-foreground);
+}
+
+.board-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  transition: background var(--transition-fast);
+  box-shadow: 0 0 10px rgba(35, 134, 54, 0.4);
+}
+.board-actions button:hover {
+  background: var(--vscode-button-hoverBackground);
+  box-shadow: 0 0 15px rgba(35, 134, 54, 0.6);
+}
+
+/* Columns */
+.board-horizontal {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.column {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(4px); /* Layered blur */
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.column-title span:last-child {
+  text-shadow: 0 0 10px currentColor; /* Neon text glow */
+}
+
+.column-title .stage-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+.column-title .stage-dot.inbox { background: var(--stage-inbox); color: var(--stage-inbox); }
+.column-title .stage-dot.plan { background: var(--stage-plan); color: var(--stage-plan); }
+.column-title .stage-dot.code { background: var(--stage-code); color: var(--stage-code); }
+.column-title .stage-dot.audit { background: var(--stage-audit); color: var(--stage-audit); }
+.column-title .stage-dot.completed { background: var(--stage-completed); color: var(--stage-completed); }
+
+.column-count {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vscode-descriptionForeground);
+}
+
+.column-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  overflow-y: auto;
+}
+
+.column-add {
+  margin-top: auto;
+  padding: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.1);
+  color: var(--vscode-descriptionForeground);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+.column-add:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.2);
+  color: var(--vscode-editor-foreground);
+}

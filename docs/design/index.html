@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban2Code - Design System</title>
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/glassmorphic.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <style>
+    body {
+      min-height: 100vh;
+      padding: 40px;
+    }
+    .design-hub {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .hub-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .hub-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .hub-logo svg {
+      width: 48px;
+      height: 48px;
+      color: var(--vscode-focusBorder);
+    }
+    .hub-title {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hub-subtitle {
+      font-size: 16px;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 8px;
+    }
+    .hub-version {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--vscode-badge-background);
+      border-radius: 12px;
+      margin-top: 16px;
+    }
+    .section {
+      margin-bottom: 48px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--vscode-panel-border);
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .preview-card {
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: all var(--transition-normal);
+      text-decoration: none;
+      color: inherit;
+    }
+    .preview-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    }
+    .preview-thumbnail {
+      height: 160px;
+      background: var(--vscode-editor-background);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--vscode-panel-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .preview-thumbnail svg {
+      width: 64px;
+      height: 64px;
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.5;
+    }
+    .preview-thumbnail-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.8;
+    }
+    .preview-content {
+      padding: 16px;
+    }
+    .preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .preview-description {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      line-height: 1.5;
+    }
+    .preview-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 500;
+      background: var(--stage-code-bg);
+      color: var(--stage-code);
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .color-palette {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .swatch-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+    .swatch-label {
+      font-size: 10px;
+      color: var(--vscode-descriptionForeground);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+    }
+    .quick-link:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
+    }
+    .quick-link svg {
+      width: 14px;
+      height: 14px;
+    }
+    .design-notes {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      margin-top: 32px;
+    }
+    .design-notes h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .design-notes ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .design-notes li {
+      font-size: 13px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .design-notes code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(255,255,255,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="design-hub">
+    <!-- Header -->
+    <header class="hub-header">
+      <div class="hub-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <h1 class="hub-title">Kanban2Code</h1>
+      </div>
+      <p class="hub-subtitle">Design System & UI Prototypes</p>
+      <span class="hub-version">v0.1.0 - UI Shell Phase</span>
+    </header>
+
+    <!-- Quick Links -->
+    <div class="quick-links" style="justify-content: center; margin-bottom: 48px;">
+      <a href="sidebar.html" class="quick-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H5zm-1 0H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2V2z"/></svg>
+        Sidebar
+      </a>
+      <a href="board.html" class="quick-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M5 0v16M10 0v16"/></svg>
+        Board (Columns)
+      </a>
+      <a href="board-swimlane.html" class="quick-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M0 5h16M0 10h16"/></svg>
+        Board (Swimlanes)
+      </a>
+      <a href="components/modals.html" class="quick-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2z"/></svg>
+        Modals
+      </a>
+      <a href="components/empty-states.html" class="quick-link">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287z"/></svg>
+        Empty States
+      </a>
+    </div>
+
+    <!-- Main Views -->
+    <section class="section">
+      <h2 class="section-title">Main Views</h2>
+      <div class="card-grid">
+        <a href="sidebar.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="6" height="18" rx="1"/>
+              <rect x="12" y="3" width="9" height="18" rx="1"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Sidebar</h3>
+            <p class="preview-description">Command center with action buttons, file tree navigation, and quick filters.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+
+        <a href="board.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="4" width="4" height="16" rx="1"/>
+              <rect x="8" y="4" width="4" height="12" rx="1"/>
+              <rect x="14" y="4" width="4" height="14" rx="1"/>
+              <rect x="20" y="4" width="4" height="8" rx="1"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Board - Horizontal Columns</h3>
+            <p class="preview-description">Traditional Kanban layout with 5 stage columns. Drag-and-drop ready.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+
+        <a href="board-swimlane.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="2" width="20" height="6" rx="1"/>
+              <rect x="2" y="10" width="20" height="6" rx="1"/>
+              <rect x="2" y="18" width="20" height="4" rx="1"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Board - Swimlanes</h3>
+            <p class="preview-description">Project-grouped horizontal rows with stages as columns within each row.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Components -->
+    <section class="section">
+      <h2 class="section-title">Components</h2>
+      <div class="card-grid">
+        <a href="components/modals.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <line x1="4" y1="9" x2="20" y2="9"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Modals & Dialogs</h3>
+            <p class="preview-description">Create task, create project, context menu, and confirmation dialogs.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+
+        <a href="components/empty-states.html" class="preview-card glass">
+          <div class="preview-thumbnail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 12h8M12 8v8"/>
+            </svg>
+          </div>
+          <div class="preview-content">
+            <h3 class="preview-title">Empty States & Toasts</h3>
+            <p class="preview-description">Empty board, empty inbox, no results, loading, and notification toasts.</p>
+            <span class="preview-badge">Ready for Review</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Color Palette -->
+    <section class="section">
+      <h2 class="section-title">Stage Colors</h2>
+      <div class="color-palette">
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--stage-inbox);"></div>
+          <span class="swatch-label">Inbox</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--stage-plan);"></div>
+          <span class="swatch-label">Plan</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--stage-code);"></div>
+          <span class="swatch-label">Code</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--stage-audit);"></div>
+          <span class="swatch-label">Audit</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--stage-completed);"></div>
+          <span class="swatch-label">Done</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tag Colors -->
+    <section class="section">
+      <h2 class="section-title">Tag Colors</h2>
+      <div class="color-palette">
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--tag-bug);"></div>
+          <span class="swatch-label">Bug</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--tag-feature);"></div>
+          <span class="swatch-label">Feature</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--tag-mvp);"></div>
+          <span class="swatch-label">MVP</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--tag-urgent);"></div>
+          <span class="swatch-label">Urgent</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--tag-idea);"></div>
+          <span class="swatch-label">Idea</span>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-circle" style="background: var(--tag-spike);"></div>
+          <span class="swatch-label">Spike</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Design Notes -->
+    <div class="design-notes glass">
+      <h3>Design Implementation Notes</h3>
+      <ul>
+        <li><strong>VS Code Integration:</strong> All colors use <code>--vscode-*</code> CSS variables with dark mode fallbacks for browser preview.</li>
+        <li><strong>Glassmorphic Style:</strong> Uses <code>backdrop-filter: blur()</code> and subtle gradients. May need fallbacks for older browsers.</li>
+        <li><strong>Stage Colors:</strong> Each stage has a primary color, background (10% opacity), and border (20% opacity) variant.</li>
+        <li><strong>Responsive:</strong> Board columns are fixed-width (280px) with horizontal scroll. Swimlanes stack vertically.</li>
+        <li><strong>Interactions:</strong> Hover states reveal card actions. Drag-and-drop zones highlighted on drag.</li>
+        <li><strong>Accessibility:</strong> Focus states use VS Code's focus border color. ARIA labels to be added during React implementation.</li>
+      </ul>
+    </div>
+
+    <!-- File Structure -->
+    <div class="design-notes glass" style="margin-top: 16px;">
+      <h3>File Structure</h3>
+      <pre style="font-family: var(--font-mono); font-size: 12px; color: var(--vscode-descriptionForeground); margin: 0;">
+docs/design/
+├── index.html              # This file - design hub
+├── sidebar.html            # Sidebar command center
+├── board.html              # Kanban board (horizontal columns)
+├── board-swimlane.html     # Kanban board (project swimlanes)
+├── components/
+│   ├── modals.html         # Modal dialogs and context menus
+│   └── empty-states.html   # Empty states and toast notifications
+└── styles/
+    ├── variables.css       # VS Code theme tokens & design tokens
+    ├── glassmorphic.css    # Glass effects & stage-specific styles
+    ├── components.css      # Base component styles (buttons, inputs, tags)
+    ├── sidebar.css         # Sidebar-specific styles
+    ├── board.css           # Board layout styles
+    └── card.css            # Task card styles
+      </pre>
+    </div>
+
+  </div>
+</body>
+</html>

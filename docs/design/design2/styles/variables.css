@@ -1,0 +1,94 @@
+/* Design 2: Cyber-Glass Variables */
+:root {
+  /* Core colors - Darker, bluer backgrounds for contrast */
+  --vscode-editor-background: #0d1117; /* GitHub Dark Dimmed-ish but darker */
+  --vscode-editor-foreground: #e6edf3;
+  --vscode-sideBar-background: #010409;
+  --vscode-sideBar-foreground: #8b949e;
+  --vscode-panel-background: #0d1117;
+  --vscode-panel-border: #30363d;
+
+  /* Interactive elements */
+  --vscode-button-background: #238636;
+  --vscode-button-foreground: #ffffff;
+  --vscode-button-hoverBackground: #2ea043;
+  --vscode-button-secondaryBackground: #21262d;
+  --vscode-button-secondaryForeground: #c9d1d9;
+  --vscode-button-secondaryHoverBackground: #30363d;
+
+  /* Input fields */
+  --vscode-input-background: #0d1117;
+  --vscode-input-foreground: #c9d1d9;
+  --vscode-input-border: #30363d;
+  --vscode-input-placeholderForeground: #484f58;
+  --vscode-focusBorder: #58a6ff;
+
+  /* Lists */
+  --vscode-list-activeSelectionBackground: #1f6feb;
+  --vscode-list-activeSelectionForeground: #f0f6fc;
+  --vscode-list-hoverBackground: #161b22;
+  --vscode-list-inactiveSelectionBackground: #161b22;
+
+  /* Text */
+  --vscode-descriptionForeground: #8b949e;
+  --vscode-errorForeground: #f85149;
+  
+  /* NEON STAGE COLORS */
+  --stage-inbox: #00f3ff;      /* Cyan */
+  --stage-plan: #ff00ff;       /* Magenta */
+  --stage-code: #ccff00;       /* Lime/Electric Green */
+  --stage-audit: #ffaa00;      /* Neon Orange */
+  --stage-completed: #94a3b8;  /* Cool Slate */
+
+  /* Stage backgrounds (slightly higher opacity for neon glow effect) */
+  --stage-inbox-bg: rgba(0, 243, 255, 0.08);
+  --stage-plan-bg: rgba(255, 0, 255, 0.08);
+  --stage-code-bg: rgba(204, 255, 0, 0.08);
+  --stage-audit-bg: rgba(255, 170, 0, 0.08);
+  --stage-completed-bg: rgba(148, 163, 184, 0.08);
+
+  /* Stage borders */
+  --stage-inbox-border: rgba(0, 243, 255, 0.3);
+  --stage-plan-border: rgba(255, 0, 255, 0.3);
+  --stage-code-border: rgba(204, 255, 0, 0.3);
+  --stage-audit-border: rgba(255, 170, 0, 0.3);
+  --stage-completed-border: rgba(148, 163, 184, 0.3);
+
+  /* Tag colors - Popping Neon */
+  --tag-bug: #ff2a2a;
+  --tag-feature: #2a8bff;
+  --tag-mvp: #bf40bf;
+  --tag-urgent: #ff8800;
+  --tag-idea: #00e5ff;
+  --tag-spike: #ff0099;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* Border radius - slightly sharper */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+
+  /* Shadows - Colored Glows will be handled in CSS */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
+
+  /* Typography */
+  --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
