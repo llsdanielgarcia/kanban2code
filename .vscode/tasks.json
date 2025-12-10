@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "bun: lint",
+      "type": "shell",
+      "command": "bun",
+      "args": ["run", "lint"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "bun: build",
+      "type": "shell",
+      "command": "bun",
+      "args": ["run", "compile"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "bun: lint+build",
+      "dependsOn": ["bun: lint", "bun: build"],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Kanban2Code (F5)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "preLaunchTask": "bun: lint+build",
+      "outFiles": ["${workspaceFolder}/dist/extension.js"]
+    }
+  ]
+}
