@@ -1,0 +1,84 @@
+{
+  "name": "kanban2code",
+  "displayName": "Kanban2Code",
+  "description": "Kanban board for coding tasks",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Productivity"
+  ],
+  "activationEvents": [
+    "workspaceContains:.kanban2code",
+    "onView:kanban2code.sidebar",
+    "onCommand:kanban2code.openBoard",
+    "onCommand:kanban2code.newTask",
+    "onCommand:kanban2code.scaffoldWorkspace"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kanban2code-sidebar",
+          "title": "Kanban2Code",
+          "icon": "$(layout-sidebar-left)"
+        }
+      ]
+    },
+    "views": {
+      "kanban2code-sidebar": [
+        {
+          "id": "kanban2code.sidebar",
+          "name": "Kanban"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "kanban2code.openBoard",
+        "title": "Kanban2Code: Open Board"
+      },
+      {
+        "command": "kanban2code.newTask",
+        "title": "Kanban2Code: New Task"
+      },
+      {
+        "command": "kanban2code.scaffoldWorkspace",
+        "title": "Kanban2Code: Scaffold Workspace"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "bun run package",
+    "compile": "bun run build.ts",
+    "watch": "bun run build.ts --watch",
+    "package": "bun run build.ts --production",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^24.10.2",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/vscode": "^1.106.1",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "esbuild": "^0.27.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3"
+  }
+}

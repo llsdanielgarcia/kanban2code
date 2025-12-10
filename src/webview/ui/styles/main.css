@@ -1,0 +1,60 @@
+:root {
+  --background: var(--vscode-editor-background);
+  --foreground: var(--vscode-editor-foreground);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--vscode-font-family);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background: var(--glass-bg);
+  border-right: 1px solid var(--glass-border);
+  padding: 1rem;
+}
+
+.board {
+  flex: 1;
+  padding: 1rem;
+}
+
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+  margin-bottom: 0.5rem;
+}
+
+.ghost-button {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ghost-button:hover {
+  border-color: var(--foreground);
+}
+
+.status-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
