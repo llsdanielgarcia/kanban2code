@@ -126,12 +126,12 @@ body {
   color: var(--vscode-badge-foreground);
 }
 
-.tag-bug { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-.tag-feature { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
-.tag-mvp { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
-.tag-urgent { background: rgba(249, 115, 22, 0.2); color: #fdba74; }
-.tag-idea { background: rgba(6, 182, 212, 0.2); color: #67e8f9; }
-.tag-spike { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; }
+.tag-bug { background: rgba(239, 68, 68, 0.18); color: #fecdd3; }
+.tag-feature { background: rgba(59, 130, 246, 0.2); color: #bfdbfe; }
+.tag-mvp { background: rgba(96, 165, 250, 0.18); color: #dbeafe; }
+.tag-urgent { background: rgba(250, 204, 21, 0.2); color: #fef08a; }
+.tag-idea { background: rgba(34, 197, 94, 0.18); color: #c8facc; }
+.tag-spike { background: rgba(239, 68, 68, 0.2); color: #fecdd3; }
 
 /* Stage pills */
 .stage-pill {

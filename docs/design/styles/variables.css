@@ -1,87 +1,87 @@
 /* VS Code Theme Variables with Dark Mode Fallbacks */
 :root {
-  /* Core colors - maps to VS Code theme */
-  --vscode-editor-background: #1e1e1e;
-  --vscode-editor-foreground: #d4d4d4;
-  --vscode-sideBar-background: #252526;
-  --vscode-sideBar-foreground: #cccccc;
-  --vscode-panel-background: #1e1e1e;
-  --vscode-panel-border: #3c3c3c;
+  /* Core colors - navy night gradient */
+  --vscode-editor-background: linear-gradient(180deg, #0d111c 0%, #101524 45%, #121829 100%);
+  --vscode-editor-foreground: #f8fafc;
+  --vscode-sideBar-background: #0c101b;
+  --vscode-sideBar-foreground: #e2e8f0;
+  --vscode-panel-background: #161b2b;
+  --vscode-panel-border: #2a3147;
 
   /* Interactive elements */
-  --vscode-button-background: #0e639c;
+  --vscode-button-background: #3b82f6;
   --vscode-button-foreground: #ffffff;
-  --vscode-button-hoverBackground: #1177bb;
-  --vscode-button-secondaryBackground: #3a3d41;
-  --vscode-button-secondaryForeground: #ffffff;
-  --vscode-button-secondaryHoverBackground: #45494e;
+  --vscode-button-hoverBackground: #60a5fa;
+  --vscode-button-secondaryBackground: #1f273a;
+  --vscode-button-secondaryForeground: #e2e8f0;
+  --vscode-button-secondaryHoverBackground: #1e2436;
 
   /* Input fields */
-  --vscode-input-background: #3c3c3c;
-  --vscode-input-foreground: #cccccc;
-  --vscode-input-border: #3c3c3c;
-  --vscode-input-placeholderForeground: #8c8c8c;
-  --vscode-focusBorder: #007fd4;
+  --vscode-input-background: #1a1f30;
+  --vscode-input-foreground: #e2e8f0;
+  --vscode-input-border: #2a3247;
+  --vscode-input-placeholderForeground: #5d6b85;
+  --vscode-focusBorder: #3b82f6;
 
   /* Lists and trees */
-  --vscode-list-activeSelectionBackground: #094771;
+  --vscode-list-activeSelectionBackground: rgba(59, 130, 246, 0.16);
   --vscode-list-activeSelectionForeground: #ffffff;
-  --vscode-list-hoverBackground: #2a2d2e;
-  --vscode-list-inactiveSelectionBackground: #37373d;
+  --vscode-list-hoverBackground: #1e2436;
+  --vscode-list-inactiveSelectionBackground: #1f273a;
 
   /* Widgets */
-  --vscode-editorWidget-background: #252526;
-  --vscode-editorWidget-border: #454545;
-  --vscode-editorWidget-foreground: #cccccc;
+  --vscode-editorWidget-background: #161b2b;
+  --vscode-editorWidget-border: #2a3147;
+  --vscode-editorWidget-foreground: #e2e8f0;
 
   /* Badges */
-  --vscode-badge-background: #4d4d4d;
-  --vscode-badge-foreground: #ffffff;
+  --vscode-badge-background: #1f2535;
+  --vscode-badge-foreground: #cbd5e1;
 
   /* Notifications */
-  --vscode-notificationCenter-border: #3c3c3c;
-  --vscode-notifications-background: #252526;
-  --vscode-notifications-foreground: #cccccc;
+  --vscode-notificationCenter-border: #2a3147;
+  --vscode-notifications-background: #161b2b;
+  --vscode-notifications-foreground: #e2e8f0;
 
   /* Scrollbar */
-  --vscode-scrollbarSlider-background: rgba(121, 121, 121, 0.4);
-  --vscode-scrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7);
-  --vscode-scrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4);
+  --vscode-scrollbarSlider-background: rgba(148, 163, 184, 0.35);
+  --vscode-scrollbarSlider-hoverBackground: rgba(148, 163, 184, 0.55);
+  --vscode-scrollbarSlider-activeBackground: rgba(148, 163, 184, 0.7);
 
   /* Text colors */
-  --vscode-descriptionForeground: #8c8c8c;
-  --vscode-errorForeground: #f48771;
-  --vscode-textLink-foreground: #3794ff;
-  --vscode-textLink-activeForeground: #3794ff;
+  --vscode-descriptionForeground: #94a3b8;
+  --vscode-errorForeground: #ef4444;
+  --vscode-textLink-foreground: #60a5fa;
+  --vscode-textLink-activeForeground: #93c5fd;
 
   /* Stage colors - semantic */
-  --stage-inbox: #6366f1;      /* Indigo */
-  --stage-plan: #a855f7;       /* Purple */
+  --stage-inbox: #3b82f6;      /* Blue accent */
+  --stage-plan: #5d6b85;       /* Muted slate */
   --stage-code: #22c55e;       /* Green */
-  --stage-audit: #f59e0b;      /* Amber */
-  --stage-completed: #6b7280;  /* Gray */
+  --stage-audit: #facc15;      /* Yellow */
+  --stage-completed: #5d6b85;  /* Slate */
 
   /* Stage backgrounds (10% opacity) */
-  --stage-inbox-bg: rgba(99, 102, 241, 0.1);
-  --stage-plan-bg: rgba(168, 85, 247, 0.1);
-  --stage-code-bg: rgba(34, 197, 94, 0.1);
-  --stage-audit-bg: rgba(245, 158, 11, 0.1);
-  --stage-completed-bg: rgba(107, 114, 128, 0.1);
+  --stage-inbox-bg: rgba(59, 130, 246, 0.1);
+  --stage-plan-bg: rgba(93, 107, 133, 0.12);
+  --stage-code-bg: rgba(34, 197, 94, 0.12);
+  --stage-audit-bg: rgba(250, 204, 21, 0.12);
+  --stage-completed-bg: rgba(93, 107, 133, 0.12);
 
   /* Stage borders (20% opacity) */
-  --stage-inbox-border: rgba(99, 102, 241, 0.2);
-  --stage-plan-border: rgba(168, 85, 247, 0.2);
-  --stage-code-border: rgba(34, 197, 94, 0.2);
-  --stage-audit-border: rgba(245, 158, 11, 0.2);
-  --stage-completed-border: rgba(107, 114, 128, 0.2);
+  --stage-inbox-border: rgba(59, 130, 246, 0.2);
+  --stage-plan-border: rgba(93, 107, 133, 0.25);
+  --stage-code-border: rgba(34, 197, 94, 0.25);
+  --stage-audit-border: rgba(250, 204, 21, 0.25);
+  --stage-completed-border: rgba(93, 107, 133, 0.25);
 
   /* Tag colors */
   --tag-bug: #ef4444;
   --tag-feature: #3b82f6;
-  --tag-mvp: #8b5cf6;
-  --tag-urgent: #f97316;
-  --tag-idea: #06b6d4;
-  --tag-spike: #ec4899;
+  --tag-mvp: #60a5fa;
+  --tag-urgent: #facc15;
+  --tag-idea: #22c55e;
+  --tag-spike: #ef4444;
 
   /* Spacing */
   --spacing-xs: 4px;
