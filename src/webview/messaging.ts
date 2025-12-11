@@ -13,6 +13,8 @@ export const WebviewToHostMessageTypes = [
   'CreateTask',
   'MoveTask',
   'CopyContext',
+  // Basic demo/ping path used by the placeholder UI
+  'ALERT',
 ] as const;
 
 export type HostToWebviewType = typeof HostToWebviewMessageTypes[number];
@@ -24,6 +26,9 @@ export interface MessageEnvelope<TPayload = unknown> {
   type: MessageType;
   payload: TPayload;
 }
+
+// Backward-compatible alias used by the webview/host code
+export type WebviewMessage<TPayload = unknown> = MessageEnvelope<TPayload>;
 
 export const EnvelopeSchema = z.object({
   version: z.literal(MESSAGE_VERSION),
@@ -45,3 +50,6 @@ export function validateEnvelope<TPayload = unknown>(data: unknown): MessageEnve
   }
   return result.data as MessageEnvelope<TPayload>;
 }
+
+// Convenience helper for UI/host callers who expect a simple creator
+export const createMessage = createEnvelope;

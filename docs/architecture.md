@@ -47,6 +47,7 @@ src/
 │   ├── frontmatter.ts                     # Service for parsing and serializing task frontmatter
 │   ├── scaffolder.ts                      # Service for scaffolding new Kanban2Code workspaces
 │   ├── scanner.ts                         # Service for scanning and loading task files
+│   ├── task-watcher.ts                    # Debounced filesystem watcher for task events (create/update/delete/move)
 │   └── stage-manager.ts                   # Service for managing task stage transitions
 ├── types/
 │   ├── gray-matter.d.ts                   # Type definitions for gray-matter library
@@ -77,6 +78,7 @@ tests/
 ├── types.test.ts                          # Unit tests for type definitions and utilities
 ├── utils.test.ts                          # Unit tests for utility functions
 ├── validation.test.ts                     # Unit tests for workspace validation
+├── task-watcher.test.ts                   # Unit tests for debounced watcher events and move detection
 └── webview.test.ts                        # Unit tests for webview components
 
 webview/                                   # Build output directory for webview assets
@@ -91,3 +93,12 @@ README.md                                  # Project README with setup instructi
 roadmap.md                                 # Comprehensive development roadmap with phase breakdown
 tsconfig.json                              # TypeScript compiler configuration
 .vscode/                                   # VS Code workspace configuration
+
+## Webview Messaging Architecture
+
+- Messages between host and webview use a versioned envelope: `{ version: 1, type, payload }`, defined in `src/webview/messaging.ts` and validated with zod.
+- Supported types:
+  - Host → Webview: `TaskUpdated`, `TaskSelected`, `FilterChanged`, `InitState`.
+  - Webview → Host: `CreateTask`, `MoveTask`, `CopyContext`, and a simple `ALERT` utility used by the placeholder UI.
+- Helper API: `createEnvelope`/`createMessage` build typed envelopes; `validateEnvelope` guards incoming data.
+- The placeholder React UI (`src/webview/ui/App.tsx`) uses `createMessage('ALERT', …)` to send pings to the host, and `KanbanPanel` listens for these envelopes. A richer Zustand-backed state layer is planned for later phases.

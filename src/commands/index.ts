@@ -3,6 +3,9 @@ import { KanbanPanel } from '../webview/KanbanPanel';
 import { scaffoldWorkspace } from '../services/scaffolder';
 import { WorkspaceState } from '../workspace/state';
 import { KANBAN_FOLDER } from '../core/constants';
+import { buildCopyPayload, copyToClipboard } from '../services/copy';
+import { findTaskById } from '../services/scanner';
+import { CopyMode } from '../types/copy';
 import * as path from 'path';
 
 export function registerCommands(context: vscode.ExtensionContext) {
@@ -36,6 +39,34 @@ export function registerCommands(context: vscode.ExtensionContext) {
         // Or we can expose a refresh method on SidebarProvider if we had access to the instance.
       } catch (error: any) {
         vscode.window.showErrorMessage(`Failed to scaffold: ${error.message}`);
+      }
+    }),
+    vscode.commands.registerCommand('kanban2code.copyTaskContext', async (taskInput: string | { id: string }, mode: CopyMode = 'full_xml') => {
+      const kanbanRoot = WorkspaceState.kanbanRoot;
+      if (!kanbanRoot) {
+        vscode.window.showErrorMessage('Kanban workspace not detected.');
+        return;
+      }
+
+      try {
+        const taskId = typeof taskInput === 'string' ? taskInput : taskInput?.id;
+        if (!taskId) {
+          vscode.window.showErrorMessage('No task specified for copy.');
+          return;
+        }
+
+        const task = await findTaskById(kanbanRoot, taskId);
+        if (!task) {
+          vscode.window.showErrorMessage(`Task '${taskId}' not found.`);
+          return;
+        }
+
+        const payload = await buildCopyPayload(task, mode, kanbanRoot);
+        await copyToClipboard(payload);
+        vscode.window.showInformationMessage('Task context copied to clipboard.');
+      } catch (error: any) {
+        const message = error?.message ?? 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to copy context: ${message}`);
       }
     }),
   );
