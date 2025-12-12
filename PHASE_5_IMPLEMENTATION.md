@@ -221,13 +221,10 @@ isTagInCategory('feature', 'type'); // true
 - Sequential execution (single fork)
 - E2E-specific setup
 
-#### `.github/workflows/ci.yml` (NEW)
-**GitHub Actions CI/CD**
-- Multi-platform (Ubuntu, Windows, macOS)
-- Type checking, linting, testing
-- Coverage upload to Codecov
-- E2E tests on Linux
-- Automated release on tags
+#### CI Integration (Provider-Specific)
+**CI-ready scripts (no workflow committed)**
+- Type checking, linting, testing, and coverage via `bun run typecheck`, `bun run lint`, `bun run test`, `bun run test:coverage`
+- E2E tests via `bun run test:e2e`
 
 ### Documentation Files (2 files)
 
@@ -389,10 +386,8 @@ sidebar, board, messaging, keyboard, filters, context, copy, archive, test
 - E2E workflows validated
 
 ### ✅ Infrastructure Ready
-- GitHub Actions CI/CD
-- Multi-platform testing
-- Coverage reporting
-- Automated release workflow
+- CI-ready scripts (provider-specific)
+- Coverage reporting (HTML/LCOV/text)
 
 ### ✅ Documentation Complete
 - Architecture guide updated
@@ -450,7 +445,6 @@ sidebar, board, messaging, keyboard, filters, context, copy, archive, test
 | tests/setup.ts | Test | 82 | ✅ New |
 | vitest.config.ts | Config | Enhanced | ✅ Enhanced |
 | vitest.e2e.config.ts | Config | 24 | ✅ New |
-| .github/workflows/ci.yml | CI/CD | 95 | ✅ New |
 | docs/architecture.md | Docs | +220 | ✅ Enhanced |
 | phase-5-audit.md | Docs | 523 | ✅ New |
 | package.json | Config | Enhanced | ✅ Enhanced |

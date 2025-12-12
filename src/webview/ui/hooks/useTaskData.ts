@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { Task } from '../../../types/task';
 import type { FilterState } from '../../../types/filters';
-import type { MessageEnvelope } from '../../messaging';
+import { createMessage, type MessageEnvelope } from '../../messaging';
+import { vscode } from '../vscodeApi';
 
 export interface TaskTemplate {
   id: string;
@@ -13,6 +14,8 @@ export interface TaskTemplate {
 interface InitStatePayload {
   tasks: Task[];
   templates?: TaskTemplate[];
+  projects?: string[];
+  phasesByProject?: Record<string, string[]>;
   workspaceRoot: string;
   context?: 'sidebar' | 'board';
   filterState?: FilterState;
@@ -29,6 +32,8 @@ interface FilterChangedPayload {
 interface UseTaskDataResult {
   tasks: Task[];
   templates: TaskTemplate[];
+  projects: string[];
+  phasesByProject: Record<string, string[]>;
   workspaceRoot: string | null;
   isLoading: boolean;
   error: string | null;
@@ -39,6 +44,8 @@ interface UseTaskDataResult {
 export function useTaskData(): UseTaskDataResult {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +53,9 @@ export function useTaskData(): UseTaskDataResult {
   const [filterState, setFilterState] = useState<FilterState | null>(null);
 
   useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let receivedInitState = false;
+
     const handleMessage = (event: MessageEvent<MessageEnvelope>) => {
       const message = event.data;
       if (!message?.type) return;
@@ -55,11 +65,18 @@ export function useTaskData(): UseTaskDataResult {
           const payload = message.payload as InitStatePayload;
           setTasks(payload.tasks || []);
           setTemplates(payload.templates || []);
+          setProjects(payload.projects || []);
+          setPhasesByProject(payload.phasesByProject || {});
           setWorkspaceRoot(payload.workspaceRoot || null);
           if (payload.context) setContext(payload.context);
           if (payload.filterState) setFilterState(payload.filterState);
           setIsLoading(false);
           setError(null);
+          receivedInitState = true;
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+          }
           break;
         }
         case 'TaskUpdated': {
@@ -79,9 +96,13 @@ export function useTaskData(): UseTaskDataResult {
 
     window.addEventListener('message', handleMessage);
 
-    // Set a timeout for loading state
-    const timeout = setTimeout(() => {
-      if (isLoading) {
+    // Request state in case this hook mounted after the initial InitState was posted
+    if (vscode) {
+      vscode.postMessage(createMessage('RequestState', {}));
+    }
+
+    timeout = setTimeout(() => {
+      if (!receivedInitState) {
         setError('Timeout waiting for task data');
         setIsLoading(false);
       }
@@ -89,13 +110,15 @@ export function useTaskData(): UseTaskDataResult {
 
     return () => {
       window.removeEventListener('message', handleMessage);
-      clearTimeout(timeout);
+      if (timeout) clearTimeout(timeout);
     };
-  }, [isLoading]);
+  }, []);
 
   return {
     tasks,
     templates,
+    projects,
+    phasesByProject,
     workspaceRoot,
     isLoading,
     error,

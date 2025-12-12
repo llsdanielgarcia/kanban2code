@@ -9,9 +9,23 @@ interface SwimlaneProps {
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
+  onCopyXml?: (task: Task) => void;
+  onOpenFile?: (task: Task) => void;
+  onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
 }
 
-export const Swimlane: React.FC<SwimlaneProps> = ({ label, tasksByStage, onMoveTask, onOpenTask, onFocusTask }) => {
+export const Swimlane: React.FC<SwimlaneProps> = ({
+  label,
+  tasksByStage,
+  onMoveTask,
+  onOpenTask,
+  onFocusTask,
+  onDeleteTask,
+  onCopyXml,
+  onOpenFile,
+  onShowMenu,
+}) => {
   return (
     <div className="swimlane">
       <div className="swimlane-label">{label}</div>
@@ -25,6 +39,10 @@ export const Swimlane: React.FC<SwimlaneProps> = ({ label, tasksByStage, onMoveT
             onMoveTask={onMoveTask}
             onOpenTask={onOpenTask}
             onFocusTask={onFocusTask}
+            onDeleteTask={onDeleteTask}
+            onCopyXml={onCopyXml}
+            onOpenFile={onOpenFile}
+            onShowMenu={onShowMenu}
           />
         ))}
       </div>

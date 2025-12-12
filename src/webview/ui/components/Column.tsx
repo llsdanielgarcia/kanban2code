@@ -9,9 +9,24 @@ interface ColumnProps {
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
+  onCopyXml?: (task: Task) => void;
+  onOpenFile?: (task: Task) => void;
+  onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
 }
 
-export const Column: React.FC<ColumnProps> = ({ stage, title, tasks, onMoveTask, onOpenTask, onFocusTask }) => {
+export const Column: React.FC<ColumnProps> = ({
+  stage,
+  title,
+  tasks,
+  onMoveTask,
+  onOpenTask,
+  onFocusTask,
+  onDeleteTask,
+  onCopyXml,
+  onOpenFile,
+  onShowMenu,
+}) => {
   const [dropActive, setDropActive] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -49,7 +64,16 @@ export const Column: React.FC<ColumnProps> = ({ stage, title, tasks, onMoveTask,
       </header>
       <div className="column-body">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onOpen={onOpenTask} onFocusTask={onFocusTask} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onOpen={onOpenTask}
+            onFocusTask={onFocusTask}
+            onDelete={onDeleteTask}
+            onCopyXml={onCopyXml}
+            onOpenFile={onOpenFile}
+            onShowMenu={onShowMenu}
+          />
         ))}
         {tasks.length === 0 && <div className="column-empty">No tasks</div>}
       </div>

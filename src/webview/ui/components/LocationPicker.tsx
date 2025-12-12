@@ -3,12 +3,16 @@ import type { Task } from '../../../types/task';
 
 interface LocationPickerProps {
   tasks: Task[];
+  projects?: string[];
+  phasesByProject?: Record<string, string[]>;
   value: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   onChange: (location: LocationPickerProps['value']) => void;
 }
 
 export const LocationPicker: React.FC<LocationPickerProps> = ({
   tasks,
+  projects: knownProjects = [],
+  phasesByProject: knownPhasesByProject = {},
   value,
   onChange,
 }) => {
@@ -21,24 +25,26 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   );
 
   // Extract unique projects from tasks
-  const projects = useMemo(() => {
+  const projectOptions = useMemo(() => {
     const projectSet = new Set<string>();
+    knownProjects.forEach((project) => projectSet.add(project));
     tasks.forEach((task) => {
       if (task.project) projectSet.add(task.project);
     });
     return Array.from(projectSet).sort();
-  }, [tasks]);
+  }, [knownProjects, tasks]);
 
   // Extract phases for selected project
-  const phases = useMemo(() => {
+  const phaseOptions = useMemo(() => {
     const phaseSet = new Set<string>();
+    (knownPhasesByProject[selectedProject] ?? []).forEach((phase) => phaseSet.add(phase));
     tasks.forEach((task) => {
       if (task.project === selectedProject && task.phase) {
         phaseSet.add(task.phase);
       }
     });
     return Array.from(phaseSet).sort();
-  }, [tasks, selectedProject]);
+  }, [knownPhasesByProject, selectedProject, tasks]);
 
   const handleTypeChange = (type: 'inbox' | 'project') => {
     setLocationType(type);
@@ -102,7 +108,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
               onChange={(e) => handleProjectChange(e.target.value)}
             >
               <option value="">Select a project...</option>
-              {projects.map((project) => (
+              {projectOptions.map((project) => (
                 <option key={project} value={project}>
                   {project}
                 </option>
@@ -110,7 +116,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             </select>
           </div>
 
-          {phases.length > 0 && (
+          {phaseOptions.length > 0 && (
             <div className="form-group">
               <label className="form-label">Phase (optional)</label>
               <select
@@ -119,7 +125,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
                 onChange={(e) => handlePhaseChange(e.target.value)}
               >
                 <option value="">No specific phase</option>
-                {phases.map((phase) => (
+                {phaseOptions.map((phase) => (
                   <option key={phase} value={phase}>
                     {phase}
                   </option>

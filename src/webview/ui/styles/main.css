@@ -244,24 +244,200 @@ body {
   text-align: center;
 }
 
+/* === TASK CARD === */
 .task-card {
+  position: relative;
   background: rgba(31, 39, 58, 0.9);
   border: 1px solid var(--vscode-panel-border);
   border-radius: var(--radius-md);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md);
   cursor: grab;
-  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .task-card.dragging {
-  opacity: 0.6;
-  transform: scale(0.98);
+  opacity: 0.9;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  z-index: 100;
 }
 
 .task-card:hover {
   border-color: rgba(96, 165, 250, 0.6);
+  transform: translateY(-2px);
 }
 
+.task-card:active {
+  cursor: grabbing;
+}
+
+.task-card.completed {
+  opacity: 0.7;
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.card-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--vscode-editor-foreground);
+  word-break: break-word;
+}
+
+.card-title:hover {
+  color: var(--vscode-textLink-foreground);
+}
+
+.card-title.completed {
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+/* Card Actions - hidden by default, visible on hover */
+.card-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.task-card:hover .card-actions {
+  opacity: 1;
+}
+
+.card-action {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  transition: all var(--transition-fast);
+}
+
+.card-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vscode-editor-foreground);
+}
+
+.card-action.danger {
+  color: var(--vscode-errorForeground);
+}
+
+.card-action.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Card Breadcrumb */
+.card-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: var(--spacing-sm);
+}
+
+.card-breadcrumb .separator {
+  color: var(--vscode-panel-border);
+}
+
+.card-breadcrumb .project {
+  color: var(--vscode-textLink-foreground);
+}
+
+.card-breadcrumb .phase {
+  color: var(--vscode-editor-foreground);
+  opacity: 0.85;
+}
+
+/* Card Tags */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.card-tag.bug { background: rgba(239, 68, 68, 0.18); color: #fecdd3; }
+.card-tag.feature { background: rgba(59, 130, 246, 0.2); color: #bfdbfe; }
+.card-tag.mvp { background: rgba(96, 165, 250, 0.18); color: #dbeafe; }
+.card-tag.urgent { background: rgba(250, 204, 21, 0.2); color: #fef08a; }
+.card-tag.idea { background: rgba(34, 197, 94, 0.18); color: #c8facc; }
+.card-tag.spike { background: rgba(239, 68, 68, 0.2); color: #fecdd3; }
+
+/* Card Footer */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-agent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--vscode-descriptionForeground);
+}
+
+.card-agent .agent-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Copy XML Button */
+.copy-xml-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--vscode-focusBorder);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.copy-xml-btn:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: var(--vscode-focusBorder);
+}
+
+.copy-xml-btn .icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Legacy support - keep old classes working */
 .task-card-title {
   font-weight: 500;
   margin-bottom: var(--spacing-xs);
@@ -723,9 +899,10 @@ body {
 .tooltip::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
+  margin-top: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-xs);
   white-space: nowrap;

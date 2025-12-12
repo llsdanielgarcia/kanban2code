@@ -10,6 +10,7 @@ import { changeStageAndReload, moveTaskToLocation, type TaskLocation } from '../
 import { archiveTask } from '../services/archive';
 import { loadTaskTemplates, type TaskTemplate } from '../services/template';
 import { KanbanPanel } from './KanbanPanel';
+import { listProjectsAndPhases } from '../services/projects';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
@@ -187,19 +188,32 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private async _sendInitialState() {
     const kanbanRoot = WorkspaceState.kanbanRoot;
     const hasKanban = !!kanbanRoot;
+    let projects: string[] = [];
+    let phasesByProject: Record<string, string[]> = {};
 
     if (hasKanban && kanbanRoot) {
       try {
-        this._tasks = await loadAllTasks(kanbanRoot);
-        this._templates = await loadTaskTemplates(kanbanRoot);
+        const [tasks, templates, listing] = await Promise.all([
+          loadAllTasks(kanbanRoot),
+          loadTaskTemplates(kanbanRoot),
+          listProjectsAndPhases(kanbanRoot),
+        ]);
+        this._tasks = tasks;
+        this._templates = templates;
+        projects = listing.projects;
+        phasesByProject = listing.phasesByProject;
       } catch (error) {
         console.error('Error loading tasks:', error);
         this._tasks = [];
         this._templates = [];
+        projects = [];
+        phasesByProject = {};
       }
     } else {
       this._tasks = [];
       this._templates = [];
+      projects = [];
+      phasesByProject = {};
     }
 
     this._postMessage(createEnvelope('InitState', {
@@ -207,6 +221,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       hasKanban,
       tasks: this._tasks,
       templates: this._templates,
+      projects,
+      phasesByProject,
       workspaceRoot: kanbanRoot,
       filterState: this._filterState ?? (WorkspaceState.filterState as FilterState | null) ?? undefined,
     }));

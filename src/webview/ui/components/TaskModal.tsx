@@ -21,6 +21,8 @@ interface TaskModalProps {
   isOpen: boolean;
   tasks: Task[];
   templates?: Template[];
+  projects?: string[];
+  phasesByProject?: Record<string, string[]>;
   onClose: () => void;
   defaultLocation?: 'inbox' | { project: string; phase?: string };
   parentTaskId?: string;
@@ -47,6 +49,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   tasks,
   templates = [],
+  projects = [],
+  phasesByProject = {},
   onClose,
   defaultLocation = 'inbox',
   parentTaskId,
@@ -181,6 +185,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* Location */}
           <LocationPicker
             tasks={tasks}
+            projects={projects}
+            phasesByProject={phasesByProject}
             value={formData.location}
             onChange={(location) => setFormData((prev) => ({ ...prev, location }))}
           />

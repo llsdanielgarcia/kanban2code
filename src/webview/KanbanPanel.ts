@@ -5,6 +5,7 @@ import { findTaskById, loadAllTasks } from '../services/scanner';
 import { changeStageAndReload } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
 import { loadTaskTemplates } from '../services/template';
+import { listProjectsAndPhases } from '../services/projects';
 import type { Task, Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 
@@ -68,6 +69,10 @@ export class KanbanPanel {
   public updateTasks(tasks: Task[]) {
     this._tasks = tasks;
     this._postMessage(createEnvelope('TaskUpdated', { tasks }));
+  }
+
+  public async refresh(): Promise<void> {
+    await this._sendInitialState();
   }
 
   public postFilterState(filters: FilterState) {
@@ -219,18 +224,31 @@ export class KanbanPanel {
   private async _sendInitialState() {
     const kanbanRoot = WorkspaceState.kanbanRoot;
     const hasKanban = !!kanbanRoot;
+    let projects: string[] = [];
+    let phasesByProject: Record<string, string[]> = {};
     if (hasKanban && kanbanRoot) {
       try {
-        this._tasks = await loadAllTasks(kanbanRoot);
-        this._templates = await loadTaskTemplates(kanbanRoot);
+        const [tasks, templates, listing] = await Promise.all([
+          loadAllTasks(kanbanRoot),
+          loadTaskTemplates(kanbanRoot),
+          listProjectsAndPhases(kanbanRoot),
+        ]);
+        this._tasks = tasks;
+        this._templates = templates;
+        projects = listing.projects;
+        phasesByProject = listing.phasesByProject;
       } catch (error) {
         console.error('Error loading tasks for board:', error);
         this._tasks = [];
         this._templates = [];
+        projects = [];
+        phasesByProject = {};
       }
     } else {
       this._tasks = [];
       this._templates = [];
+      projects = [];
+      phasesByProject = {};
     }
 
     this._postMessage(createEnvelope('InitState', {
@@ -238,6 +256,8 @@ export class KanbanPanel {
       hasKanban,
       tasks: this._tasks,
       templates: this._templates,
+      projects,
+      phasesByProject,
       workspaceRoot: kanbanRoot,
       filterState: WorkspaceState.filterState as FilterState | null ?? undefined,
     }));

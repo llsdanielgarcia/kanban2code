@@ -296,6 +296,14 @@ Project context and documentation goes here.
           Buffer.from(contextContent, 'utf8')
         );
 
+        await sidebarProvider.refresh();
+        if (KanbanPanel.currentPanel) {
+          await KanbanPanel.currentPanel.refresh();
+        }
+
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(contextPath));
+        await vscode.window.showTextDocument(doc);
+
         vscode.window.showInformationMessage(`Project "${name}" created.`);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -304,8 +312,63 @@ Project context and documentation goes here.
     }),
 
     // New Context command (placeholder)
-    vscode.commands.registerCommand('kanban2code.newContext', () => {
-      vscode.window.showInformationMessage('New Context command (Not implemented yet)');
+    vscode.commands.registerCommand('kanban2code.newContext', async () => {
+      const kanbanRoot = WorkspaceState.kanbanRoot;
+      if (!kanbanRoot) {
+        vscode.window.showErrorMessage('Kanban workspace not detected.');
+        return;
+      }
+
+      const name = await vscode.window.showInputBox({
+        prompt: 'Enter context name',
+        placeHolder: 'my-context',
+        validateInput: (value) => {
+          if (!value) return 'Context name is required';
+          if (!/^[a-z0-9-]+$/.test(value)) return 'Use lowercase letters, numbers, and hyphens only';
+          return null;
+        },
+      });
+
+      if (!name) return;
+
+      const contextDir = path.join(kanbanRoot, '_context');
+      const contextPath = path.join(contextDir, `${name}.md`);
+      const contextContent = `# ${name}
+
+Context notes go here.
+`;
+
+      try {
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(contextDir));
+
+        let exists = false;
+        try {
+          await vscode.workspace.fs.stat(vscode.Uri.file(contextPath));
+          exists = true;
+        } catch {
+          // does not exist
+        }
+
+        if (!exists) {
+          await vscode.workspace.fs.writeFile(
+            vscode.Uri.file(contextPath),
+            Buffer.from(contextContent, 'utf8'),
+          );
+        }
+
+        await sidebarProvider.refresh();
+        if (KanbanPanel.currentPanel) {
+          await KanbanPanel.currentPanel.refresh();
+        }
+
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(contextPath));
+        await vscode.window.showTextDocument(doc);
+
+        vscode.window.showInformationMessage(exists ? `Context "${name}" opened.` : `Context "${name}" created.`);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to create context: ${message}`);
+      }
     }),
 
     // New Agent command (placeholder)
@@ -350,8 +413,86 @@ Describe the agent's role and expertise.
     }),
 
     // New Template command (placeholder)
-    vscode.commands.registerCommand('kanban2code.newTemplate', () => {
-      vscode.window.showInformationMessage('New Template command (Not implemented yet)');
+    vscode.commands.registerCommand('kanban2code.newTemplate', async () => {
+      const kanbanRoot = WorkspaceState.kanbanRoot;
+      if (!kanbanRoot) {
+        vscode.window.showErrorMessage('Kanban workspace not detected.');
+        return;
+      }
+
+      const id = await vscode.window.showInputBox({
+        prompt: 'Enter template id',
+        placeHolder: 'bug-report',
+        validateInput: (value) => {
+          if (!value) return 'Template id is required';
+          if (!/^[a-z0-9-]+$/.test(value)) return 'Use lowercase letters, numbers, and hyphens only';
+          return null;
+        },
+      });
+
+      if (!id) return;
+
+      const name = await vscode.window.showInputBox({
+        prompt: 'Enter template name (optional)',
+        placeHolder: 'Bug Report',
+        value: id
+          .split(/[-_]/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' '),
+      });
+
+      const description = await vscode.window.showInputBox({
+        prompt: 'Enter template description (optional)',
+        placeHolder: 'Track and fix a bug',
+      });
+
+      const templatesDir = path.join(kanbanRoot, '_templates', 'tasks');
+      const templatePath = path.join(templatesDir, `${id}.md`);
+      const yamlName = JSON.stringify(name || id);
+      const yamlDescription = JSON.stringify(description || '');
+      const templateContent = `---
+name: ${yamlName}
+description: ${yamlDescription}
+---
+
+# {title}
+
+## Goal
+
+## Notes
+`;
+
+      try {
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(templatesDir));
+
+        let exists = false;
+        try {
+          await vscode.workspace.fs.stat(vscode.Uri.file(templatePath));
+          exists = true;
+        } catch {
+          // does not exist
+        }
+
+        if (!exists) {
+          await vscode.workspace.fs.writeFile(
+            vscode.Uri.file(templatePath),
+            Buffer.from(templateContent, 'utf8'),
+          );
+        }
+
+        await sidebarProvider.refresh();
+        if (KanbanPanel.currentPanel) {
+          await KanbanPanel.currentPanel.refresh();
+        }
+
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(templatePath));
+        await vscode.window.showTextDocument(doc);
+
+        vscode.window.showInformationMessage(exists ? `Template "${id}" opened.` : `Template "${id}" created.`);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to create template: ${message}`);
+      }
     }),
   );
 }

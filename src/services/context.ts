@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AGENTS_FOLDER, PROJECTS_FOLDER, TEMPLATES_FOLDER } from '../core/constants';
+import { AGENTS_FOLDER, CONTEXT_FOLDER, PROJECTS_FOLDER, TEMPLATES_FOLDER } from '../core/constants';
 import { Stage } from '../types/task';
 import { ensureSafePath } from '../workspace/validation';
 
@@ -18,6 +18,18 @@ async function readFileIfExists(root: string, relativePath: string): Promise<str
     }
     console.warn(`Failed to read context file ${targetPath}:`, error);
     return '';
+  }
+}
+
+async function fileExists(root: string, relativePath: string): Promise<boolean> {
+  const targetPath = path.join(root, relativePath);
+  await ensureSafePath(root, targetPath);
+  try {
+    const stats = await fs.stat(targetPath);
+    return stats.isFile();
+  } catch (error: any) {
+    if (error?.code === 'ENOENT') return false;
+    return false;
   }
 }
 
@@ -61,6 +73,16 @@ export async function loadCustomContexts(root: string, contextNames?: string[] |
   const contents = await Promise.all(
     contextNames.map(async (ctx) => {
       const normalized = ensureExtension(ctx);
+      const isExplicitPath = normalized.includes('/') || normalized.includes('\\');
+      if (isExplicitPath) {
+        return readFileIfExists(root, normalized);
+      }
+
+      const fromContextDir = path.join(CONTEXT_FOLDER, normalized);
+      if (await fileExists(root, fromContextDir)) {
+        return readFileIfExists(root, fromContextDir);
+      }
+
       return readFileIfExists(root, normalized);
     }),
   );

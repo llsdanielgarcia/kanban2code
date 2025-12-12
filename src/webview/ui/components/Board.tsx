@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type { Task, Stage } from '../../../types/task';
 import type { FilterState } from '../../../types/filters';
 import { createMessage } from '../../messaging';
@@ -13,6 +13,7 @@ import { BoardSwimlane } from './BoardSwimlane';
 import { EmptyState } from './EmptyState';
 import { TaskModal } from './TaskModal';
 import { KeyboardHelp } from './KeyboardHelp';
+import { TaskContextMenu } from './TaskContextMenu';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
@@ -59,12 +60,13 @@ export const Board: React.FC<BoardProps> = ({
   showKeyboardShortcutsNonce = 0,
   toggleLayoutNonce = 0,
 }) => {
-  const { tasks, templates, isLoading, error, filterState } = useTaskData();
+  const { tasks, templates, projects, phasesByProject, isLoading, error, filterState } = useTaskData();
   const { layout, setLayout } = useBoardLayout('columns');
   const [search, setSearch] = useState('');
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ task: Task; position: { x: number; y: number } } | null>(null);
   const lastToggleLayoutNonce = useRef(0);
 
   const filteredTasks = useMemo(
@@ -183,6 +185,27 @@ export const Board: React.FC<BoardProps> = ({
     }
   };
 
+  // Card action handlers
+  const handleDeleteTask = useCallback((task: Task) => {
+    postMessage('DeleteTask', { taskId: task.id });
+  }, []);
+
+  const handleCopyXml = useCallback((task: Task) => {
+    postMessage('CopyContext', { taskId: task.id, mode: 'full_xml' });
+  }, []);
+
+  const handleOpenFile = useCallback((task: Task) => {
+    postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
+  }, []);
+
+  const handleShowMenu = useCallback((task: Task, position: { x: number; y: number }) => {
+    setContextMenu({ task, position });
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
   const { shortcuts } = useKeyboard({
     enabled: hasKanban,
     onNewTask: () => setShowTaskModal(true),
@@ -232,6 +255,10 @@ export const Board: React.FC<BoardProps> = ({
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}
+          onDeleteTask={handleDeleteTask}
+          onCopyXml={handleCopyXml}
+          onOpenFile={handleOpenFile}
+          onShowMenu={handleShowMenu}
         />
       )}
 
@@ -241,6 +268,10 @@ export const Board: React.FC<BoardProps> = ({
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}
+          onDeleteTask={handleDeleteTask}
+          onCopyXml={handleCopyXml}
+          onOpenFile={handleOpenFile}
+          onShowMenu={handleShowMenu}
         />
       )}
 
@@ -249,12 +280,22 @@ export const Board: React.FC<BoardProps> = ({
           isOpen={showTaskModal}
           tasks={tasks}
           templates={templates}
+          projects={projects}
+          phasesByProject={phasesByProject}
           onClose={() => setShowTaskModal(false)}
         />
       )}
 
       {showKeyboardHelp && (
         <KeyboardHelp shortcuts={shortcuts} onClose={() => setShowKeyboardHelp(false)} />
+      )}
+
+      {contextMenu && (
+        <TaskContextMenu
+          task={contextMenu.task}
+          position={contextMenu.position}
+          onClose={handleCloseContextMenu}
+        />
       )}
     </div>
   );

@@ -132,7 +132,7 @@ inbox → plan → code → audit → completed → (archive only)
 
 **File**: [task5.0_implement-test-infrastructure-full-and-ci.md](task5.0_implement-test-infrastructure-full-and-ci.md)
 **Status**: Pending
-**Deliverables**: Vitest config, @vscode/test-electron setup, GitHub Actions CI
+**Deliverables**: Vitest config, @vscode/test-electron setup, CI integration (provider-specific)
 
 #### Requirements Checklist
 
@@ -141,7 +141,7 @@ inbox → plan → code → audit → completed → (archive only)
 | Vitest coverage thresholds configured | Phase 4 tests | Target 70%+ coverage |
 | Watch mode for development | Vitest config | `bun test --watch` |
 | @vscode/test-electron configured | package.json | Extension e2e tests |
-| GitHub Actions workflow created | package.json | Run on PR/push to main |
+| CI workflow created (provider-specific) | package.json | Run on PR/push to main |
 | CI matrix tested (Node versions, platforms) | @vscode/test-electron | Windows/Linux/Mac support |
 | `bun test` is single entry point | All test suites | Local and CI use same command |
 | Pre-commit hook for tests (optional) | husky setup | Lint + test before commit |
@@ -177,7 +177,7 @@ inbox → plan → code → audit → completed → (archive only)
 ```bash
 ✅ All tests pass locally: bun test
 ✅ Coverage report: 70%+ overall, 80%+ for critical paths
-✅ CI pipeline: Green on PR → GitHub Actions
+✅ CI pipeline: Green on PR (provider-specific)
 ✅ E2E tests: Pass on at least 2 platforms
 ✅ No flaky tests: 3 consecutive runs succeed
 ```
@@ -559,7 +559,7 @@ export class StageTransitionError extends KanbanError {
 | Unit tests (70%+ coverage) | Phase 5 | ✅ | All core services |
 | Component tests | Phase 4-5 | ✅ | Board, sidebar, modal |
 | E2E tests | Phase 5 | ✅ | Core workflows |
-| CI/CD pipeline | Phase 5 | ✅ | GitHub Actions |
+| CI/CD pipeline | Phase 5 | ✅ | Provider-specific |
 | **Documentation** | Phase 5 | ✅ | User + contributor guides |
 | User guide | Phase 5 | ✅ | Installation, features, how-to |
 | Architecture docs | Phase 5 | ✅ | System design |
@@ -1119,7 +1119,7 @@ Phase 5 (Polish and Docs) 🚧
 
 # Phase 5 new
 - @vscode/test-electron (E2E tests)
-- GitHub Actions (CI)
+- CI (provider-specific)
 ```
 
 ### Development Checklist
@@ -1204,7 +1204,7 @@ package.json                          # Phase 5.1: Keywords, scripts, keybinding
 CHANGELOG.md                          # NEW: Phase 5.8
 ROADMAP.md                            # Updated: All phases, backlog
 README.md                             # Enhanced: Phase 5.4
-.github/workflows/test.yml            # NEW: Phase 5.0 CI/CD
+CI workflow (provider-specific)       # NEW: Phase 5.0 CI/CD
 ```
 
 ---

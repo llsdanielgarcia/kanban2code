@@ -8,3 +8,4 @@ export const PROJECTS_FOLDER = 'projects';
 export const ARCHIVE_FOLDER = '_archive';
 export const TEMPLATES_FOLDER = '_templates';
 export const AGENTS_FOLDER = '_agents';
+export const CONTEXT_FOLDER = '_context';

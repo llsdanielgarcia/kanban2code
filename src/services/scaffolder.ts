@@ -32,6 +32,7 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
     'inbox',
     'projects',
     '_agents',
+    '_context',
     '_templates/stages',
     '_templates/tasks',
     '_archive',

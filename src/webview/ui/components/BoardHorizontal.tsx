@@ -8,6 +8,10 @@ interface BoardHorizontalProps {
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
+  onCopyXml?: (task: Task) => void;
+  onOpenFile?: (task: Task) => void;
+  onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
 }
 
 const STAGE_TITLES: Record<Stage, string> = {
@@ -18,7 +22,16 @@ const STAGE_TITLES: Record<Stage, string> = {
   completed: 'Completed',
 };
 
-export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({ tasksByStage, onMoveTask, onOpenTask, onFocusTask }) => {
+export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({
+  tasksByStage,
+  onMoveTask,
+  onOpenTask,
+  onFocusTask,
+  onDeleteTask,
+  onCopyXml,
+  onOpenFile,
+  onShowMenu,
+}) => {
   return (
     <div className="board-horizontal">
       {STAGES.map((stage) => (
@@ -30,6 +43,10 @@ export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({ tasksByStage, 
           onMoveTask={onMoveTask}
           onOpenTask={onOpenTask}
           onFocusTask={onFocusTask}
+          onDeleteTask={onDeleteTask}
+          onCopyXml={onCopyXml}
+          onOpenFile={onOpenFile}
+          onShowMenu={onShowMenu}
         />
       ))}
     </div>

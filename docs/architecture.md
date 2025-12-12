@@ -284,11 +284,10 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 ### Test Infrastructure (Task 5.0)
 
 **Configuration Files:**
-- [`vitest.config.ts`](../vitest.config.ts): Main Vitest config with coverage thresholds (70%), environment detection, and reporter setup
+- [`vitest.config.ts`](../vitest.config.ts): Main Vitest config with coverage thresholds (70% statements/lines/functions, 65% branches) and reporter setup
 - [`vitest.e2e.config.ts`](../vitest.e2e.config.ts): Separate E2E config with longer timeouts and sequential execution
 - [`tests/setup.ts`](../tests/setup.ts): Global test setup with VS Code mocks and test utilities
 - [`tests/e2e/setup.ts`](../tests/e2e/setup.ts): E2E workspace utilities for creating test workspaces and tasks
-- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): GitHub Actions CI/CD with multi-platform testing (Windows, Linux, macOS)
 
 **Test Coverage:**
 - **Unit/Integration/Component Tests**: 128 tests covering core services and utilities
@@ -300,12 +299,9 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - **Component Tests**: Board, TaskCard, Column, Sidebar interactions (5+ tests)
 - **E2E Tests**: Core workflows including workspace creation, task progression, filtering (13 tests)
 
-**CI/CD Pipeline:**
-- Runs on PR/push to main across three platforms
-- Type checking, linting, unit tests, coverage upload
-- Extension build verification
-- E2E tests on Linux (optional, can be slow)
-- Automated release on tags to VS Code Marketplace
+**CI Integration (Provider-Specific):**
+- Run `bun run typecheck`, `bun run lint`, `bun run test`, `bun run test:coverage`, and `bun run test:e2e`
+- Release packaging: `bun run package`
 
 ### Keyboard Shortcuts and Command Palette (Task 5.1)
 
@@ -415,7 +411,6 @@ Add Ctrl+N, 1-5, and copy shortcuts globally.
 - `vitest.config.ts` - Coverage thresholds, reporter setup
 - `vitest.e2e.config.ts` - E2E-specific configuration
 - `tests/setup.ts` - Global test mocks and utilities
-- `.github/workflows/ci.yml` - GitHub Actions pipeline
 
 ### Scripts Added
 
@@ -451,10 +446,8 @@ tests/
 │   └── core-workflows.test.ts      # NEW: E2E workflow tests (13)
 ├── setup.ts                       # NEW: Global test setup
 
-config/
-├── vitest.config.ts               # ENHANCED: Coverage, reporters
-├── vitest.e2e.config.ts           # NEW: E2E configuration
-└── .github/workflows/ci.yml       # NEW: GitHub Actions CI/CD
+vitest.config.ts                    # ENHANCED: Coverage, reporters
+vitest.e2e.config.ts               # NEW: E2E configuration
 
 package.json                        # ENHANCED: Commands, keybindings, scripts
 ```
@@ -490,7 +483,6 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 ✅ Keyboard shortcuts implemented and wired (8+ shortcuts)
 ✅ Error handling and logging fully implemented
 ✅ Tag taxonomy defined with validation
-✅ CI/CD pipeline set up and working
 ✅ Comprehensive test coverage (70%+)
 ✅ All code compiles without errors
 ✅ E2E tests covering core workflows
