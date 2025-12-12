@@ -2,10 +2,7 @@ import React, { useMemo } from 'react';
 import type { Task, Stage } from '../../../types/task';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
 import { createMessage } from '../../messaging';
-
-declare const acquireVsCodeApi: (() => { postMessage: (message: unknown) => void }) | undefined;
-
-const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+import { vscode } from '../vscodeApi';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {

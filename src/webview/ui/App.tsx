@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './styles/main.css';
 import { Sidebar } from './components/Sidebar';
-import type { MessageEnvelope } from '../messaging';
+import { createMessage, type MessageEnvelope } from '../messaging';
+import { vscode } from './vscodeApi';
 
 interface InitStatePayload {
   hasKanban: boolean;
@@ -24,6 +25,12 @@ export const App: React.FC = () => {
     };
 
     window.addEventListener('message', handler);
+
+    // Request initial state from host now that we're ready
+    if (vscode) {
+      vscode.postMessage(createMessage('RequestState', {}));
+    }
+
     return () => window.removeEventListener('message', handler);
   }, []);
 

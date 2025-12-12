@@ -1,10 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Task } from '../../../types/task';
 import { createMessage } from '../../messaging';
-
-declare const acquireVsCodeApi: (() => { postMessage: (message: unknown) => void }) | undefined;
-
-const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+import { vscode } from '../vscodeApi';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {

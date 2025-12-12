@@ -27,6 +27,8 @@ export const WebviewToHostMessageTypes = [
   'CreateTemplate',
   'TaskContextMenu',
   'RequestTemplates',
+  // Webview ready handshake - requests initial state from host
+  'RequestState',
   // Basic demo/ping path used by the placeholder UI
   'ALERT',
 ] as const;

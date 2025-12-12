@@ -156,6 +156,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           vscode.window.showInformationMessage(text);
           break;
         }
+
+        case 'RequestState': {
+          // Webview is ready and requesting initial state
+          await this._sendInitialState();
+          break;
+        }
       }
     } catch (error) {
       console.error('Error handling webview message:', error);
@@ -217,7 +223,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     <title>Kanban2Code</title>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <!-- This text will be replaced by React when it mounts -->
+        <div style="padding: 20px; color: #ccc;">
+            <p>Loading webview...</p>
+            <p style="font-size: 10px; opacity: 0.6;">If you see this for more than 2 seconds, check the console for errors.</p>
+        </div>
+    </div>
     <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

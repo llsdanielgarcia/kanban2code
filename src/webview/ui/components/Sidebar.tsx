@@ -15,10 +15,7 @@ import { TaskModal } from './TaskModal';
 import { TaskContextMenu } from './TaskContextMenu';
 import { KeyboardHelp } from './KeyboardHelp';
 import { MoveModal } from './MoveModal';
-
-declare const acquireVsCodeApi: (() => { postMessage: (message: unknown) => void }) | undefined;
-
-const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+import { vscode } from '../vscodeApi';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {

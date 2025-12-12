@@ -3,10 +3,7 @@ import type { Task, Stage } from '../../../types/task';
 import { createMessage } from '../../messaging';
 import { LocationPicker } from './LocationPicker';
 import { TemplatePicker } from './TemplatePicker';
-
-declare const acquireVsCodeApi: (() => { postMessage: (message: unknown) => void }) | undefined;
-
-const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
+import { vscode } from '../vscodeApi';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
