@@ -11,7 +11,6 @@ interface ColumnProps {
   onFocusTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
   onCopyXml?: (task: Task) => void;
-  onOpenFile?: (task: Task) => void;
   onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
 }
 
@@ -24,7 +23,6 @@ export const Column: React.FC<ColumnProps> = ({
   onFocusTask,
   onDeleteTask,
   onCopyXml,
-  onOpenFile,
   onShowMenu,
 }) => {
   const [dropActive, setDropActive] = useState(false);
@@ -68,10 +66,10 @@ export const Column: React.FC<ColumnProps> = ({
             key={task.id}
             task={task}
             onOpen={onOpenTask}
+            onEdit={onOpenTask}
             onFocusTask={onFocusTask}
             onDelete={onDeleteTask}
             onCopyXml={onCopyXml}
-            onOpenFile={onOpenFile}
             onShowMenu={onShowMenu}
           />
         ))}

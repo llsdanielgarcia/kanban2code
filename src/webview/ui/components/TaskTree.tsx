@@ -8,6 +8,7 @@ interface TaskTreeProps {
   tasks: Task[];
   activeStages: Stage[];
   onTaskClick: (task: Task) => void;
+  onTaskDoubleClick?: (task: Task) => void;
   onTaskContextMenu?: (e: React.MouseEvent, task: Task) => void;
 }
 
@@ -67,6 +68,7 @@ export const TaskTree: React.FC<TaskTreeProps> = ({
   tasks,
   activeStages,
   onTaskClick,
+  onTaskDoubleClick,
   onTaskContextMenu,
 }) => {
   // Filter tasks by active stages
@@ -96,6 +98,7 @@ export const TaskTree: React.FC<TaskTreeProps> = ({
           type="inbox"
           defaultExpanded={true}
           onTaskClick={onTaskClick}
+          onTaskDoubleClick={onTaskDoubleClick}
           onTaskContextMenu={onTaskContextMenu}
         />
       )}
@@ -124,6 +127,7 @@ export const TaskTree: React.FC<TaskTreeProps> = ({
                   task={task}
                   depth={1}
                   onClick={onTaskClick}
+                  onDoubleClick={onTaskDoubleClick}
                   onContextMenu={onTaskContextMenu}
                 />
               ))}
@@ -144,6 +148,7 @@ export const TaskTree: React.FC<TaskTreeProps> = ({
                       task={task}
                       depth={2}
                       onClick={onTaskClick}
+                      onDoubleClick={onTaskDoubleClick}
                       onContextMenu={onTaskContextMenu}
                     />
                   ))}

@@ -15,6 +15,7 @@ import { TaskModal } from './TaskModal';
 import { TaskContextMenu } from './TaskContextMenu';
 import { KeyboardHelp } from './KeyboardHelp';
 import { MoveModal } from './MoveModal';
+import { TaskEditorModal } from './TaskEditorModal';
 import { vscode } from '../vscodeApi';
 import type { FilterState as ProtocolFilterState } from '../../../types/filters';
 
@@ -49,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
   const [moveModalTask, setMoveModalTask] = useState<Task | null>(null);
   const [contextMenuState, setContextMenuState] = useState<{ task: Task; position: { x: number; y: number } } | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [editorTask, setEditorTask] = useState<Task | null>(null);
 
   const filteredTasks = useMemo(() => filterTasks(tasks), [filterTasks, tasks]);
   const selectedTask = useMemo(() => {
@@ -116,7 +118,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
 
   const handleTaskClick = (task: Task) => {
     setSelectedTaskId(task.id);
-    postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
+  };
+
+  const handleTaskDoubleClick = (task: Task) => {
+    setSelectedTaskId(task.id);
+    setEditorTask(task);
   };
 
   const handleTaskContextMenu = (e: React.MouseEvent, task: Task) => {
@@ -161,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
   const openSelectedTask = () => {
     if (!filteredTasks.length) return;
     const task = filteredTasks.find((t) => t.id === selectedTaskId) ?? filteredTasks[0];
-    handleTaskClick(task);
+    handleTaskDoubleClick(task);
   };
 
   const copySelected = (mode: 'full_xml' | 'task_only' | 'context_only') => {
@@ -210,6 +216,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
       }
       if (moveModalTask) {
         setMoveModalTask(null);
+        return;
+      }
+      if (editorTask) {
+        setEditorTask(null);
         return;
       }
       if (showKeyboardHelp) {
@@ -277,6 +287,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
         tasks={filteredTasks}
         activeStages={filterState.activeStages}
         onTaskClick={handleTaskClick}
+        onTaskDoubleClick={handleTaskDoubleClick}
         onTaskContextMenu={handleTaskContextMenu}
       />
 
@@ -297,6 +308,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
           position={contextMenuState.position}
           onClose={handleCloseContextMenu}
           onOpenMoveModal={handleOpenMoveModal}
+          onEditTask={(task) => {
+            handleCloseContextMenu();
+            setEditorTask(task);
+          }}
+          onOpenInVSCode={(task) => {
+            handleCloseContextMenu();
+            postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
+          }}
         />
       )}
 
@@ -313,6 +332,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
         <KeyboardHelp
           shortcuts={shortcuts}
           onClose={() => setShowKeyboardHelp(false)}
+        />
+      )}
+
+      {editorTask && (
+        <TaskEditorModal
+          isOpen={!!editorTask}
+          task={editorTask}
+          onClose={() => setEditorTask(null)}
         />
       )}
     </div>

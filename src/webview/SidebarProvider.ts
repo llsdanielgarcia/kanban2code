@@ -8,16 +8,20 @@ import type { Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 import { changeStageAndReload, moveTaskToLocation, type TaskLocation } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
-import { loadTaskTemplates, type TaskTemplate } from '../services/template';
+import { loadTaskTemplates, createTaskTemplate, updateTaskTemplate, type TaskTemplate } from '../services/template';
+import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
 import { KanbanPanel } from './KanbanPanel';
 import { listProjectsAndPhases } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
+import { loadTaskContentById, saveTaskContentById } from '../services/task-content';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
   private _view?: vscode.WebviewView;
   private _tasks: Task[] = [];
   private _templates: TaskTemplate[] = [];
+  private _contexts: ContextFile[] = [];
+  private _agents: Agent[] = [];
   private _filterState: FilterState | null = null;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
@@ -100,6 +104,33 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
+        case 'RequestTaskContent': {
+          const { taskId } = payload as { taskId: string };
+          try {
+            const { content } = await loadTaskContentById(taskId);
+            this._postMessage(createEnvelope('TaskContentLoaded', { taskId, content }));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this._postMessage(createEnvelope('TaskContentLoadFailed', { taskId, error: message }));
+          }
+          break;
+        }
+
+        case 'SaveTaskContent': {
+          const { taskId, content } = payload as { taskId: string; content: string };
+          try {
+            const tasks = await saveTaskContentById(taskId, content);
+            this.updateTasks(tasks);
+            KanbanPanel.currentPanel?.updateTasks(tasks);
+            this._postMessage(createEnvelope('TaskContentSaved', { taskId }));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to save task: ${message}`);
+            this._postMessage(createEnvelope('TaskContentSaveFailed', { taskId, error: message }));
+          }
+          break;
+        }
+
         case 'CopyContext': {
           const { taskId, mode } = payload as { taskId: string; mode: string };
           await vscode.commands.executeCommand('kanban2code.copyTaskContext', taskId, mode);
@@ -110,17 +141,167 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           await vscode.commands.executeCommand('kanban2code.newProject');
           break;
 
-        case 'CreateContext':
-          await vscode.commands.executeCommand('kanban2code.newContext');
+        case 'CreateContext': {
+          const contextPayload = payload as {
+            name?: string;
+            scope?: 'global' | 'project';
+            project?: string;
+            description?: string;
+            fileReferences?: string[];
+            content?: string;
+          };
+          if (contextPayload.name && contextPayload.description !== undefined) {
+            const root = WorkspaceState.kanbanRoot;
+            if (root) {
+              try {
+                await createContextFile(root, {
+                  name: contextPayload.name,
+                  scope: contextPayload.scope || 'global',
+                  project: contextPayload.project,
+                  description: contextPayload.description,
+                  fileReferences: contextPayload.fileReferences,
+                  content: contextPayload.content || '',
+                });
+                await this._sendInitialState();
+              } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create context: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }
+          } else {
+            await vscode.commands.executeCommand('kanban2code.newContext');
+          }
           break;
+        }
 
-        case 'CreateAgent':
-          await vscode.commands.executeCommand('kanban2code.newAgent');
+        case 'CreateAgent': {
+          const agentPayload = payload as {
+            name?: string;
+            description?: string;
+            instructions?: string;
+          };
+          if (agentPayload.name && agentPayload.description !== undefined && agentPayload.instructions !== undefined) {
+            const root = WorkspaceState.kanbanRoot;
+            if (root) {
+              try {
+                await createAgentFile(root, {
+                  name: agentPayload.name,
+                  description: agentPayload.description,
+                  instructions: agentPayload.instructions,
+                });
+                await this._sendInitialState();
+              } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create agent: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }
+          } else {
+            await vscode.commands.executeCommand('kanban2code.newAgent');
+          }
           break;
+        }
 
-        case 'CreateTemplate':
-          await vscode.commands.executeCommand('kanban2code.newTemplate');
+        case 'CreateTemplate': {
+          const templatePayload = payload as {
+            name?: string;
+            description?: string;
+            icon?: string;
+            defaultStage?: Stage;
+            defaultTags?: string[];
+            content?: string;
+          };
+          if (templatePayload.name) {
+            const root = WorkspaceState.kanbanRoot;
+            if (root) {
+              try {
+                await createTaskTemplate(root, {
+                  name: templatePayload.name,
+                  description: templatePayload.description || '',
+                  icon: templatePayload.icon,
+                  defaultStage: templatePayload.defaultStage,
+                  defaultTags: templatePayload.defaultTags,
+                  content: templatePayload.content || '',
+                });
+                await this._sendInitialState();
+              } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }
+          } else {
+            await vscode.commands.executeCommand('kanban2code.newTemplate');
+          }
           break;
+        }
+
+        case 'UpdateTemplate': {
+          const updatePayload = payload as {
+            templateId: string;
+            name?: string;
+            description?: string;
+            icon?: string;
+            defaultStage?: Stage;
+            defaultTags?: string[];
+            content?: string;
+          };
+          if (updatePayload.templateId) {
+            const root = WorkspaceState.kanbanRoot;
+            if (root) {
+              try {
+                await updateTaskTemplate(root, updatePayload.templateId, {
+                  name: updatePayload.name,
+                  description: updatePayload.description,
+                  icon: updatePayload.icon,
+                  defaultStage: updatePayload.defaultStage,
+                  defaultTags: updatePayload.defaultTags,
+                  content: updatePayload.content,
+                });
+                await this._sendInitialState();
+              } catch (error) {
+                vscode.window.showErrorMessage(`Failed to update template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }
+          }
+          break;
+        }
+
+        case 'RequestContexts': {
+          const root = WorkspaceState.kanbanRoot;
+          if (root) {
+            const contexts = await listAvailableContexts(root);
+            this._contexts = contexts;
+            this._postMessage(createEnvelope('ContextsLoaded', { contexts }));
+          }
+          break;
+        }
+
+        case 'RequestAgents': {
+          const root = WorkspaceState.kanbanRoot;
+          if (root) {
+            const agents = await listAvailableAgents(root);
+            this._agents = agents;
+            this._postMessage(createEnvelope('AgentsLoaded', { agents }));
+          }
+          break;
+        }
+
+        case 'PickFile': {
+          const options: vscode.OpenDialogOptions = {
+            canSelectMany: false,
+            openLabel: 'Select',
+            canSelectFiles: true,
+            canSelectFolders: false,
+          };
+          const root = WorkspaceState.kanbanRoot;
+          if (root) {
+            options.defaultUri = vscode.Uri.file(root);
+          }
+          const fileUri = await vscode.window.showOpenDialog(options);
+          if (fileUri && fileUri[0]) {
+            const relativePath = root
+              ? fileUri[0].fsPath.replace(root, '').replace(/^[/\\]/, '')
+              : fileUri[0].fsPath;
+            this._postMessage(createEnvelope('FilePicked', { path: relativePath }));
+          }
+          break;
+        }
 
         case 'MoveTask': {
           const { taskId, toStage, newStage } = payload as { taskId: string; toStage?: Stage; newStage?: Stage };
@@ -191,25 +372,33 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     if (hasKanban && kanbanRoot) {
       try {
-        const [tasks, templates, listing] = await Promise.all([
+        const [tasks, templates, contexts, agents, listing] = await Promise.all([
           loadAllTasks(kanbanRoot),
           loadTaskTemplates(kanbanRoot),
+          listAvailableContexts(kanbanRoot),
+          listAvailableAgents(kanbanRoot),
           listProjectsAndPhases(kanbanRoot),
         ]);
         this._tasks = tasks;
         this._templates = templates;
+        this._contexts = contexts;
+        this._agents = agents;
         projects = listing.projects;
         phasesByProject = listing.phasesByProject;
       } catch (error) {
         console.error('Error loading tasks:', error);
         this._tasks = [];
         this._templates = [];
+        this._contexts = [];
+        this._agents = [];
         projects = [];
         phasesByProject = {};
       }
     } else {
       this._tasks = [];
       this._templates = [];
+      this._contexts = [];
+      this._agents = [];
       projects = [];
       phasesByProject = {};
     }
@@ -219,6 +408,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       hasKanban,
       tasks: this._tasks,
       templates: this._templates,
+      contexts: this._contexts,
+      agents: this._agents,
       projects,
       phasesByProject,
       workspaceRoot: kanbanRoot,
@@ -246,6 +437,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.css'),
     );
+    const distUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist'));
 
     const nonce = getNonce();
 
@@ -253,7 +445,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}'; worker-src ${webview.cspSource} blob:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="${styleUri}">
     <title>Kanban2Code</title>
@@ -266,6 +458,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             <p style="font-size: 10px; opacity: 0.6;">If you see this for more than 2 seconds, check the console for errors.</p>
         </div>
     </div>
+    <script nonce="${nonce}">window.__KANBAN2CODE_DIST_URI__ = "${distUri}";</script>
     <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

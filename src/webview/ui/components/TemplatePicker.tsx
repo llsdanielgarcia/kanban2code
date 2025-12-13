@@ -10,6 +10,7 @@ interface TemplatePickerProps {
   templates: Template[];
   value: string | null;
   onChange: (templateId: string | null) => void;
+  onCreateNew?: () => void;
 }
 
 const DEFAULT_TEMPLATES: Template[] = [
@@ -24,6 +25,7 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
   templates = DEFAULT_TEMPLATES,
   value,
   onChange,
+  onCreateNew,
 }) => {
   const allTemplates = templates.length > 0 ? templates : DEFAULT_TEMPLATES;
 
@@ -47,6 +49,13 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
           <p className="form-hint">
             {allTemplates.find((t) => t.id === value)?.description}
           </p>
+        )}
+        {onCreateNew && (
+          <span className="form-hint">
+            <button type="button" className="link-button" onClick={onCreateNew}>
+              Create new template
+            </button>
+          </span>
         )}
       </div>
     </div>

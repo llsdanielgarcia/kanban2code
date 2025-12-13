@@ -11,7 +11,6 @@ interface SwimlaneProps {
   onFocusTask?: (task: Task) => void;
   onDeleteTask?: (task: Task) => void;
   onCopyXml?: (task: Task) => void;
-  onOpenFile?: (task: Task) => void;
   onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
 }
 
@@ -23,7 +22,6 @@ export const Swimlane: React.FC<SwimlaneProps> = ({
   onFocusTask,
   onDeleteTask,
   onCopyXml,
-  onOpenFile,
   onShowMenu,
 }) => {
   return (
@@ -41,7 +39,6 @@ export const Swimlane: React.FC<SwimlaneProps> = ({
             onFocusTask={onFocusTask}
             onDeleteTask={onDeleteTask}
             onCopyXml={onCopyXml}
-            onOpenFile={onOpenFile}
             onShowMenu={onShowMenu}
           />
         ))}

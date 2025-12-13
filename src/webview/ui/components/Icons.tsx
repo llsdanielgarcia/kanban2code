@@ -112,6 +112,14 @@ export const OpenFileIcon: React.FC<IconProps> = ({ className = 'icon', style, s
   </svg>
 );
 
+export const EditIcon: React.FC<IconProps> = ({ className = 'icon', style, size = 16 }) => (
+  <svg className={className} style={style} width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
+    <path d="M15.502 1.94a.5.5 0 0 1 0 .706l-1.439 1.44-2.122-2.122 1.44-1.44a.5.5 0 0 1 .707 0l1.414 1.416z"/>
+    <path d="M13.563 4.793 11.44 2.67 4.939 9.172a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.624-6.38z"/>
+    <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h6a.5.5 0 0 0 0-1h-6A1.5 1.5 0 0 0 1 2.5v11z"/>
+  </svg>
+);
+
 export const TrashIcon: React.FC<IconProps> = ({ className = 'icon', style, size = 16 }) => (
   <svg className={className} style={style} width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -150,6 +158,7 @@ export const Icons = {
   Filter: FilterIcon,
   X: XIcon,
   OpenFile: OpenFileIcon,
+  Edit: EditIcon,
   Trash: TrashIcon,
   More: MoreIcon,
   Clipboard: ClipboardIcon,

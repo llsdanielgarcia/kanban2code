@@ -134,9 +134,9 @@ describe('TaskCard', () => {
     expect(onCopyXml).toHaveBeenCalledWith(task);
   });
 
-  test('calls onOpenFile when Open File button clicked', async () => {
+  test('calls onEdit when Edit Task button clicked', async () => {
     const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
-    const onOpenFile = vi.fn();
+    const onEdit = vi.fn();
     const task = {
       id: 't1',
       filePath: '/tmp/t1.md',
@@ -145,11 +145,11 @@ describe('TaskCard', () => {
       content: '',
     } as any;
 
-    render(<TaskCard task={task} onOpen={vi.fn()} onOpenFile={onOpenFile} />);
+    render(<TaskCard task={task} onOpen={vi.fn()} onEdit={onEdit} />);
 
-    const openFileBtn = screen.getByRole('button', { name: /open file/i });
-    fireEvent.click(openFileBtn);
-    expect(onOpenFile).toHaveBeenCalledWith(task);
+    const editBtn = screen.getByRole('button', { name: /edit task/i });
+    fireEvent.click(editBtn);
+    expect(onEdit).toHaveBeenCalledWith(task);
   });
 
   test('has completed styling for completed tasks', async () => {

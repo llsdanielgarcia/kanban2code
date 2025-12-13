@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: completed
 tags: [bug, board, mvp, p0]
 ---
 
@@ -43,8 +43,8 @@ The delete button appears on task cards but clicking it does not delete the task
 
 ## Acceptance Criteria
 
-- [ ] Clicking delete button on a task card shows confirmation
-- [ ] Confirming deletion removes the task file from filesystem
-- [ ] Board updates to show task removed
-- [ ] Sidebar (if open) also reflects deletion
+- [x] Clicking delete button on a task card shows confirmation
+- [x] Confirming deletion removes the task file from filesystem
+- [x] Board updates to show task removed
+- [x] Sidebar (if open) also reflects deletion
 - [ ] Undo not required for MVP but nice-to-have

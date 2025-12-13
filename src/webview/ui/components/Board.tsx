@@ -14,6 +14,7 @@ import { EmptyState } from './EmptyState';
 import { TaskModal } from './TaskModal';
 import { KeyboardHelp } from './KeyboardHelp';
 import { TaskContextMenu } from './TaskContextMenu';
+import { TaskEditorModal } from './TaskEditorModal';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
@@ -67,6 +68,7 @@ export const Board: React.FC<BoardProps> = ({
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ task: Task; position: { x: number; y: number } } | null>(null);
+  const [editorTask, setEditorTask] = useState<Task | null>(null);
   const lastToggleLayoutNonce = useRef(0);
 
   const filteredTasks = useMemo(
@@ -120,42 +122,54 @@ export const Board: React.FC<BoardProps> = ({
     return map;
   }, [filteredTasks]);
 
-  const swimlanes = useMemo(() => {
-    const lanes = new Map<string, { label: string; tasksByStage: Record<Stage, Task[]> }>();
+  // New swimlane format: rows = stages, columns = projects
+  const INBOX_KEY = '__inbox__';
+
+  const swimlaneRows = useMemo(() => {
+    const stages: Stage[] = ['inbox', 'plan', 'code', 'audit', 'completed'];
+    const rows: Array<{ stage: Stage; tasksByProject: Record<string, Task[]> }> = stages.map((stage) => ({
+      stage,
+      tasksByProject: {},
+    }));
+
     for (const task of filteredTasks) {
-      const project = task.project || 'Inbox';
-      const phase = task.phase || '';
-      const key = `${project}/${phase}`;
-      if (!lanes.has(key)) {
-        lanes.set(key, {
-          label: phase ? `${project} / ${phase}` : project,
-          tasksByStage: {
-            inbox: [],
-            plan: [],
-            code: [],
-            audit: [],
-            completed: [],
-          },
-        });
+      const projectKey = task.project || INBOX_KEY;
+      const row = rows.find((r) => r.stage === task.stage);
+      if (row) {
+        if (!row.tasksByProject[projectKey]) {
+          row.tasksByProject[projectKey] = [];
+        }
+        row.tasksByProject[projectKey].push(task);
       }
-      lanes.get(key)!.tasksByStage[task.stage].push(task);
     }
-    return Array.from(lanes.entries()).map(([key, v]) => ({ key, ...v }));
+
+    return rows;
   }, [filteredTasks]);
 
-  const handleMoveTask = (taskId: string, toStage: Stage) => {
+  // Extract unique project names (excluding inbox)
+  const swimlaneProjects = useMemo(() => {
+    const projectSet = new Set<string>();
+    for (const task of filteredTasks) {
+      if (task.project) {
+        projectSet.add(task.project);
+      }
+    }
+    return Array.from(projectSet).sort();
+  }, [filteredTasks]);
+
+  const handleMoveTask = (taskId: string, toStage: Stage, toProject?: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
     if (!isTransitionAllowed(task.stage, toStage)) {
       postMessage('ALERT', { text: `Cannot move from ${task.stage} to ${toStage}` });
       return;
     }
-    postMessage('MoveTask', { taskId, toStage });
+    postMessage('MoveTask', { taskId, toStage, toProject });
   };
 
   const handleOpenTask = (task: Task) => {
     setFocusedTaskId(task.id);
-    postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
+    setEditorTask(task);
   };
 
   const toggleBoardLayout = () => {
@@ -192,10 +206,6 @@ export const Board: React.FC<BoardProps> = ({
     postMessage('CopyContext', { taskId: task.id, mode: 'full_xml' });
   }, []);
 
-  const handleOpenFile = useCallback((task: Task) => {
-    postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
-  }, []);
-
   const handleShowMenu = useCallback((task: Task, position: { x: number; y: number }) => {
     setContextMenu({ task, position });
   }, []);
@@ -218,6 +228,10 @@ export const Board: React.FC<BoardProps> = ({
     onEscape: () => {
       if (showKeyboardHelp) {
         setShowKeyboardHelp(false);
+        return;
+      }
+      if (editorTask) {
+        setEditorTask(null);
         return;
       }
       if (showTaskModal) {
@@ -255,20 +269,19 @@ export const Board: React.FC<BoardProps> = ({
           onFocusTask={(task) => setFocusedTaskId(task.id)}
           onDeleteTask={handleDeleteTask}
           onCopyXml={handleCopyXml}
-          onOpenFile={handleOpenFile}
           onShowMenu={handleShowMenu}
         />
       )}
 
       {!isLoading && !error && layout === 'swimlanes' && (
         <BoardSwimlane
-          swimlanes={swimlanes}
+          rows={swimlaneRows}
+          projects={swimlaneProjects}
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}
           onDeleteTask={handleDeleteTask}
           onCopyXml={handleCopyXml}
-          onOpenFile={handleOpenFile}
           onShowMenu={handleShowMenu}
         />
       )}
@@ -293,6 +306,22 @@ export const Board: React.FC<BoardProps> = ({
           task={contextMenu.task}
           position={contextMenu.position}
           onClose={handleCloseContextMenu}
+          onEditTask={(task) => {
+            handleCloseContextMenu();
+            setEditorTask(task);
+          }}
+          onOpenInVSCode={(task) => {
+            handleCloseContextMenu();
+            postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
+          }}
+        />
+      )}
+
+      {editorTask && (
+        <TaskEditorModal
+          isOpen={!!editorTask}
+          task={editorTask}
+          onClose={() => setEditorTask(null)}
         />
       )}
     </div>

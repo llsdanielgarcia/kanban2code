@@ -10,6 +10,13 @@ export const HostToWebviewMessageTypes = [
   'FilterChanged',
   'InitState',
   'TemplatesLoaded',
+  'ContextsLoaded',
+  'AgentsLoaded',
+  'FilePicked',
+  'TaskContentLoaded',
+  'TaskContentLoadFailed',
+  'TaskContentSaved',
+  'TaskContentSaveFailed',
 ] as const;
 
 export const WebviewToHostMessageTypes = [
@@ -29,8 +36,14 @@ export const WebviewToHostMessageTypes = [
   'CreateContext',
   'CreateAgent',
   'CreateTemplate',
+  'UpdateTemplate',
   'TaskContextMenu',
   'RequestTemplates',
+  'RequestContexts',
+  'RequestAgents',
+  'PickFile',
+  'RequestTaskContent',
+  'SaveTaskContent',
   // Webview ready handshake - requests initial state from host
   'RequestState',
   // Basic demo/ping path used by the placeholder UI

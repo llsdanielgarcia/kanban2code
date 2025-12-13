@@ -15,6 +15,8 @@ interface TaskContextMenuProps {
   position: { x: number; y: number };
   onClose: () => void;
   onOpenMoveModal?: (task: Task) => void;
+  onEditTask?: (task: Task) => void;
+  onOpenInVSCode?: (task: Task) => void;
 }
 
 const STAGES: Stage[] = ['inbox', 'plan', 'code', 'audit', 'completed'];
@@ -32,9 +34,29 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   position,
   onClose,
   onOpenMoveModal,
+  onEditTask,
+  onOpenInVSCode,
 }) => {
   const menuItems: ContextMenuItem[] = useMemo(() => {
     const items: ContextMenuItem[] = [
+      {
+        id: 'edit',
+        label: 'Edit Task',
+        disabled: !onEditTask,
+        action: () => onEditTask?.(task),
+      },
+      {
+        id: 'open-in-vscode',
+        label: 'Open in VS Code',
+        action: () => {
+          if (onOpenInVSCode) {
+            onOpenInVSCode(task);
+            return;
+          }
+          postMessage('OpenTask', { taskId: task.id, filePath: task.filePath });
+        },
+      },
+      { id: 'div0', label: '', divider: true },
       // Copy actions
       {
         id: 'copy-full',
@@ -121,7 +143,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     });
 
     return items;
-  }, [task, onOpenMoveModal]);
+  }, [task, onOpenMoveModal, onEditTask, onOpenInVSCode]);
 
   return (
     <ContextMenu

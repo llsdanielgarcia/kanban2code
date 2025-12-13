@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Task } from '../../../types/task';
-import { OpenFileIcon, TrashIcon, MoreIcon, ClipboardIcon, AgentIcon } from './Icons';
+import { EditIcon, TrashIcon, MoreIcon, ClipboardIcon, AgentIcon } from './Icons';
 
 interface TaskCardProps {
   task: Task;
@@ -8,7 +8,7 @@ interface TaskCardProps {
   onFocusTask?: (task: Task) => void;
   onDelete?: (task: Task) => void;
   onCopyXml?: (task: Task) => void;
-  onOpenFile?: (task: Task) => void;
+  onEdit?: (task: Task) => void;
   onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
 }
 
@@ -18,7 +18,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onFocusTask,
   onDelete,
   onCopyXml,
-  onOpenFile,
+  onEdit,
   onShowMenu,
 }) => {
   const [dragging, setDragging] = useState(false);
@@ -73,14 +73,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <div className="card-header">
         <span className={`card-title ${isCompleted ? 'completed' : ''}`}>{task.title}</span>
         <div className="card-actions">
-          {onOpenFile && (
+          {onEdit && (
             <button
               className="card-action tooltip"
-              data-tooltip="Open File"
-              onClick={(e) => handleActionClick(e, () => onOpenFile(task))}
-              aria-label="Open file"
+              data-tooltip="Edit Task"
+              onClick={(e) => handleActionClick(e, () => onEdit(task))}
+              aria-label="Edit task"
             >
-              <OpenFileIcon size={14} />
+              <EditIcon size={14} />
             </button>
           )}
           {onDelete && (

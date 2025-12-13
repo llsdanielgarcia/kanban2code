@@ -9,6 +9,7 @@ interface TreeSectionProps {
   type: 'inbox' | 'projects';
   defaultExpanded?: boolean;
   onTaskClick: (task: Task) => void;
+  onTaskDoubleClick?: (task: Task) => void;
   onTaskContextMenu?: (e: React.MouseEvent, task: Task) => void;
   children?: React.ReactNode;
 }
@@ -19,6 +20,7 @@ export const TreeSection: React.FC<TreeSectionProps> = ({
   type,
   defaultExpanded = true,
   onTaskClick,
+  onTaskDoubleClick,
   onTaskContextMenu,
   children,
 }) => {
@@ -67,6 +69,7 @@ export const TreeSection: React.FC<TreeSectionProps> = ({
                 index={index}
                 totalItems={tasks.length}
                 onClick={onTaskClick}
+                onDoubleClick={onTaskDoubleClick}
                 onContextMenu={onTaskContextMenu}
               />
             ))}

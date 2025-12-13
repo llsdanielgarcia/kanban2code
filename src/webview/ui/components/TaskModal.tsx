@@ -3,6 +3,8 @@ import type { Task, Stage } from '../../../types/task';
 import { createMessage } from '../../messaging';
 import { LocationPicker } from './LocationPicker';
 import { TemplatePicker } from './TemplatePicker';
+import { ContextPicker, type ContextFile } from './ContextPicker';
+import { AgentPicker, type Agent } from './AgentPicker';
 import { vscode } from '../vscodeApi';
 
 function postMessage(type: string, payload: unknown) {
@@ -21,9 +23,14 @@ interface TaskModalProps {
   isOpen: boolean;
   tasks: Task[];
   templates?: Template[];
+  contexts?: ContextFile[];
+  agents?: Agent[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
   onClose: () => void;
+  onOpenContextModal?: () => void;
+  onOpenAgentModal?: () => void;
+  onOpenTemplateModal?: () => void;
   defaultLocation?: 'inbox' | { project: string; phase?: string };
   parentTaskId?: string;
 }
@@ -32,9 +39,10 @@ interface TaskFormData {
   title: string;
   location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   stage: Stage;
-  agent: string;
+  agent: string | null;
   tags: string[];
   template: string | null;
+  contexts: string[];
   content: string;
 }
 
@@ -49,9 +57,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   tasks,
   templates = [],
+  contexts = [],
+  agents = [],
   projects = [],
   phasesByProject = {},
   onClose,
+  onOpenContextModal,
+  onOpenAgentModal,
+  onOpenTemplateModal,
   defaultLocation = 'inbox',
   parentTaskId,
 }) => {
@@ -61,9 +74,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       ? { type: 'inbox' }
       : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
     stage: 'inbox',
-    agent: '',
+    agent: null,
     tags: [],
     template: null,
+    contexts: [],
     content: '',
   });
   const [tagInput, setTagInput] = useState('');
@@ -77,9 +91,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           ? { type: 'inbox' }
           : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
         stage: 'inbox',
-        agent: '',
+        agent: null,
         tags: [],
         template: null,
+        contexts: [],
         content: '',
       });
       setTagInput('');
@@ -114,13 +129,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       agent: formData.agent || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
       template: formData.template || undefined,
+      contexts: formData.contexts.length > 0 ? formData.contexts : undefined,
       parent: parentTaskId || undefined,
       content: formData.content || undefined,
     };
 
     postMessage('CreateTask', taskData);
     onClose();
-  }, [formData, onClose]);
+  }, [formData, onClose, parentTaskId]);
 
   const handleAddTag = () => {
     const tag = tagInput.trim();
@@ -140,6 +156,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
+    }
+  };
+
+  const handleCreateContext = () => {
+    if (onOpenContextModal) {
+      onOpenContextModal();
+    }
+  };
+
+  const handleCreateAgent = () => {
+    if (onOpenAgentModal) {
+      onOpenAgentModal();
     }
   };
 
@@ -206,11 +234,28 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </select>
           </div>
 
+          {/* Agent */}
+          <AgentPicker
+            agents={agents}
+            value={formData.agent}
+            onChange={(agent) => setFormData((prev) => ({ ...prev, agent }))}
+            onCreateNew={handleCreateAgent}
+          />
+
           {/* Template */}
           <TemplatePicker
             templates={templates}
             value={formData.template}
             onChange={(template) => setFormData((prev) => ({ ...prev, template }))}
+            onCreateNew={onOpenTemplateModal}
+          />
+
+          {/* Context Files */}
+          <ContextPicker
+            contexts={contexts}
+            selected={formData.contexts}
+            onChange={(selectedContexts) => setFormData((prev) => ({ ...prev, contexts: selectedContexts }))}
+            onCreateNew={handleCreateContext}
           />
 
           {/* Tags */}

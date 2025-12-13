@@ -7,6 +7,7 @@ interface TaskItemProps {
   index?: number;
   totalItems?: number;
   onClick: (task: Task) => void;
+  onDoubleClick?: (task: Task) => void;
   onContextMenu?: (e: React.MouseEvent, task: Task) => void;
 }
 
@@ -25,9 +26,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   index = 0,
   totalItems = 1,
   onClick,
+  onDoubleClick,
   onContextMenu,
 }) => {
   const handleClick = () => onClick(task);
+  const handleDoubleClick = () => onDoubleClick?.(task);
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     onContextMenu?.(e, task);
@@ -44,6 +47,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       className="task-item"
       style={{ '--depth': depth } as React.CSSProperties}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
       onKeyDown={handleKeyDown}
       data-task-id={task.id}
