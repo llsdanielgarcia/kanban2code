@@ -1505,6 +1505,188 @@ Confirm the MVP is complete, tested, and documented.
 
 ---
 
+### Phase 6 – Bug Fixes and Feature Completion
+
+*Location: [`phase-6-bugs-and-features/`](./phase-6-bugs-and-features/)*
+
+This phase addresses critical bugs and implements remaining features from the original design specifications.
+
+**Key Goals:**
+
+* Fix delete button in Board view.
+* Implement fixed color palette (Navy Night Gradient).
+* Redesign swimlane layout (Rows = Stages, Columns = Projects).
+* Add context file selection to Task Modal.
+* Implement Context creation modal.
+* Implement Agent selection and creation modal.
+* Implement Template creation/editing modal.
+* Add Monaco Editor for in-place task editing.
+* **Phase audit file**.
+
+---
+
+#### Task 6.0: Fix delete button in Board view
+
+**Stage:** plan
+**Tags:** bug, board, mvp, p0
+
+**Goal**
+Fix the non-functional delete button on TaskCard components so tasks can be deleted directly from the Kanban board.
+
+**Scope**
+
+* Trace delete flow from TaskCard through Board to host messaging.
+* Ensure `DeleteTask` message is sent with correct payload.
+* Add/fix host-side handler to delete file and broadcast update.
+
+---
+
+#### Task 6.1: Implement fixed color palette
+
+**Stage:** plan
+**Tags:** feature, ui, mvp, p1
+
+**Goal**
+Replace VS Code theme-dependent CSS variables with a fixed "Navy Night Gradient" color palette for consistent appearance across all themes.
+
+**Scope**
+
+* Create `palette.css` with fixed color variables.
+* Override VS Code theme variables.
+* Apply Navy Night Gradient background.
+* Update all components to use fixed palette.
+
+---
+
+#### Task 6.2: Fix swimlane layout
+
+**Stage:** plan
+**Tags:** bug, board, ui, mvp, p1
+
+**Goal**
+Redesign swimlane view so Rows = Stages and Columns = Projects, providing a matrix view of project progress.
+
+**Scope**
+
+* Update `BoardSwimlane.tsx` to render stage rows.
+* Add project column headers.
+* Update drag-and-drop to handle stage and/or project changes.
+* Add sticky stage labels during horizontal scroll.
+
+---
+
+#### Task 6.3: Add context selection to Task Modal
+
+**Stage:** plan
+**Tags:** feature, ui, context, mvp, p1
+
+**Goal**
+Add multi-select context file picker to Task Modal, allowing users to select context files for AI agent prompts.
+
+**Scope**
+
+* Add context discovery service.
+* Create `ContextPicker` component with checkboxes.
+* Update Task Modal to include context section.
+* Save selected contexts to task frontmatter.
+
+---
+
+#### Task 6.4: Implement Context creation modal
+
+**Stage:** plan
+**Tags:** feature, ui, context, mvp, p1
+
+**Goal**
+Implement modal for creating new context files following the design in `docs/design/forms/context.html`.
+
+**Scope**
+
+* Create `ContextModal` component with:
+  * Name, scope, description fields.
+  * File references picker.
+  * Content textarea.
+  * Metadata preview.
+* Add host-side handler to create context file.
+
+---
+
+#### Task 6.5: Implement Agent selection and creation modal
+
+**Stage:** plan
+**Tags:** feature, ui, agent, mvp, p1
+
+**Goal**
+Add agent selection to Task Modal and implement Agent creation modal following `docs/design/forms/agent.html`.
+
+**Scope**
+
+* Add agent discovery service.
+* Create `AgentPicker` dropdown component.
+* Create `AgentModal` with:
+  * Quick templates grid.
+  * Name, description, instructions fields.
+  * XML preview.
+* Add host-side handler to create agent file.
+
+---
+
+#### Task 6.6: Implement Template creation/editing modal
+
+**Stage:** plan
+**Tags:** feature, ui, template, mvp, p2
+
+**Goal**
+Implement modal for creating and editing task templates with default values and placeholder support.
+
+**Scope**
+
+* Create `TemplateModal` component with:
+  * Name, description fields.
+  * Default stage and tags.
+  * Content textarea with placeholders.
+  * Preview section.
+* Support both create and edit modes.
+* Add host-side handlers.
+
+---
+
+#### Task 6.7: Implement Monaco Editor for task editing
+
+**Stage:** plan
+**Tags:** feature, ui, editor, mvp, p2
+
+**Goal**
+Embed Monaco Editor in a modal for in-place task editing without opening files externally.
+
+**Scope**
+
+* Install `@monaco-editor/react` package.
+* Create `TaskEditorModal` component.
+* Configure Monaco with markdown language and custom theme.
+* Add save/cancel handling with dirty state tracking.
+* Update TaskCard and context menus to use editor modal.
+
+---
+
+#### Task 6.8: Phase 6 audit & sign-off
+
+**Stage:** plan
+**Tags:** audit, docs, testing
+
+**Goal**
+Confirm all Phase 6 bug fixes and features are complete before production release.
+
+**Scope**
+
+* Create `phase-6-bugs-and-features/phase-6-audit.md` including:
+  * Checklist of tasks 6.0–6.7.
+  * Testing status summary.
+  * Known issues and deferred items.
+* Mark as "Checked" to confirm production readiness.
+
+---
+
 ## Task Management & Workflow
 
 Each task file includes:

@@ -1,97 +1,9 @@
 /* ========================================
    KANBAN2CODE SIDEBAR STYLES
-   All design system styles inlined for esbuild compatibility
    ======================================== */
 
-/* === VARIABLES === */
-:root {
-  /* Core colors - navy night gradient */
-  --vscode-editor-background: linear-gradient(180deg, #0d111c 0%, #101524 45%, #121829 100%);
-  --vscode-editor-foreground: #f8fafc;
-  --vscode-sideBar-background: #0c101b;
-  --vscode-sideBar-foreground: #e2e8f0;
-  --vscode-panel-background: #161b2b;
-  --vscode-panel-border: #2a3147;
-
-  /* Interactive elements */
-  --vscode-button-background: #3b82f6;
-  --vscode-button-foreground: #ffffff;
-  --vscode-button-hoverBackground: #60a5fa;
-  --vscode-button-secondaryBackground: #1f273a;
-  --vscode-button-secondaryForeground: #e2e8f0;
-  --vscode-button-secondaryHoverBackground: #1e2436;
-
-  /* Input fields */
-  --vscode-input-background: #1a1f30;
-  --vscode-input-foreground: #e2e8f0;
-  --vscode-input-border: #2a3247;
-  --vscode-input-placeholderForeground: #5d6b85;
-  --vscode-focusBorder: #3b82f6;
-
-  /* Lists and trees */
-  --vscode-list-activeSelectionBackground: rgba(59, 130, 246, 0.16);
-  --vscode-list-activeSelectionForeground: #ffffff;
-  --vscode-list-hoverBackground: #1e2436;
-  --vscode-list-inactiveSelectionBackground: #1f273a;
-
-  /* Widgets */
-  --vscode-editorWidget-background: #161b2b;
-  --vscode-editorWidget-border: #2a3147;
-  --vscode-editorWidget-foreground: #e2e8f0;
-
-  /* Badges */
-  --vscode-badge-background: #1f2535;
-  --vscode-badge-foreground: #cbd5e1;
-
-  /* Scrollbar */
-  --vscode-scrollbarSlider-background: rgba(148, 163, 184, 0.35);
-  --vscode-scrollbarSlider-hoverBackground: rgba(148, 163, 184, 0.55);
-  --vscode-scrollbarSlider-activeBackground: rgba(148, 163, 184, 0.7);
-
-  /* Text colors */
-  --vscode-descriptionForeground: #94a3b8;
-  --vscode-errorForeground: #ef4444;
-  --vscode-textLink-foreground: #60a5fa;
-
-  /* Stage colors - semantic */
-  --stage-inbox: #3b82f6;
-  --stage-plan: #5d6b85;
-  --stage-code: #22c55e;
-  --stage-audit: #facc15;
-  --stage-completed: #5d6b85;
-
-  /* Stage backgrounds (10% opacity) */
-  --stage-inbox-bg: rgba(59, 130, 246, 0.1);
-  --stage-plan-bg: rgba(93, 107, 133, 0.12);
-  --stage-code-bg: rgba(34, 197, 94, 0.12);
-  --stage-audit-bg: rgba(250, 204, 21, 0.12);
-  --stage-completed-bg: rgba(93, 107, 133, 0.12);
-
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-
-  /* Border radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-
-  /* Typography */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-size-xs: 11px;
-  --font-size-sm: 12px;
-  --font-size-md: 13px;
-  --font-size-lg: 14px;
-  --font-size-xl: 16px;
-
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 200ms ease;
-}
+/* Import fixed color palette first */
+@import './palette.css';
 
 /* === BASE RESET === */
 * {
@@ -196,8 +108,8 @@ body {
 .column {
   min-width: 240px;
   flex: 1;
-  background: var(--vscode-panel-background);
-  border: 1px solid var(--vscode-panel-border);
+  background: var(--k2c-bg-surface-2);
+  border: 1px solid var(--k2c-border-subtle);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -247,24 +159,28 @@ body {
 /* === TASK CARD === */
 .task-card {
   position: relative;
-  background: rgba(31, 39, 58, 0.9);
-  border: 1px solid var(--vscode-panel-border);
+  background: var(--k2c-bg-surface-3);
+  border: 1px solid var(--k2c-border-subtle);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   cursor: grab;
   transition: all var(--transition-fast);
+  box-shadow: var(--k2c-shadow-sm);
 }
 
 .task-card.dragging {
-  opacity: 0.9;
-  transform: rotate(2deg) scale(1.02);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  opacity: 0.95;
+  transform: rotate(1.5deg) scale(1.02);
+  box-shadow: var(--k2c-shadow-lg);
   z-index: 100;
+  border-color: var(--k2c-accent);
 }
 
 .task-card:hover {
-  border-color: rgba(96, 165, 250, 0.6);
-  transform: translateY(-2px);
+  border-color: var(--k2c-border-strong);
+  background: var(--k2c-bg-surface-4);
+  transform: translateY(-1px);
+  box-shadow: var(--k2c-shadow-md);
 }
 
 .task-card:active {
@@ -272,7 +188,7 @@ body {
 }
 
 .task-card.completed {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 /* Card Header */
@@ -382,12 +298,16 @@ body {
   color: var(--vscode-badge-foreground);
 }
 
-.card-tag.bug { background: rgba(239, 68, 68, 0.18); color: #fecdd3; }
-.card-tag.feature { background: rgba(59, 130, 246, 0.2); color: #bfdbfe; }
-.card-tag.mvp { background: rgba(96, 165, 250, 0.18); color: #dbeafe; }
-.card-tag.urgent { background: rgba(250, 204, 21, 0.2); color: #fef08a; }
-.card-tag.idea { background: rgba(34, 197, 94, 0.18); color: #c8facc; }
-.card-tag.spike { background: rgba(239, 68, 68, 0.2); color: #fecdd3; }
+.card-tag.bug { background: var(--k2c-tag-bug-bg); color: var(--k2c-tag-bug-text); }
+.card-tag.feature { background: var(--k2c-tag-feature-bg); color: var(--k2c-tag-feature-text); }
+.card-tag.mvp { background: var(--k2c-tag-mvp-bg); color: var(--k2c-tag-mvp-text); }
+.card-tag.urgent { background: var(--k2c-tag-urgent-bg); color: var(--k2c-tag-urgent-text); }
+.card-tag.idea { background: var(--k2c-tag-idea-bg); color: var(--k2c-tag-idea-text); }
+.card-tag.spike { background: var(--k2c-tag-spike-bg); color: var(--k2c-tag-spike-text); }
+.card-tag.p0 { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.card-tag.p1 { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+.card-tag.p2 { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+.card-tag.p3 { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
 
 /* Card Footer */
 .card-footer {
@@ -497,24 +417,24 @@ body {
 
 /* === GLASSMORPHIC EFFECTS === */
 .glass-panel {
-  background: linear-gradient(180deg, rgba(22, 27, 43, 0.95) 0%, rgba(16, 21, 36, 0.98) 100%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(42, 49, 71, 0.9);
+  background: var(--k2c-glass-bg);
+  backdrop-filter: blur(var(--k2c-glass-blur));
+  -webkit-backdrop-filter: blur(var(--k2c-glass-blur));
+  border: 1px solid var(--k2c-glass-border);
 }
 
 .glass-button {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.06) 100%);
+  background: linear-gradient(135deg, var(--k2c-accent-muted) 0%, var(--k2c-accent-subtle) 100%);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   transition: all var(--transition-fast);
 }
 
 .glass-button:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(96, 165, 250, 0.15) 100%);
-  border-color: rgba(96, 165, 250, 0.45);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.28) 0%, rgba(96, 165, 250, 0.12) 100%);
+  border-color: var(--k2c-accent);
+  box-shadow: var(--k2c-shadow-glow);
 }
 
 /* === BUTTONS === */
@@ -769,12 +689,12 @@ body {
   color: var(--vscode-badge-foreground);
 }
 
-.mini-tag.tag-bug { background: rgba(239, 68, 68, 0.18); color: #fecdd3; }
-.mini-tag.tag-feature { background: rgba(59, 130, 246, 0.2); color: #bfdbfe; }
-.mini-tag.tag-mvp { background: rgba(96, 165, 250, 0.18); color: #dbeafe; }
-.mini-tag.tag-urgent { background: rgba(250, 204, 21, 0.2); color: #fef08a; }
-.mini-tag.tag-idea { background: rgba(34, 197, 94, 0.18); color: #c8facc; }
-.mini-tag.tag-spike { background: rgba(239, 68, 68, 0.2); color: #fecdd3; }
+.mini-tag.tag-bug { background: var(--k2c-tag-bug-bg); color: var(--k2c-tag-bug-text); }
+.mini-tag.tag-feature { background: var(--k2c-tag-feature-bg); color: var(--k2c-tag-feature-text); }
+.mini-tag.tag-mvp { background: var(--k2c-tag-mvp-bg); color: var(--k2c-tag-mvp-text); }
+.mini-tag.tag-urgent { background: var(--k2c-tag-urgent-bg); color: var(--k2c-tag-urgent-text); }
+.mini-tag.tag-idea { background: var(--k2c-tag-idea-bg); color: var(--k2c-tag-idea-text); }
+.mini-tag.tag-spike { background: var(--k2c-tag-spike-bg); color: var(--k2c-tag-spike-text); }
 
 /* Quick filters */
 .quick-filters {
@@ -1096,12 +1016,12 @@ body {
   width: 90%;
   max-width: 400px;
   max-height: 80vh;
-  background: linear-gradient(180deg, rgba(22, 27, 43, 0.98) 0%, rgba(16, 21, 36, 0.99) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--vscode-panel-border);
+  background: var(--k2c-glass-bg);
+  backdrop-filter: blur(var(--k2c-glass-blur));
+  -webkit-backdrop-filter: blur(var(--k2c-glass-blur));
+  border: 1px solid var(--k2c-border-default);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--k2c-shadow-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;

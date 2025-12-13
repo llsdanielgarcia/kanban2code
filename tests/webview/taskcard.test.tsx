@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import './setup-dom';
 import React from 'react';
 import { expect, test, vi, beforeAll, afterEach, describe } from 'vitest';
@@ -166,5 +167,23 @@ describe('TaskCard', () => {
     const card = screen.getByRole('button', { name: /open task done task/i });
     expect(card).toHaveClass('completed');
     expect(screen.getByText('Done Task')).toHaveClass('completed');
+  });
+
+  test('calls onDelete when Delete button clicked', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const onDelete = vi.fn();
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Delete Me',
+      stage: 'inbox',
+      content: '',
+    } as any;
+
+    render(<TaskCard task={task} onOpen={vi.fn()} onDelete={onDelete} />);
+
+    const deleteBtn = screen.getByRole('button', { name: /delete task/i });
+    fireEvent.click(deleteBtn);
+    expect(onDelete).toHaveBeenCalledWith(task);
   });
 });

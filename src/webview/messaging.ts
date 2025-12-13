@@ -59,6 +59,10 @@ export const EnvelopeSchema = z.object({
   payload: z.unknown(),
 });
 
+export const DeleteTaskPayloadSchema = z.object({
+  taskId: z.string().min(1),
+});
+
 export function createEnvelope<TPayload>(type: MessageType, payload: TPayload): MessageEnvelope<TPayload> {
   return { version: MESSAGE_VERSION, type, payload };
 }
@@ -69,6 +73,14 @@ export function validateEnvelope<TPayload = unknown>(data: unknown): MessageEnve
     throw new Error(`Invalid message envelope: ${result.error.message}`);
   }
   return result.data as MessageEnvelope<TPayload>;
+}
+
+export function parseDeleteTaskPayload(payload: unknown): { taskId: string } {
+  const parsed = DeleteTaskPayloadSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(`Invalid DeleteTask payload: ${parsed.error.message}`);
+  }
+  return parsed.data;
 }
 
 // Convenience helper for UI/host callers who expect a simple creator

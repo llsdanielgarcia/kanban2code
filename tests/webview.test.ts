@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { createEnvelope, validateEnvelope, MESSAGE_VERSION, HostToWebviewMessageTypes } from '../src/webview/messaging';
+import { createEnvelope, parseDeleteTaskPayload, validateEnvelope, MESSAGE_VERSION, HostToWebviewMessageTypes } from '../src/webview/messaging';
 
 test('createEnvelope creates versioned envelope', () => {
   const msg = createEnvelope('TaskUpdated', { id: '1' });
@@ -14,4 +14,12 @@ test('validateEnvelope accepts known message types', () => {
 
 test('validateEnvelope throws on invalid data', () => {
   expect(() => validateEnvelope({ version: 99, type: 'NOPE', payload: {} })).toThrow('Invalid message envelope');
+});
+
+test('parseDeleteTaskPayload accepts a taskId', () => {
+  expect(parseDeleteTaskPayload({ taskId: 'abc' })).toEqual({ taskId: 'abc' });
+});
+
+test('parseDeleteTaskPayload throws on invalid payload', () => {
+  expect(() => parseDeleteTaskPayload({ taskId: '' })).toThrow('Invalid DeleteTask payload');
 });

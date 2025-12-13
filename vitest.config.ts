@@ -1,11 +1,14 @@
 import { defineConfig } from 'vitest/config';
+import path from 'node:path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      vscode: path.resolve(__dirname, './tests/vscode-stub.ts'),
+    },
+  },
   test: {
     environment: 'node',
-    environmentMatchGlobs: [
-      ['tests/webview/**', 'jsdom'],
-    ],
     include: ['tests/**/*.test.{ts,tsx}'],
     exclude: ['tests/e2e/**'],
     coverage: {

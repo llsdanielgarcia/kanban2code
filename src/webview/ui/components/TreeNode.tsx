@@ -39,8 +39,8 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
 
   const Icon = type === 'project' ? FolderIcon : PhaseIcon;
   const iconColor = type === 'project'
-    ? 'var(--vscode-focusBorder)'
-    : 'var(--vscode-descriptionForeground)';
+    ? 'var(--k2c-accent)'
+    : 'var(--k2c-text-muted)';
 
   return (
     <>

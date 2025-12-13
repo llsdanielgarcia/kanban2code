@@ -180,9 +180,7 @@ export const Board: React.FC<BoardProps> = ({
 
   const deleteFocused = () => {
     if (!focusedTask) return;
-    if (window.confirm(`Delete task "${focusedTask.title}"?`)) {
-      postMessage('DeleteTask', { taskId: focusedTask.id });
-    }
+    postMessage('DeleteTask', { taskId: focusedTask.id });
   };
 
   // Card action handlers

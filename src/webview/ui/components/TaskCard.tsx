@@ -45,9 +45,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(`Delete task "${task.title}"?`)) {
-      onDelete?.(task);
-    }
+    onDelete?.(task);
   };
 
   return (

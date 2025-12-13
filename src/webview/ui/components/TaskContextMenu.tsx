@@ -116,9 +116,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
       id: 'delete',
       label: 'Delete Task',
       action: () => {
-        if (window.confirm(`Delete task "${task.title}"?`)) {
-          postMessage('DeleteTask', { taskId: task.id });
-        }
+        postMessage('DeleteTask', { taskId: task.id });
       },
     });
 

@@ -1,0 +1,230 @@
+/* ========================================
+   KANBAN2CODE - NAVY NIGHT COLOR PALETTE
+   Fixed colors independent of VS Code theme
+   ======================================== */
+
+:root {
+  /* === BACKGROUND HIERARCHY === */
+  /* Deepest layer - main canvas */
+  --k2c-bg-base: #0a0e17;
+  --k2c-bg-gradient: linear-gradient(180deg, #0d111c 0%, #101524 50%, #0c1018 100%);
+
+  /* Surface layers - cards, panels */
+  --k2c-bg-surface-1: #0f1420;  /* sidebar, deepest panels */
+  --k2c-bg-surface-2: #141a28;  /* columns, mid-level panels */
+  --k2c-bg-surface-3: #1a2235;  /* cards, elevated elements */
+  --k2c-bg-surface-4: #212b42;  /* hover states, raised cards */
+
+  /* Interactive surface states */
+  --k2c-bg-hover: #1e2740;
+  --k2c-bg-active: rgba(59, 130, 246, 0.12);
+  --k2c-bg-selected: rgba(59, 130, 246, 0.18);
+
+  /* === BORDERS === */
+  --k2c-border-subtle: #1e2639;
+  --k2c-border-default: #283248;
+  --k2c-border-strong: #3a4560;
+  --k2c-border-focus: #3b82f6;
+
+  /* === TEXT HIERARCHY === */
+  --k2c-text-primary: #f1f5f9;
+  --k2c-text-secondary: #cbd5e1;
+  --k2c-text-muted: #64748b;
+  --k2c-text-disabled: #475569;
+  --k2c-text-inverse: #0f172a;
+
+  /* === ACCENT COLORS === */
+  --k2c-accent: #3b82f6;
+  --k2c-accent-hover: #60a5fa;
+  --k2c-accent-muted: rgba(59, 130, 246, 0.2);
+  --k2c-accent-subtle: rgba(59, 130, 246, 0.08);
+
+  /* === SEMANTIC COLORS === */
+  --k2c-success: #22c55e;
+  --k2c-success-muted: rgba(34, 197, 94, 0.2);
+  --k2c-warning: #f59e0b;
+  --k2c-warning-muted: rgba(245, 158, 11, 0.2);
+  --k2c-error: #ef4444;
+  --k2c-error-muted: rgba(239, 68, 68, 0.15);
+
+  /* === STAGE COLORS === */
+  --k2c-stage-inbox: #3b82f6;
+  --k2c-stage-inbox-bg: rgba(59, 130, 246, 0.12);
+  --k2c-stage-inbox-border: rgba(59, 130, 246, 0.25);
+
+  --k2c-stage-plan: #8b5cf6;
+  --k2c-stage-plan-bg: rgba(139, 92, 246, 0.12);
+  --k2c-stage-plan-border: rgba(139, 92, 246, 0.25);
+
+  --k2c-stage-code: #22c55e;
+  --k2c-stage-code-bg: rgba(34, 197, 94, 0.12);
+  --k2c-stage-code-border: rgba(34, 197, 94, 0.25);
+
+  --k2c-stage-audit: #f59e0b;
+  --k2c-stage-audit-bg: rgba(245, 158, 11, 0.12);
+  --k2c-stage-audit-border: rgba(245, 158, 11, 0.25);
+
+  --k2c-stage-completed: #64748b;
+  --k2c-stage-completed-bg: rgba(100, 116, 139, 0.12);
+  --k2c-stage-completed-border: rgba(100, 116, 139, 0.25);
+
+  /* === TAG COLORS === */
+  --k2c-tag-bug: #ef4444;
+  --k2c-tag-bug-bg: rgba(239, 68, 68, 0.15);
+  --k2c-tag-bug-text: #fca5a5;
+
+  --k2c-tag-feature: #3b82f6;
+  --k2c-tag-feature-bg: rgba(59, 130, 246, 0.18);
+  --k2c-tag-feature-text: #93c5fd;
+
+  --k2c-tag-mvp: #06b6d4;
+  --k2c-tag-mvp-bg: rgba(6, 182, 212, 0.15);
+  --k2c-tag-mvp-text: #67e8f9;
+
+  --k2c-tag-urgent: #f59e0b;
+  --k2c-tag-urgent-bg: rgba(245, 158, 11, 0.18);
+  --k2c-tag-urgent-text: #fcd34d;
+
+  --k2c-tag-idea: #22c55e;
+  --k2c-tag-idea-bg: rgba(34, 197, 94, 0.15);
+  --k2c-tag-idea-text: #86efac;
+
+  --k2c-tag-spike: #f43f5e;
+  --k2c-tag-spike-bg: rgba(244, 63, 94, 0.15);
+  --k2c-tag-spike-text: #fda4af;
+
+  /* === PRIORITY INDICATORS === */
+  --k2c-priority-p0: #ef4444;
+  --k2c-priority-p1: #f59e0b;
+  --k2c-priority-p2: #3b82f6;
+  --k2c-priority-p3: #64748b;
+
+  /* === BUTTONS === */
+  --k2c-btn-primary-bg: #3b82f6;
+  --k2c-btn-primary-hover: #2563eb;
+  --k2c-btn-primary-text: #ffffff;
+
+  --k2c-btn-secondary-bg: #1e293b;
+  --k2c-btn-secondary-hover: #334155;
+  --k2c-btn-secondary-text: #e2e8f0;
+  --k2c-btn-secondary-border: #334155;
+
+  --k2c-btn-ghost-hover: rgba(255, 255, 255, 0.08);
+  --k2c-btn-danger-bg: rgba(239, 68, 68, 0.15);
+  --k2c-btn-danger-hover: rgba(239, 68, 68, 0.25);
+
+  /* === INPUT FIELDS === */
+  --k2c-input-bg: #0f1420;
+  --k2c-input-border: #283248;
+  --k2c-input-text: #e2e8f0;
+  --k2c-input-placeholder: #4b5563;
+  --k2c-input-focus-border: #3b82f6;
+  --k2c-input-focus-ring: rgba(59, 130, 246, 0.25);
+
+  /* === SCROLLBAR === */
+  --k2c-scrollbar-track: transparent;
+  --k2c-scrollbar-thumb: rgba(100, 116, 139, 0.35);
+  --k2c-scrollbar-thumb-hover: rgba(100, 116, 139, 0.55);
+
+  /* === SHADOWS === */
+  --k2c-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --k2c-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --k2c-shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.5);
+  --k2c-shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+
+  /* === GLASSMORPHISM === */
+  --k2c-glass-bg: rgba(20, 26, 40, 0.85);
+  --k2c-glass-border: rgba(40, 50, 72, 0.6);
+  --k2c-glass-blur: 12px;
+
+  /* === SPACING (unchanged) === */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  /* === RADIUS === */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* === TYPOGRAPHY === */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 20px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* === TRANSITIONS === */
+  --transition-fast: 100ms ease;
+  --transition-normal: 150ms ease;
+  --transition-slow: 250ms ease;
+
+  /* === VS CODE VARIABLE OVERRIDES === */
+  /* These override VS Code's theme variables to ensure consistency */
+  --vscode-editor-background: var(--k2c-bg-gradient);
+  --vscode-editor-foreground: var(--k2c-text-primary);
+  --vscode-sideBar-background: var(--k2c-bg-surface-1);
+  --vscode-sideBar-foreground: var(--k2c-text-secondary);
+  --vscode-panel-background: var(--k2c-bg-surface-2);
+  --vscode-panel-border: var(--k2c-border-default);
+
+  --vscode-button-background: var(--k2c-btn-primary-bg);
+  --vscode-button-foreground: var(--k2c-btn-primary-text);
+  --vscode-button-hoverBackground: var(--k2c-btn-primary-hover);
+  --vscode-button-secondaryBackground: var(--k2c-btn-secondary-bg);
+  --vscode-button-secondaryForeground: var(--k2c-btn-secondary-text);
+  --vscode-button-secondaryHoverBackground: var(--k2c-btn-secondary-hover);
+
+  --vscode-input-background: var(--k2c-input-bg);
+  --vscode-input-foreground: var(--k2c-input-text);
+  --vscode-input-border: var(--k2c-input-border);
+  --vscode-input-placeholderForeground: var(--k2c-input-placeholder);
+  --vscode-focusBorder: var(--k2c-border-focus);
+
+  --vscode-list-activeSelectionBackground: var(--k2c-bg-selected);
+  --vscode-list-activeSelectionForeground: var(--k2c-text-primary);
+  --vscode-list-hoverBackground: var(--k2c-bg-hover);
+  --vscode-list-inactiveSelectionBackground: var(--k2c-bg-active);
+
+  --vscode-editorWidget-background: var(--k2c-bg-surface-3);
+  --vscode-editorWidget-border: var(--k2c-border-default);
+  --vscode-editorWidget-foreground: var(--k2c-text-secondary);
+
+  --vscode-badge-background: var(--k2c-bg-surface-4);
+  --vscode-badge-foreground: var(--k2c-text-muted);
+
+  --vscode-scrollbarSlider-background: var(--k2c-scrollbar-thumb);
+  --vscode-scrollbarSlider-hoverBackground: var(--k2c-scrollbar-thumb-hover);
+  --vscode-scrollbarSlider-activeBackground: var(--k2c-scrollbar-thumb-hover);
+
+  --vscode-descriptionForeground: var(--k2c-text-muted);
+  --vscode-errorForeground: var(--k2c-error);
+  --vscode-textLink-foreground: var(--k2c-accent-hover);
+  --vscode-textLink-activeForeground: var(--k2c-accent);
+
+  /* Stage colors - legacy support */
+  --stage-inbox: var(--k2c-stage-inbox);
+  --stage-plan: var(--k2c-stage-plan);
+  --stage-code: var(--k2c-stage-code);
+  --stage-audit: var(--k2c-stage-audit);
+  --stage-completed: var(--k2c-stage-completed);
+
+  --stage-inbox-bg: var(--k2c-stage-inbox-bg);
+  --stage-plan-bg: var(--k2c-stage-plan-bg);
+  --stage-code-bg: var(--k2c-stage-code-bg);
+  --stage-audit-bg: var(--k2c-stage-audit-bg);
+  --stage-completed-bg: var(--k2c-stage-completed-bg);
+}

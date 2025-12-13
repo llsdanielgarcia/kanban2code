@@ -487,8 +487,21 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 ✅ All code compiles without errors
 ✅ E2E tests covering core workflows
 
-**Next Phase:**
-- Documentation completion (USER_GUIDE.md, CONTRIBUTING.md)
-- Remaining UI polish (Task 5.4)
-- Dogfooding on Kanban2Code project (Task 5.3)
-- Final sign-off and MVP validation (Task 5.5, 5.8)
+**Next Phase: Phase 6 - Bug Fixes and Feature Completion**
+
+Phase 6 addresses critical bugs and implements remaining design features:
+- Fix delete button in Board view (Task 6.0)
+- Implement fixed Navy Night Gradient color palette (Task 6.1)
+- Fix swimlane layout: Rows = Stages, Columns = Projects (Task 6.2)
+- Add context file selection to Task Modal (Task 6.3)
+- Implement Context creation modal (Task 6.4)
+- Implement Agent selection and creation modal (Task 6.5)
+- Implement Template creation/editing modal (Task 6.6)
+- Add Monaco Editor for in-place task editing (Task 6.7)
+
+Design references in `docs/design/`:
+- `forms/task.html` - Task modal with context selection
+- `forms/context.html` - Context creation modal
+- `forms/agent.html` - Agent creation modal with quick templates
+- `board-swimlane.html` - Swimlane layout reference
+- `styles/variables.css` - Navy Night Gradient color palette

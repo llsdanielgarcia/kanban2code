@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { WorkspaceState } from '../workspace/state';
 import { findKanbanRoot } from '../workspace/validation';
 import { loadAllTasks, findTaskById } from '../services/scanner';
-import { createEnvelope, validateEnvelope, type MessageEnvelope } from './messaging';
+import { createEnvelope, parseDeleteTaskPayload, validateEnvelope, type MessageEnvelope } from './messaging';
 import type { Task } from '../types/task';
 import type { Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
@@ -11,6 +11,7 @@ import { archiveTask } from '../services/archive';
 import { loadTaskTemplates, type TaskTemplate } from '../services/template';
 import { KanbanPanel } from './KanbanPanel';
 import { listProjectsAndPhases } from '../services/projects';
+import { deleteTaskById } from '../services/delete-task';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
@@ -145,14 +146,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
 
         case 'DeleteTask': {
-          const { taskId } = payload as { taskId: string };
-          const root = WorkspaceState.kanbanRoot;
-          if (root && taskId) {
-            const task = await findTaskById(root, taskId);
-            if (task) {
-              await vscode.workspace.fs.delete(vscode.Uri.file(task.filePath));
-              await this._sendInitialState();
-            }
+          const { taskId } = parseDeleteTaskPayload(payload);
+          const tasks = await deleteTaskById(taskId);
+          if (tasks) {
+            this.updateTasks(tasks);
+            KanbanPanel.currentPanel?.updateTasks(tasks);
           }
           break;
         }

@@ -182,9 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
 
   const deleteSelected = () => {
     if (!selectedTask) return;
-    if (window.confirm(`Delete task "${selectedTask.title}"?`)) {
-      postMessage('DeleteTask', { taskId: selectedTask.id });
-    }
+    postMessage('DeleteTask', { taskId: selectedTask.id });
   };
 
   // Keyboard shortcuts

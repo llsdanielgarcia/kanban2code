@@ -6,6 +6,7 @@ import { SidebarProvider } from './webview/SidebarProvider';
 import { KanbanPanel } from './webview/KanbanPanel';
 import { TaskWatcher } from './services/task-watcher';
 import { loadAllTasks } from './services/scanner';
+import { setSidebarProvider } from './webview/viewRegistry';
 
 let taskWatcher: TaskWatcher | null = null;
 let sidebarProvider: SidebarProvider | null = null;
@@ -36,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // 2. Register Sidebar Provider
   sidebarProvider = new SidebarProvider(context.extensionUri);
+  setSidebarProvider(sidebarProvider);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider)
   );
@@ -82,6 +84,7 @@ function startFileWatcher(kanbanRoot: string) {
 export function deactivate() {
   taskWatcher?.dispose();
   taskWatcher = null;
+  setSidebarProvider(null);
 }
 
 // Export for use by commands
