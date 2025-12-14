@@ -9,7 +9,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Kanban2CodeConfig, DEFAULT_CONFIG } from '../types/config';
-import { KANBAN_FOLDER } from '../core/constants';
 
 const CONFIG_FILE = 'config.json';
 
@@ -101,7 +100,6 @@ class ConfigService {
     // Dispose existing watcher if any
     this.configWatcher?.dispose();
 
-    const configPath = path.join(this.kanbanRoot, CONFIG_FILE);
     const pattern = new vscode.RelativePattern(this.kanbanRoot, CONFIG_FILE);
 
     this.configWatcher = vscode.workspace.createFileSystemWatcher(pattern);

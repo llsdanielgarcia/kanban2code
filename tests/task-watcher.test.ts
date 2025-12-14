@@ -52,6 +52,18 @@ describe('TaskWatcher', () => {
     watcher.dispose();
   });
 
+  test('emits created when a new task file appears', async () => {
+    const watcher = createWatcher();
+    const handler = vi.fn();
+    watcher.on('event', handler);
+
+    fake.createListeners.forEach((fn) => fn('/tmp/.kanban2code/inbox/ai-created.md'));
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(handler).toHaveBeenCalledWith({ type: 'created', path: '/tmp/.kanban2code/inbox/ai-created.md' });
+    watcher.dispose();
+  });
+
   test('ignores _context files', async () => {
     const watcher = createWatcher();
     const handler = vi.fn();

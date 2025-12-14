@@ -252,6 +252,8 @@ Agent personality definitions for different roles.
 | [personality-name].focus | string[] | Yes | Areas of focus |
 | [personality-name].strengths | string[] | No | Personality strengths |
 | [personality-name].limitations | string[] | No | Personality limitations |
+| [personality-name].instructions | string | No | Short instruction block for how to operate in this personality |
+| [personality-name].suggestedPrompts | string[] | No | Suggested prompts to use with this personality |
 
 **Standard Personalities:**
 

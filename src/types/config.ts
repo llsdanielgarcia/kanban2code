@@ -46,6 +46,8 @@ export interface PersonalityConfig {
   focus: string[];
   strengths?: string[];
   limitations?: string[];
+  instructions?: string;
+  suggestedPrompts?: string[];
 }
 
 export interface Kanban2CodeConfig {

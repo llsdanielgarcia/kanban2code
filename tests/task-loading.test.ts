@@ -54,6 +54,22 @@ test('loadAllTasks finds tasks in inbox and projects', async () => {
   expect(t3?.phase).toBe('phase-1');
 });
 
+test('loadAllTasks finds tasks in phase-* folders at kanban root', async () => {
+  const phaseDir = path.join(KANBAN_ROOT, 'phase-1-example');
+  await fs.mkdir(phaseDir, { recursive: true });
+
+  await fs.writeFile(path.join(phaseDir, 't-phase.md'), '---\nstage: plan\n---\n# Phase Task');
+
+  const tasks = await loadAllTasks(KANBAN_ROOT);
+  expect(tasks).toHaveLength(1);
+
+  const phaseTask = tasks[0];
+  expect(phaseTask.id).toBe('t-phase');
+  expect(phaseTask.project).toBeUndefined();
+  expect(phaseTask.phase).toBeUndefined();
+  expect(phaseTask.stage).toBe('plan');
+});
+
 test('loadAllTasks handles empty workspace', async () => {
   const tasks = await loadAllTasks(KANBAN_ROOT);
   expect(tasks).toEqual([]);

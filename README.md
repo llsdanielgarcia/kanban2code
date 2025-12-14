@@ -2,14 +2,50 @@
 
 A VS Code extension for AI-assisted task management using a file-based kanban system.
 
-## Installation
+## Quick Start
 
 ```bash
 bun install
 bun run compile
 ```
 
-Press F5 in VS Code to launch the extension in development mode.
+Press `F5` in VS Code to launch the Extension Host, then run `Kanban2Code: Scaffold Workspace` in the Command Palette to create `.kanban2code/`.
+
+## Configuration (`.kanban2code/config.json`)
+
+Kanban2Code loads optional configuration from `.kanban2code/config.json` and falls back to defaults if the file is missing or invalid.
+
+- Config reference: `docs/config-schema.md`
+- Example config: `examples/config.example.json`
+
+Common customizations:
+- Default agent: `preferences.defaultAgent`
+- Tag categories: `tags.categories.*`
+- Stage ordering/transitions: `stages.*`
+
+## Templates
+
+Templates live under `.kanban2code/_templates/`:
+
+- Task templates: `.kanban2code/_templates/tasks/*.md`
+- Stage templates: `.kanban2code/_templates/stages/*.md`
+
+Task templates are markdown with optional YAML frontmatter (`name`, `description`, optional `default_stage`, optional `default_tags`). Stage templates are injected into AI prompts during context-copy.
+
+## Context Workflow (for AI prompting)
+
+Kanban2Code builds a structured prompt from layered context sources:
+
+- Global: `.kanban2code/how-it-works.md`, `.kanban2code/architecture.md`, `.kanban2code/project-details.md`
+- Agent: `.kanban2code/_agents/<agent>.md`
+- Project/phase: `.kanban2code/projects/<project>/_context.md`, `.kanban2code/projects/<project>/<phase>/_context.md`
+- Stage template: `.kanban2code/_templates/stages/<stage>.md`
+- Custom contexts: `.kanban2code/_context/*.md` referenced by task `contexts: [...]`
+
+Copy commands:
+- `Kanban2Code: Copy Task Context (Full XML)`
+- `Kanban2Code: Copy Task Only`
+- `Kanban2Code: Copy Context Only`
 
 ## Features
 
@@ -63,10 +99,17 @@ Right-click a task to:
 ## Development
 
 ```bash
-bun run compile    # Build extension + webview
-bun run watch      # Watch mode
-bun run tsc:check  # Type checking
+bun run compile      # Build extension + webview
+bun run watch        # Watch mode
+bun run test         # Unit tests
+bun run test:e2e     # E2E tests (filesystem workflows)
+bun run typecheck    # TypeScript type checking
+bun run lint         # ESLint
 ```
+
+## Example Project
+
+An example workspace is included at `examples/sample-project/` (including `.kanban2code/config.json`, sample contexts, and sample tasks).
 
 ## Project Structure
 

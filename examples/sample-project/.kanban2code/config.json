@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Sample Project",
+    "description": "A small example workspace showing Kanban2Code config, context, and tasks working together",
+    "repository": "https://example.com/sample-project"
+  },
+  "preferences": {
+    "fileNaming": "kebab-case",
+    "requireTests": true,
+    "defaultAgent": "codex",
+    "archiveCompleted": true,
+    "archiveAfterDays": 14
+  },
+  "tags": {
+    "categories": {
+      "type": {
+        "description": "Task type",
+        "values": ["feature", "bug", "refactor", "spike", "docs", "test"]
+      },
+      "priority": {
+        "description": "Priority",
+        "values": ["p0", "p1", "p2", "p3"]
+      },
+      "component": {
+        "description": "Component",
+        "values": ["ui", "api", "infra", "docs"]
+      }
+    }
+  }
+}
+

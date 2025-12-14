@@ -102,42 +102,78 @@
       "agents": ["opus"],
       "focus": ["system-design", "patterns", "scalability", "trade-offs"],
       "strengths": ["big-picture thinking", "trade-off analysis", "pattern recognition"],
-      "limitations": ["may over-engineer simple tasks"]
+      "limitations": ["may over-engineer simple tasks"],
+      "instructions": "Prioritize system-level correctness, clear boundaries, and explicit trade-offs. Produce a concrete decision and follow-up tasks.",
+      "suggestedPrompts": [
+        "Propose 2-3 architecture options with trade-offs and pick one.",
+        "Define module boundaries and data flow; list risks and mitigations.",
+        "Produce an implementation plan with milestones and acceptance criteria."
+      ]
     },
     "frontend-developer": {
       "description": "UI/UX implementation specialist",
       "agents": ["opus", "gemini"],
       "focus": ["components", "styling", "user-experience", "accessibility"],
       "strengths": ["visual design", "component architecture", "responsive design"],
-      "limitations": ["backend integration complexity"]
+      "limitations": ["backend integration complexity"],
+      "instructions": "Optimize for usability, accessibility, and predictable state transitions. Specify empty/loading/error states and keyboard behavior.",
+      "suggestedPrompts": [
+        "Design the UI states (loading/empty/error) and keyboard navigation plan.",
+        "List required components, props, and accessibility roles/labels.",
+        "Provide a step-by-step implementation plan and test/QA checklist."
+      ]
     },
     "backend-developer": {
       "description": "Backend logic and API development",
       "agents": ["codex"],
       "focus": ["apis", "databases", "business-logic", "performance"],
       "strengths": ["efficient algorithms", "error handling", "data modeling"],
-      "limitations": ["UI/UX considerations"]
+      "limitations": ["UI/UX considerations"],
+      "instructions": "Prefer simple, testable logic. Define contracts, validate inputs, and ensure errors are explicit and actionable.",
+      "suggestedPrompts": [
+        "Define the API contract and data model; include validation and error cases.",
+        "Implement with tests; enumerate edge cases and failure modes.",
+        "Suggest performance improvements only if measured or clearly needed."
+      ]
     },
     "auditor": {
       "description": "Code review and quality assurance",
       "agents": ["codex", "opus"],
       "focus": ["code-quality", "testing", "security", "best-practices"],
       "strengths": ["finding bugs", "suggesting improvements", "ensuring standards"],
-      "limitations": ["may be overly critical"]
+      "limitations": ["may be overly critical"],
+      "instructions": "Verify behavior matches requirements. Prefer concrete issues with reproduction/impact and propose minimal safe fixes.",
+      "suggestedPrompts": [
+        "Audit the change set for correctness, tests, and security issues; list actionable fixes.",
+        "Identify mismatches between docs/config and runtime behavior.",
+        "Propose targeted tests to prevent regressions."
+      ]
     },
     "planner": {
       "description": "Task breakdown and roadmap creation",
       "agents": ["opus"],
       "focus": ["task-decomposition", "estimation", "dependencies", "milestones"],
       "strengths": ["breaking down complex work", "identifying risks", "sequencing"],
-      "limitations": ["implementation details"]
+      "limitations": ["implementation details"],
+      "instructions": "Decompose into small tasks with clear acceptance criteria and ordering. Call out dependencies and risks explicitly.",
+      "suggestedPrompts": [
+        "Split this initiative into 5-15 tasks with acceptance criteria and ordering.",
+        "Identify dependencies and critical path; include risk mitigation tasks.",
+        "Propose a phased rollout plan with checkpoints."
+      ]
     },
     "context-builder": {
       "description": "Context file and documentation creation",
       "agents": ["sonnet", "glm"],
       "focus": ["documentation", "context-files", "summaries"],
       "strengths": ["clear writing", "information synthesis", "quick turnaround"],
-      "limitations": ["complex architectural decisions"]
+      "limitations": ["complex architectural decisions"],
+      "instructions": "Produce concise, structured context files optimized for LLM parsing. Prefer checklists, schemas, and examples.",
+      "suggestedPrompts": [
+        "Summarize the current system behavior as a structured context file with examples.",
+        "Extract key decisions, conventions, and file paths into a checklist.",
+        "Generate/update context docs to match implementation exactly."
+      ]
     }
   }
 }

@@ -1,133 +1,96 @@
-# Kanban2Code AI Guide - Outline
+# AI Guide Outline (Kanban2Code)
 
-This document outlines the structure of the comprehensive AI guide for working with Kanban2Code.
+This document outlines the structure for `.kanban2code/_context/ai-guide.md`.
 
-## Document Structure
+## 1. Purpose and Audience
 
-### 1. Introduction
+- What Kanban2Code is (VS Code extension + filesystem-backed board)
+- Who this guide is for (AI agents generating/editing task files)
 
-- **Purpose**: What this guide is for
-- **Target Audience**: AI agents (Claude, GPT, Gemini, GLM, etc.)
-- **Quick Start**: Minimal steps to create a task
+## 2. Kanban Workspace Layout
 
-### 2. System Overview
+- Kanban root: `.kanban2code/`
+- Task locations:
+  - `.kanban2code/inbox/*.md`
+  - `.kanban2code/projects/<project>/**/*.md`
+- Non-task folders:
+  - `.kanban2code/_templates/` (task and stage templates)
+  - `.kanban2code/_agents/` (agent instruction files)
+  - `.kanban2code/_context/` (optional custom context files)
+  - `.kanban2code/_archive/` (archived tasks)
 
-- **What is Kanban2Code?**: Brief description
-- **Core Concepts**: Tasks, stages, agents, tags, contexts
-- **File Structure**: Where things live in `.kanban2code/`
+## 3. Task File Format
 
-### 3. File Format Specification
+- Markdown with optional YAML frontmatter (`---` … `---`)
+- Title extraction rule (first `# Heading` in body)
+- Project/phase inference rule (from file path)
 
-- **Task Files**: Markdown files with YAML frontmatter
-- **Frontmatter Schema**: All fields documented
-- **Markdown Body Structure**: Sections and conventions
+## 4. Task Frontmatter Schema
 
-### 4. Frontmatter Reference
+Document each field with:
+- type
+- required/optional
+- default behavior
+- examples
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| stage | string | Yes | Workflow stage |
-| tags | string[] | No | Task categorization |
-| agent | string | No | Assigned AI agent |
-| contexts | string[] | No | Referenced context files |
-| parent | string | No | Parent task ID |
-| order | number | No | Sort order within stage |
-| created | string | No | ISO date of creation |
+Fields:
+- `stage`
+- `created`
+- `agent`
+- `tags`
+- `contexts`
+- `parent`
+- `order`
+- (Optional / passthrough) `template`
 
-### 5. Stage Definitions and Workflow
+## 5. Stages and Transitions
 
-- **inbox**: New tasks awaiting triage
-- **plan**: Tasks being planned/designed
-- **code**: Tasks in active development
-- **audit**: Tasks under review
-- **completed**: Finished tasks
-- **Transition Rules**: What transitions are allowed
+- Stage definitions (`inbox`, `plan`, `code`, `audit`, `completed`)
+- Transition rules enforced by the extension
+- Practical “how to progress a task” guidance
 
-### 6. Agent System
+## 6. Agents
 
-- **Available Agents**: opus, codex, sonnet, glm, gemini
-- **Agent Capabilities**: When to use each agent
-- **Agent Selection**: Guidelines for choosing agents
+- Source of truth: `.kanban2code/config.json` → `agents`
+- How to set `agent` in frontmatter
+- When to omit `agent`
 
-### 7. Tag Taxonomy
+## 7. Tags
 
-- **Type Tags**: feature, bug, refactor, spike, docs, test, design, security, config, audit
-- **Priority Tags**: critical, high, medium, low
-- **Domain Tags**: frontend, backend, api, database, infra, devops, ui, ux
-- **Component Tags**: core, auth, ui, utils, services, types, config, extension, webview
+- Tag taxonomy used by the extension UI (categories + recommended values)
+- Tag usage guidance (1 type tag, optional priority tag, etc.)
+- Custom tags (allowed but not categorized)
 
-### 8. Context System
+## 8. Context System
 
-- **What are Contexts?**: Shared knowledge files
-- **Context File Location**: `.kanban2code/_context/`
-- **Referencing Contexts**: Using the `contexts` frontmatter field
-- **Context Update Workflow**: When and how to update context files
+Explain prompt/context layering:
+- Global context (`how-it-works.md`, `architecture.md`, `project-details.md`)
+- Agent context (`_agents/<agent>.md`)
+- Project context (`projects/<project>/_context.md`)
+- Phase context (`projects/<project>/<phase>/_context.md`)
+- Stage template (`_templates/stages/<stage>.md`)
+- Custom contexts (`contexts:` frontmatter entries)
 
-### 9. Task Body Structure
+## 9. Task Examples (Good + Bad)
 
-- **Title**: H1 heading as task title
-- **Goal Section**: What needs to be accomplished
-- **Background Section**: Why this task exists
-- **Scope Section**: What's in/out of scope
-- **Files to Modify/Create**: Affected files
-- **Acceptance Criteria**: Checklist of requirements
-- **Testing Requirements**: How to verify completion
-- **Notes**: Additional information
+Include at least:
+- One good example per “template type”:
+  - bug report
+  - feature
+  - refactor
+  - spike/research
+  - documentation
+  - test
+  - UI component
+  - security review
+  - design task
+  - roadmap
+- A few “bad examples” showing common mistakes and how to correct them
 
-### 10. File Naming Conventions
+## 10. Best Practices and Common Patterns
 
-- **Task Files**: `kebab-case.md`
-- **Project Folders**: `project-name/`
-- **Phase Folders**: `phase-X-description/`
-- **Numbered Tasks**: `taskX.Y_description.md`
+- Keep tasks atomic; split when too large
+- Prefer explicit acceptance criteria
+- Use contexts intentionally (avoid huge dumps)
+- Keep tags consistent
 
-### 11. Task Examples
-
-Examples for each template type:
-- Bug Report
-- Feature
-- Refactor
-- Spike/Research
-- Documentation
-- Test
-- UI Component
-- Security Review
-- Design Task
-- Roadmap
-
-### 12. Good vs Bad Examples
-
-- **Good Examples**: Properly formatted tasks
-- **Bad Examples**: Common mistakes to avoid
-- **Anti-patterns**: What not to do
-
-### 13. Advanced Patterns
-
-- **Task Hierarchies**: Parent-child relationships
-- **Phase Organization**: Grouping related tasks
-- **Cross-References**: Linking between tasks
-- **Batch Operations**: Creating multiple tasks
-
-### 14. Best Practices
-
-- **Task Granularity**: How to size tasks
-- **Clear Acceptance Criteria**: How to write them
-- **Context Management**: When to create/update contexts
-- **Stage Transitions**: When to move tasks
-
-### 15. Troubleshooting
-
-- **Common Errors**: Invalid frontmatter, bad stage values
-- **Validation**: How the extension validates tasks
-- **Recovery**: How to fix broken tasks
-
----
-
-## Implementation Notes
-
-The AI guide should:
-1. Be parseable by AI systems (clear structure, consistent formatting)
-2. Be readable by humans (for debugging and reference)
-3. Include complete examples (not fragments)
-4. Reference config.json for dynamic values
-5. Stay synchronized with the actual extension behavior

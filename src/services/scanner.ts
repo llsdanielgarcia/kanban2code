@@ -5,12 +5,14 @@ import { Task } from '../types/task';
 import { INBOX_FOLDER, PROJECTS_FOLDER } from '../core/constants';
 
 export async function findAllTaskFiles(kanbanRoot: string): Promise<string[]> {
-  // We want to find markdown files in 'inbox' and 'projects'
-  // excluding '_context.md' and hidden files/folders if any (besides our structure)
+  // We want to find markdown task files primarily in 'inbox' and 'projects'.
+  // Additionally, we support "phase-*" folders at the kanban root to allow
+  // phase-scoped task groupings without requiring a project.
   
   const patterns = [
     path.join(kanbanRoot, INBOX_FOLDER, '*.md'),
     path.join(kanbanRoot, PROJECTS_FOLDER, '**', '*.md'),
+    path.join(kanbanRoot, 'phase-*', '*.md'),
   ];
 
   // fast-glob only supports forward slashes, even on Windows

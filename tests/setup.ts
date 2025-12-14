@@ -21,6 +21,12 @@ vi.mock('vscode', () => ({
   },
   workspace: {
     workspaceFolders: [],
+    createFileSystemWatcher: vi.fn(() => ({
+      onDidChange: vi.fn(),
+      onDidCreate: vi.fn(),
+      onDidDelete: vi.fn(),
+      dispose: vi.fn(),
+    })),
     fs: {
       readFile: vi.fn(),
       writeFile: vi.fn(),
@@ -41,6 +47,14 @@ vi.mock('vscode', () => ({
     registerCommand: vi.fn(),
     executeCommand: vi.fn(),
   },
+  RelativePattern: class RelativePattern {
+    base: string;
+    pattern: string;
+    constructor(base: string, pattern: string) {
+      this.base = base;
+      this.pattern = pattern;
+    }
+  },
   Uri: {
     file: (path: string) => ({ fsPath: path, path }),
     parse: (uri: string) => ({ fsPath: uri, path: uri }),
@@ -52,11 +66,11 @@ vi.mock('vscode', () => ({
     },
   },
   ExtensionContext: vi.fn(),
-  EventEmitter: vi.fn(() => ({
-    event: vi.fn(),
-    fire: vi.fn(),
-    dispose: vi.fn(),
-  })),
+  EventEmitter: class EventEmitter<T> {
+    event = vi.fn();
+    fire = vi.fn((_data?: T) => {});
+    dispose = vi.fn();
+  },
   ProgressLocation: {
     Notification: 1,
     Window: 10,
