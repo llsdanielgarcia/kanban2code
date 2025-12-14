@@ -1,0 +1,143 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Example Project",
+    "description": "A sample project demonstrating Kanban2Code configuration",
+    "repository": "https://github.com/user/example-project"
+  },
+  "agents": {
+    "opus": {
+      "description": "Claude Opus - Best for planning, architecture, and complex UI work",
+      "primaryUse": ["planning", "architecture", "ui", "design"],
+      "secondaryUse": ["auditing", "code-review"],
+      "model": "claude-opus-4"
+    },
+    "codex": {
+      "description": "Claude Codex - Best for backend logic, APIs, and code auditing",
+      "primaryUse": ["backend", "api", "logic", "coding"],
+      "secondaryUse": ["auditing"],
+      "model": "claude-sonnet-4"
+    },
+    "sonnet": {
+      "description": "Claude Sonnet - Best for quick tasks and context creation",
+      "primaryUse": ["quick-tasks", "context-creation", "roadmap-reading"],
+      "secondaryUse": [],
+      "model": "claude-sonnet-4"
+    },
+    "glm": {
+      "description": "GLM - Best for task splitting and simple context",
+      "primaryUse": ["task-splitting", "simple-context"],
+      "secondaryUse": ["miscellaneous"],
+      "model": "glm-4"
+    },
+    "gemini": {
+      "description": "Gemini - Alternative for UI work",
+      "primaryUse": ["ui"],
+      "secondaryUse": [],
+      "model": "gemini-2.0-flash"
+    }
+  },
+  "tags": {
+    "categories": {
+      "type": {
+        "description": "Type of task",
+        "values": ["feature", "bug", "refactor", "spike", "docs", "test", "design", "security", "config", "audit"]
+      },
+      "priority": {
+        "description": "Task priority level",
+        "values": ["critical", "high", "medium", "low"]
+      },
+      "domain": {
+        "description": "Technical domain",
+        "values": ["frontend", "backend", "api", "database", "infra", "devops", "ui", "ux"]
+      },
+      "component": {
+        "description": "Project component or module",
+        "values": ["core", "auth", "ui", "utils", "services", "types", "config"]
+      }
+    }
+  },
+  "stages": {
+    "inbox": {
+      "description": "New tasks awaiting triage",
+      "order": 0,
+      "allowedTransitions": ["plan", "completed"],
+      "color": "#6b7280"
+    },
+    "plan": {
+      "description": "Tasks being planned and designed",
+      "order": 1,
+      "allowedTransitions": ["inbox", "code", "completed"],
+      "color": "#3b82f6"
+    },
+    "code": {
+      "description": "Tasks in active development",
+      "order": 2,
+      "allowedTransitions": ["plan", "audit", "completed"],
+      "color": "#f59e0b"
+    },
+    "audit": {
+      "description": "Tasks under review",
+      "order": 3,
+      "allowedTransitions": ["code", "completed"],
+      "color": "#8b5cf6"
+    },
+    "completed": {
+      "description": "Finished tasks",
+      "order": 4,
+      "allowedTransitions": ["inbox"],
+      "color": "#10b981"
+    }
+  },
+  "preferences": {
+    "fileNaming": "kebab-case",
+    "requireTests": true,
+    "defaultAgent": "codex",
+    "archiveCompleted": true,
+    "archiveAfterDays": 7
+  },
+  "personalities": {
+    "architect": {
+      "description": "System design and architecture focus",
+      "agents": ["opus"],
+      "focus": ["system-design", "patterns", "scalability", "trade-offs"],
+      "strengths": ["big-picture thinking", "trade-off analysis", "pattern recognition"],
+      "limitations": ["may over-engineer simple tasks"]
+    },
+    "frontend-developer": {
+      "description": "UI/UX implementation specialist",
+      "agents": ["opus", "gemini"],
+      "focus": ["components", "styling", "user-experience", "accessibility"],
+      "strengths": ["visual design", "component architecture", "responsive design"],
+      "limitations": ["backend integration complexity"]
+    },
+    "backend-developer": {
+      "description": "Backend logic and API development",
+      "agents": ["codex"],
+      "focus": ["apis", "databases", "business-logic", "performance"],
+      "strengths": ["efficient algorithms", "error handling", "data modeling"],
+      "limitations": ["UI/UX considerations"]
+    },
+    "auditor": {
+      "description": "Code review and quality assurance",
+      "agents": ["codex", "opus"],
+      "focus": ["code-quality", "testing", "security", "best-practices"],
+      "strengths": ["finding bugs", "suggesting improvements", "ensuring standards"],
+      "limitations": ["may be overly critical"]
+    },
+    "planner": {
+      "description": "Task breakdown and roadmap creation",
+      "agents": ["opus"],
+      "focus": ["task-decomposition", "estimation", "dependencies", "milestones"],
+      "strengths": ["breaking down complex work", "identifying risks", "sequencing"],
+      "limitations": ["implementation details"]
+    },
+    "context-builder": {
+      "description": "Context file and documentation creation",
+      "agents": ["sonnet", "glm"],
+      "focus": ["documentation", "context-files", "summaries"],
+      "strengths": ["clear writing", "information synthesis", "quick turnaround"],
+      "limitations": ["complex architectural decisions"]
+    }
+  }
+}

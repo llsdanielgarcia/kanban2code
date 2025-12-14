@@ -7,6 +7,7 @@ import { KanbanPanel } from './webview/KanbanPanel';
 import { TaskWatcher } from './services/task-watcher';
 import { loadAllTasks } from './services/scanner';
 import { setSidebarProvider } from './webview/viewRegistry';
+import { configService } from './services/config';
 
 let taskWatcher: TaskWatcher | null = null;
 let sidebarProvider: SidebarProvider | null = null;
@@ -31,6 +32,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
   if (kanbanRoot) {
     console.log(`Kanban2Code found at: ${kanbanRoot}`);
+
+    // Initialize configuration service
+    await configService.initialize(kanbanRoot);
+    console.log('ConfigService initialized');
   } else {
     console.log('Kanban2Code not found in workspace.');
   }
@@ -84,6 +89,7 @@ function startFileWatcher(kanbanRoot: string) {
 export function deactivate() {
   taskWatcher?.dispose();
   taskWatcher = null;
+  configService.dispose();
   setSidebarProvider(null);
 }
 
