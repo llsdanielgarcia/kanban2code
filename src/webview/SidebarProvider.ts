@@ -11,7 +11,7 @@ import { archiveTask } from '../services/archive';
 import { loadTaskTemplates, createTaskTemplate, updateTaskTemplate, type TaskTemplate } from '../services/template';
 import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
 import { KanbanPanel } from './KanbanPanel';
-import { listProjectsAndPhases } from '../services/projects';
+import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
 import { loadTaskContentById, saveTaskContentById } from '../services/task-content';
 
@@ -137,9 +137,29 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
-        case 'CreateProject':
-          await vscode.commands.executeCommand('kanban2code.newProject');
+        case 'CreateProject': {
+          const projectPayload = payload as {
+            name?: string;
+            phases?: string[];
+          };
+          if (projectPayload.name) {
+            const root = WorkspaceState.kanbanRoot;
+            if (root) {
+              try {
+                await createProject(root, {
+                  name: projectPayload.name,
+                  phases: projectPayload.phases,
+                });
+                await this._sendInitialState();
+              } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }
+          } else {
+            await vscode.commands.executeCommand('kanban2code.newProject');
+          }
           break;
+        }
 
         case 'CreateContext': {
           const contextPayload = payload as {

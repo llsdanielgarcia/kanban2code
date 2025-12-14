@@ -9,11 +9,31 @@ export interface TaskTemplate {
   name: string;
   description: string;
   content: string;
+  icon?: string;
+  defaultStage?: string;
+  defaultTags?: string[];
+}
+
+export interface ContextFile {
+  id: string;
+  name: string;
+  description: string;
+  path: string;
+  scope?: 'global' | 'project';
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  path: string;
 }
 
 interface InitStatePayload {
   tasks: Task[];
   templates?: TaskTemplate[];
+  contexts?: ContextFile[];
+  agents?: Agent[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
   workspaceRoot: string;
@@ -32,6 +52,8 @@ interface FilterChangedPayload {
 interface UseTaskDataResult {
   tasks: Task[];
   templates: TaskTemplate[];
+  contexts: ContextFile[];
+  agents: Agent[];
   projects: string[];
   phasesByProject: Record<string, string[]>;
   workspaceRoot: string | null;
@@ -44,6 +66,8 @@ interface UseTaskDataResult {
 export function useTaskData(): UseTaskDataResult {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
+  const [contexts, setContexts] = useState<ContextFile[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
@@ -65,6 +89,8 @@ export function useTaskData(): UseTaskDataResult {
           const payload = message.payload as InitStatePayload;
           setTasks(payload.tasks || []);
           setTemplates(payload.templates || []);
+          setContexts(payload.contexts || []);
+          setAgents(payload.agents || []);
           setProjects(payload.projects || []);
           setPhasesByProject(payload.phasesByProject || {});
           setWorkspaceRoot(payload.workspaceRoot || null);
@@ -117,6 +143,8 @@ export function useTaskData(): UseTaskDataResult {
   return {
     tasks,
     templates,
+    contexts,
+    agents,
     projects,
     phasesByProject,
     workspaceRoot,

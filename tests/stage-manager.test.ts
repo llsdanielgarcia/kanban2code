@@ -40,6 +40,23 @@ test('updateTaskStage moves forward one stage', async () => {
   expect(fileContent).toContain('stage: plan');
 });
 
+test('updateTaskStage allows moving backward one stage', async () => {
+  await fs.writeFile(TASK_PATH, `---
+stage: audit
+---
+# Task 1
+`);
+
+  const task = await parseTaskFile(TASK_PATH);
+
+  const updated = await updateTaskStage(task, 'code');
+
+  expect(updated.stage).toBe('code');
+
+  const fileContent = await fs.readFile(TASK_PATH, 'utf-8');
+  expect(fileContent).toContain('stage: code');
+});
+
 test('updateTaskStage forbids invalid transition', async () => {
   const task = await parseTaskFile(TASK_PATH);
   // Inbox -> Audit not allowed

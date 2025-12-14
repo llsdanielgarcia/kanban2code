@@ -6,7 +6,7 @@ import { changeStageAndReload } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
 import { loadTaskTemplates, createTaskTemplate, updateTaskTemplate } from '../services/template';
 import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
-import { listProjectsAndPhases } from '../services/projects';
+import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
 import { loadTaskContentById, saveTaskContentById } from '../services/task-content';
 import type { Task, Stage } from '../types/task';
@@ -245,6 +245,28 @@ export class KanbanPanel {
         case 'ALERT': {
           const text = (payload as { text?: string })?.text ?? 'Alert from Kanban2Code';
           vscode.window.showInformationMessage(text);
+          break;
+        }
+
+        case 'CreateProject': {
+          const projectPayload = payload as {
+            name?: string;
+            phases?: string[];
+          };
+          if (projectPayload.name) {
+            const root = WorkspaceState.kanbanRoot;
+            if (root) {
+              try {
+                await createProject(root, {
+                  name: projectPayload.name,
+                  phases: projectPayload.phases,
+                });
+                await this._sendInitialState();
+              } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            }
+          }
           break;
         }
 

@@ -7,10 +7,13 @@ describe('core/rules', () => {
     expect(isTransitionAllowed('completed', 'completed')).toBe(true);
   });
 
-  it('allows only forward transitions', () => {
+  it('allows adjacent transitions (forward and backward)', () => {
     expect(isTransitionAllowed('inbox', 'plan')).toBe(true);
+    expect(isTransitionAllowed('plan', 'inbox')).toBe(true);
     expect(isTransitionAllowed('plan', 'code')).toBe(true);
+    expect(isTransitionAllowed('code', 'plan')).toBe(true);
     expect(isTransitionAllowed('code', 'audit')).toBe(true);
+    expect(isTransitionAllowed('audit', 'code')).toBe(true);
     expect(isTransitionAllowed('audit', 'completed')).toBe(true);
   });
 
@@ -20,4 +23,3 @@ describe('core/rules', () => {
     expect(isTransitionAllowed('completed', 'inbox')).toBe(false);
   });
 });
-

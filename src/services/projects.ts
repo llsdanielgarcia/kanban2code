@@ -52,3 +52,35 @@ export async function listProjectsAndPhases(kanbanRoot: string): Promise<Project
 
   return { projects, phasesByProject };
 }
+
+/**
+ * Create a new project directory with optional initial phases.
+ */
+export async function createProject(
+  kanbanRoot: string,
+  data: {
+    name: string;
+    phases?: string[];
+  }
+): Promise<string> {
+  const projectsDir = path.join(kanbanRoot, PROJECTS_FOLDER);
+  await fs.mkdir(projectsDir, { recursive: true });
+
+  const projectName = data.name.toLowerCase().replace(/\s+/g, '-');
+  const projectDir = path.join(projectsDir, projectName);
+  await ensureSafePath(kanbanRoot, projectDir);
+
+  await fs.mkdir(projectDir, { recursive: true });
+
+  // Create initial phases if provided
+  if (data.phases && data.phases.length > 0) {
+    for (const phase of data.phases) {
+      const phaseName = phase.toLowerCase().replace(/\s+/g, '-');
+      const phaseDir = path.join(projectDir, phaseName);
+      await ensureSafePath(kanbanRoot, phaseDir);
+      await fs.mkdir(phaseDir, { recursive: true });
+    }
+  }
+
+  return projectName;
+}

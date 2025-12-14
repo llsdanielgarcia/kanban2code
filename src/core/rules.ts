@@ -2,9 +2,9 @@ import { Stage } from '../types/task';
 
 export const ALLOWED_TRANSITIONS: Record<Stage, Stage[]> = {
   inbox: ['plan'],
-  plan: ['code'],
-  code: ['audit'],
-  audit: ['completed'],
+  plan: ['inbox', 'code'],
+  code: ['plan', 'audit'],
+  audit: ['code', 'completed'],
   // Completed items should only be archived, not moved back into the board
   completed: [],
 };
