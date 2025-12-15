@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Task } from '../../../types/task';
 
 interface LocationPickerProps {
@@ -23,6 +23,17 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   const [selectedPhase, setSelectedPhase] = useState(
     value.type === 'project' ? value.phase || '' : ''
   );
+
+  useEffect(() => {
+    setLocationType(value.type);
+    if (value.type === 'project') {
+      setSelectedProject(value.project);
+      setSelectedPhase(value.phase || '');
+    } else {
+      setSelectedProject('');
+      setSelectedPhase('');
+    }
+  }, [value]);
 
   // Extract unique projects from tasks
   const projectOptions = useMemo(() => {

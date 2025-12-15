@@ -91,11 +91,14 @@ src/
 │   ├── archive.ts                         # Service for archiving completed tasks and projects
 │   ├── context.ts                         # Service for loading and managing context files
 │   ├── copy.ts                            # Service for copying task context to clipboard
+│   ├── delete-task.ts                     # Service for deleting tasks by ID
 │   ├── frontmatter.ts                     # Service for parsing and serializing task frontmatter
 │   ├── prompt-builder.ts                  # Service for building XML prompts with 9-layer context
+│   ├── projects.ts                        # Service for listing/creating projects and phases
 │   ├── scaffolder.ts                      # Service for scaffolding new Kanban2Code workspaces
 │   ├── scanner.ts                         # Service for scanning and loading task files
 │   ├── stage-manager.ts                   # Service for managing task stage transitions
+│   ├── task-content.ts                    # Service for loading/saving task file content + metadata (includes file relocation)
 │   ├── task-watcher.ts                    # Debounced filesystem watcher for task events (create/update/delete/move)
 │   └── template.ts                        # Service for loading task templates from filesystem
 ├── types/
@@ -114,7 +117,9 @@ src/
 │   │   ├── main.tsx                       # Entry point for React webview application
 │   │   ├── vscodeApi.ts                   # Shared VS Code API instance (singleton pattern)
 │   │   ├── components/                    # React components for the sidebar UI (Phase 3)
+│   │   │   ├── AgentPicker.tsx            # Agent selection dropdown (used by create/edit task flows)
 │   │   │   ├── ContextMenu.tsx            # Reusable context menu component
+│   │   │   ├── ContextPicker.tsx          # Multi-select list of context files (used by create/edit task flows)
 │   │   │   ├── EmptyState.tsx             # Empty state display component
 │   │   │   ├── FilterBar.tsx              # Project/tag filters with collapsible UI
 │   │   │   ├── Icons.tsx                  # Icon components for the UI
@@ -127,6 +132,7 @@ src/
 │   │   │   ├── Sidebar.tsx                # Main sidebar container component
 │   │   │   ├── SidebarActions.tsx         # Action buttons section
 │   │   │   ├── SidebarToolbar.tsx         # Top toolbar with title
+│   │   │   ├── TaskEditorModal.tsx        # Split-panel task editor (metadata + markdown content editor)
 │   │   │   ├── TaskContextMenu.tsx        # Task-specific context menu
 │   │   │   ├── TaskItem.tsx               # Individual task item component
 │   │   │   ├── TaskModal.tsx              # Task creation modal
@@ -159,7 +165,9 @@ tests/
 ├── types.test.ts                          # Unit tests for type definitions and utilities
 ├── utils.test.ts                          # Unit tests for utility functions
 ├── validation.test.ts                     # Unit tests for workspace validation
-└── webview.test.ts                        # Unit tests for webview components
+├── webview.test.ts                        # Unit tests for message envelope validation
+└── webview/
+    └── task-editor-modal.test.tsx         # UI tests for the split-panel TaskEditorModal
 
 media/                                     # Extension assets (e.g. activity bar icon in package.json)
 
@@ -212,13 +220,22 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 
 - Messages between host and webview use a versioned envelope: `{ version: 1, type, payload }`, defined in `src/webview/messaging.ts` and validated with zod.
 - Supported types:
-  - Host → Webview: `InitState`, `TaskUpdated`, `TaskSelected`, `FilterChanged`, `TemplatesLoaded`, `ShowKeyboardShortcuts`, `ToggleLayout`.
-  - Webview → Host: `RequestState` (ready handshake), `FilterChanged` (sidebar/board filters), `CreateTask`, `MoveTask`, `MoveTaskToLocation`, `ArchiveTask`, `DeleteTask`, `CopyContext`, `OpenTask`, `OpenBoard`, `OpenSettings`, `CreateKanban`, `CreateProject`, `CreateContext`, `CreateAgent`, `CreateTemplate`, `TaskContextMenu`, `RequestTemplates`, `ALERT`.
+  - Host → Webview: `InitState`, `TaskUpdated`, `TaskSelected`, `FilterChanged`, `TemplatesLoaded`, `ContextsLoaded`, `AgentsLoaded`, `ShowKeyboardShortcuts`, `ToggleLayout`, `TaskContentLoaded`, `TaskContentLoadFailed`, `TaskContentSaved`, `TaskContentSaveFailed`.
+  - Host → Webview (task editor): `FullTaskDataLoaded`, `FullTaskDataLoadFailed`, `TaskMetadataSaved`, `TaskMetadataSaveFailed`, `TemplateContentLoaded`, `TemplateContentLoadFailed`.
+  - Webview → Host: `RequestState` (ready handshake), `FilterChanged` (sidebar/board filters), `CreateTask`, `MoveTask`, `MoveTaskToLocation`, `ArchiveTask`, `DeleteTask`, `CopyContext`, `OpenTask`, `OpenBoard`, `OpenSettings`, `CreateKanban`, `CreateProject`, `CreateContext`, `CreateAgent`, `CreateTemplate`, `UpdateTemplate`, `TaskContextMenu`, `RequestTemplates`, `RequestContexts`, `RequestAgents`, `PickFile`, `RequestTaskContent`, `SaveTaskContent`, `ALERT`.
+  - Webview → Host (task editor): `RequestFullTaskData`, `SaveTaskWithMetadata`, `RequestTemplateContent`.
 - Key pattern: **Ready Handshake** - React app sends `RequestState` on mount to signal readiness, then host responds with `InitState`. This avoids race conditions where messages are sent before the webview is fully loaded.
 - Helper API: `createEnvelope`/`createMessage` build typed envelopes; `validateEnvelope` guards incoming data.
 - VS Code API management: The shared `src/webview/ui/vscodeApi.ts` module ensures `acquireVsCodeApi()` is called only once (VS Code limitation), preventing "instance already acquired" errors.
 - The React UI (`src/webview/ui/App.tsx`) uses the messaging system to communicate with the host extension, with the sidebar providing rich task management capabilities.
 - `InitState` payload now includes optional `context: 'sidebar' | 'board'` and `filterState` so a shared UI bundle can render the correct surface and start in sync.
+
+### Task Editing Flow (Split-Panel Editor)
+
+- UI: [`src/webview/ui/components/TaskEditorModal.tsx`](../src/webview/ui/components/TaskEditorModal.tsx) renders a left metadata panel (title/location/agent/template/contexts/tags) and a right markdown editor (Monaco).
+- Load: webview sends `RequestFullTaskData` → host replies `FullTaskDataLoaded` with file content, current metadata, and option lists (templates/agents/contexts/projects/phases).
+- Save: webview sends `SaveTaskWithMetadata` → host persists content/metadata via [`src/services/task-content.ts`](../src/services/task-content.ts) and returns `TaskMetadataSaved` (or `TaskMetadataSaveFailed`).
+- Templates: selecting a template triggers `RequestTemplateContent` → host loads via [`loadTemplateById`](../src/services/template.ts) and replies `TemplateContentLoaded` (or `TemplateContentLoadFailed`).
 
 ## Phase 3 Implementation Notes (Post-Completion Fixes)
 

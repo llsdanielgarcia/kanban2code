@@ -255,6 +255,13 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         setShowTemplateWarning(false);
         setPendingTemplate(null);
       }
+
+      if (message.type === 'TemplateContentLoadFailed') {
+        const payload = message.payload as { templateId: string; error: string };
+        setError(payload.error || 'Failed to load template');
+        setShowTemplateWarning(false);
+        setPendingTemplate(null);
+      }
     };
 
     window.addEventListener('message', handler);
@@ -292,7 +299,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     <div className="glass-overlay" onClick={handleOverlayClick}>
       <div className="glass-modal task-editor-modal" role="dialog" aria-labelledby="task-editor-title">
         <div className="modal-header">
-          <h2 id="task-editor-title">Edit Task: {task.title}</h2>
+          <h2 id="task-editor-title">Edit Task: {title || task.title}</h2>
           <button className="modal-close-btn" onClick={requestClose} aria-label="Close">×</button>
         </div>
 
@@ -410,14 +417,21 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                     </div>
                     {tags.length > 0 && (
                       <div className="tag-chips">
-                        {tags.map((tag) => (
-                          <span key={tag} className="tag-chip active">
-                            {tag}
-                            <button type="button" className="tag-remove" onClick={() => handleRemoveTag(tag)}>×</button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {tags.map((tag) => (
+                      <span key={tag} className="tag-chip active">
+                        {tag}
+                        <button
+                          type="button"
+                          className="tag-remove"
+                          aria-label={`Remove tag ${tag}`}
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
                   </div>
                 </div>
               </div>
