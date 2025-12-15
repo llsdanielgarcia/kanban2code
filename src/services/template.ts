@@ -158,6 +158,24 @@ export async function updateTaskTemplate(
 }
 
 /**
+ * Load a specific template by ID and return its content.
+ */
+export async function loadTemplateById(templateId: string): Promise<{ id: string; content: string }> {
+  const root = (await import('../workspace/state')).WorkspaceState.kanbanRoot;
+  if (!root) throw new Error('Kanban workspace not detected.');
+
+  const templatePath = path.join(root, TEMPLATES_FOLDER, 'tasks', `${templateId}.md`);
+
+  try {
+    const content = await fs.readFile(templatePath, 'utf-8');
+    const parsed = matter(content);
+    return { id: templateId, content: parsed.content };
+  } catch {
+    throw new Error(`Template '${templateId}' not found.`);
+  }
+}
+
+/**
  * Format a template ID into a human-readable name.
  * e.g., "bug-report" -> "Bug Report"
  */

@@ -4,6 +4,10 @@ import { createMessage, type MessageEnvelope } from '../../messaging';
 import { vscode } from '../vscodeApi';
 import loader from '@monaco-editor/loader';
 import { defineNavyNightTheme, NAVY_NIGHT_MONACO_THEME } from './monaco-theme';
+import { LocationPicker } from './LocationPicker';
+import { TemplatePicker } from './TemplatePicker';
+import { ContextPicker, type ContextFile } from './ContextPicker';
+import { AgentPicker, type Agent } from './AgentPicker';
 
 const MonacoEditor = React.lazy(async () => {
   const mod = await import('@monaco-editor/react');
@@ -30,6 +34,21 @@ function ensureMonacoConfigured() {
   monacoConfigured = true;
 }
 
+interface Template {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface TaskMetadata {
+  title: string;
+  location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
+  agent: string | null;
+  template: string | null;
+  contexts: string[];
+  tags: string[];
+}
+
 interface TaskEditorModalProps {
   isOpen: boolean;
   task: Task;
@@ -46,7 +65,42 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
   const taskIdRef = useRef<string>('');
 
-  const isDirty = useMemo(() => value !== original, [value, original]);
+  // Metadata state
+  const [title, setTitle] = useState<string>('');
+  const [location, setLocation] = useState<{ type: 'inbox' } | { type: 'project'; project: string; phase?: string }>({ type: 'inbox' });
+  const [agent, setAgent] = useState<string | null>(null);
+  const [template, setTemplate] = useState<string | null>(null);
+  const [contexts, setContexts] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+
+  // Original metadata for dirty checking
+  const [originalMetadata, setOriginalMetadata] = useState<TaskMetadata | null>(null);
+
+  // Available options from backend
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [availableContexts, setAvailableContexts] = useState<ContextFile[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
+
+  // Template warning state
+  const [showTemplateWarning, setShowTemplateWarning] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
+
+  const isMetadataDirty = useMemo(() => {
+    if (!originalMetadata) return false;
+    return (
+      title !== originalMetadata.title ||
+      JSON.stringify(location) !== JSON.stringify(originalMetadata.location) ||
+      agent !== originalMetadata.agent ||
+      template !== originalMetadata.template ||
+      JSON.stringify([...contexts].sort()) !== JSON.stringify([...originalMetadata.contexts].sort()) ||
+      JSON.stringify([...tags].sort()) !== JSON.stringify([...originalMetadata.tags].sort())
+    );
+  }, [title, location, agent, template, contexts, tags, originalMetadata]);
+
+  const isDirty = useMemo(() => value !== original || isMetadataDirty, [value, original, isMetadataDirty]);
 
   const requestClose = () => {
     if (isSaving) return;
@@ -61,13 +115,53 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     if (isSaving) return;
     setError(null);
     setIsSaving(true);
-    postMessage('SaveTaskContent', { taskId: task.id, content: value });
+    postMessage('SaveTaskWithMetadata', {
+      taskId: task.id,
+      content: value,
+      metadata: { title, location, agent, template, contexts, tags }
+    });
   };
 
   const retryLoad = () => {
     setError(null);
     setIsLoading(true);
-    postMessage('RequestTaskContent', { taskId: task.id });
+    postMessage('RequestFullTaskData', { taskId: task.id });
+  };
+
+  const handleTemplateChange = (newTemplate: string | null) => {
+    if (newTemplate && newTemplate !== template && value.trim()) {
+      setPendingTemplate(newTemplate);
+      setShowTemplateWarning(true);
+    } else {
+      setTemplate(newTemplate);
+      if (newTemplate) {
+        postMessage('RequestTemplateContent', { templateId: newTemplate });
+      }
+    }
+  };
+
+  const confirmTemplateChange = () => {
+    if (pendingTemplate) {
+      setTemplate(pendingTemplate);
+      postMessage('RequestTemplateContent', { templateId: pendingTemplate });
+    }
+  };
+
+  const cancelTemplateChange = () => {
+    setShowTemplateWarning(false);
+    setPendingTemplate(null);
+  };
+
+  const handleAddTag = () => {
+    const tag = tagInput.trim();
+    if (tag && !tags.includes(tag)) {
+      setTags(prev => [...prev, tag]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(prev => prev.filter(t => t !== tagToRemove));
   };
 
   useEffect(() => {
@@ -77,7 +171,19 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     setIsLoading(true);
     setIsSaving(false);
     setError(null);
-    postMessage('RequestTaskContent', { taskId: task.id });
+    // Reset metadata state
+    setTitle('');
+    setLocation({ type: 'inbox' });
+    setAgent(null);
+    setTemplate(null);
+    setContexts([]);
+    setTags([]);
+    setTagInput('');
+    setOriginalMetadata(null);
+    setShowTemplateWarning(false);
+    setPendingTemplate(null);
+    // Request full task data
+    postMessage('RequestFullTaskData', { taskId: task.id });
   }, [isOpen, task.id]);
 
   useEffect(() => {
@@ -89,42 +195,71 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
       const currentTaskId = taskIdRef.current;
 
-      if (message.type === 'TaskContentLoaded') {
-        const payload = message.payload as { taskId: string; content: string };
+      if (message.type === 'FullTaskDataLoaded') {
+        const payload = message.payload as {
+          taskId: string;
+          content: string;
+          metadata: TaskMetadata;
+          templates: Template[];
+          contexts: ContextFile[];
+          agents: Agent[];
+          projects: string[];
+          phasesByProject: Record<string, string[]>;
+        };
         if (payload.taskId !== currentTaskId) return;
         setOriginal(payload.content);
         setValue(payload.content);
+        setTitle(payload.metadata.title);
+        setLocation(payload.metadata.location);
+        setAgent(payload.metadata.agent);
+        setTemplate(payload.metadata.template);
+        setContexts(payload.metadata.contexts);
+        setTags(payload.metadata.tags);
+        setOriginalMetadata(payload.metadata);
+        setTemplates(payload.templates);
+        setAvailableContexts(payload.contexts);
+        setAgents(payload.agents);
+        setProjects(payload.projects);
+        setPhasesByProject(payload.phasesByProject);
         setIsLoading(false);
         setError(null);
       }
 
-      if (message.type === 'TaskContentLoadFailed') {
+      if (message.type === 'FullTaskDataLoadFailed') {
         const payload = message.payload as { taskId: string; error: string };
         if (payload.taskId !== currentTaskId) return;
         setIsLoading(false);
-        setError(payload.error || 'Failed to load task content');
+        setError(payload.error || 'Failed to load task data');
       }
 
-      if (message.type === 'TaskContentSaved') {
+      if (message.type === 'TaskMetadataSaved') {
         const payload = message.payload as { taskId: string };
         if (payload.taskId !== currentTaskId) return;
         setIsSaving(false);
         setOriginal(value);
+        setOriginalMetadata({ title, location, agent, template, contexts, tags });
         onSave?.(value);
         onClose();
       }
 
-      if (message.type === 'TaskContentSaveFailed') {
+      if (message.type === 'TaskMetadataSaveFailed') {
         const payload = message.payload as { taskId: string; error: string };
         if (payload.taskId !== currentTaskId) return;
         setIsSaving(false);
         setError(payload.error || 'Failed to save task');
       }
+
+      if (message.type === 'TemplateContentLoaded') {
+        const payload = message.payload as { templateId: string; content: string };
+        setValue(payload.content);
+        setShowTemplateWarning(false);
+        setPendingTemplate(null);
+      }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [isOpen, onClose, onSave, value]);
+  }, [isOpen, onClose, onSave, value, title, location, agent, template, contexts, tags]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -158,49 +293,162 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
       <div className="glass-modal task-editor-modal" role="dialog" aria-labelledby="task-editor-title">
         <div className="modal-header">
           <h2 id="task-editor-title">Edit Task: {task.title}</h2>
-          <button className="modal-close-btn" onClick={requestClose} aria-label="Close">
-            ×
-          </button>
+          <button className="modal-close-btn" onClick={requestClose} aria-label="Close">×</button>
         </div>
 
-        <div className="modal-body task-editor-body">
-          {isLoading && <div className="board-loading">Loading editor…</div>}
+        <div className="modal-body task-editor-body-split">
+          {isLoading && <div className="board-loading">Loading editor...</div>}
 
           {!isLoading && error && (
             <div className="board-error">
               {error}
               <div style={{ marginTop: 12 }}>
-                <button className="btn btn-secondary" onClick={retryLoad}>
-                  Retry
-                </button>
+                <button className="btn btn-secondary" onClick={retryLoad}>Retry</button>
               </div>
             </div>
           )}
 
           {!isLoading && !error && (
-            <div className="task-editor-container">
-              <Suspense fallback={<div className="board-loading">Loading Monaco…</div>}>
-                <MonacoEditor
-                  language="markdown"
-                  value={value}
-                  height="100%"
-                  theme={NAVY_NIGHT_MONACO_THEME}
-                  beforeMount={(monaco) => defineNavyNightTheme(monaco as any)}
-                  onChange={(next) => setValue(next ?? '')}
-                  options={{
-                    minimap: { enabled: false },
-                    wordWrap: 'on',
-                    lineNumbers: 'on',
-                    scrollBeyondLastLine: false,
-                    renderWhitespace: 'selection',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 13,
-                    tabSize: 2,
-                    automaticLayout: true,
-                  }}
-                />
-              </Suspense>
-            </div>
+            <>
+              {/* Left: Metadata Panel */}
+              <div className="task-editor-metadata">
+                {/* Title */}
+                <div className="task-editor-section">
+                  <div className="task-editor-section-title">Basic Info</div>
+                  <div className="form-group">
+                    <label className="form-label">Title <span className="required">*</span></label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Task title..."
+                    />
+                  </div>
+                </div>
+
+                <div className="task-editor-divider" />
+
+                {/* Location */}
+                <div className="task-editor-section">
+                  <div className="task-editor-section-title">Location</div>
+                  <LocationPicker
+                    tasks={[]}
+                    projects={projects}
+                    phasesByProject={phasesByProject}
+                    value={location}
+                    onChange={setLocation}
+                  />
+                  <span className="form-hint">Changing location will move the file</span>
+                </div>
+
+                <div className="task-editor-divider" />
+
+                {/* Agent */}
+                <div className="task-editor-section">
+                  <div className="task-editor-section-title">Assignment</div>
+                  <AgentPicker
+                    agents={agents}
+                    value={agent}
+                    onChange={setAgent}
+                    onCreateNew={() => postMessage('CreateAgent', {})}
+                  />
+                </div>
+
+                {/* Template */}
+                <div className="task-editor-section">
+                  <TemplatePicker
+                    templates={templates}
+                    value={template}
+                    onChange={handleTemplateChange}
+                    onCreateNew={() => postMessage('CreateTemplate', {})}
+                  />
+                  {showTemplateWarning && (
+                    <div className="template-warning">
+                      <span>Changing template will replace content</span>
+                      <div className="template-warning-actions">
+                        <button className="btn btn-secondary" onClick={cancelTemplateChange}>Cancel</button>
+                        <button className="btn btn-primary" onClick={confirmTemplateChange}>Apply</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="task-editor-divider" />
+
+                {/* Contexts */}
+                <div className="task-editor-section">
+                  <div className="task-editor-section-title">Context Files</div>
+                  <ContextPicker
+                    contexts={availableContexts}
+                    selected={contexts}
+                    onChange={setContexts}
+                    onCreateNew={() => postMessage('CreateContext', {})}
+                  />
+                </div>
+
+                <div className="task-editor-divider" />
+
+                {/* Tags */}
+                <div className="task-editor-section">
+                  <div className="task-editor-section-title">Tags</div>
+                  <div className="form-group">
+                    <div className="tag-input-container">
+                      <input
+                        type="text"
+                        className="form-input tag-input"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
+                        placeholder="Add tag..."
+                      />
+                    </div>
+                    {tags.length > 0 && (
+                      <div className="tag-chips">
+                        {tags.map((tag) => (
+                          <span key={tag} className="tag-chip active">
+                            {tag}
+                            <button type="button" className="tag-remove" onClick={() => handleRemoveTag(tag)}>×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Monaco Editor */}
+              <div className="task-editor-content">
+                <div className="task-editor-container">
+                  <Suspense fallback={<div className="board-loading">Loading Monaco...</div>}>
+                    <MonacoEditor
+                      language="markdown"
+                      value={value}
+                      height="100%"
+                      theme={NAVY_NIGHT_MONACO_THEME}
+                      beforeMount={(monaco) => defineNavyNightTheme(monaco as any)}
+                      onChange={(next) => setValue(next ?? '')}
+                      options={{
+                        minimap: { enabled: false },
+                        wordWrap: 'on',
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        renderWhitespace: 'selection',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 13,
+                        tabSize: 2,
+                        automaticLayout: true,
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -209,15 +457,11 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
             <span>[Esc] Cancel</span>
             <span>[Ctrl+S] Save</span>
             {isDirty && <span className="task-editor-dirty">Unsaved changes</span>}
-            {isSaving && <span className="task-editor-saving">Saving…</span>}
+            {isSaving && <span className="task-editor-saving">Saving...</span>}
           </div>
           <div className="task-editor-actions">
-            <button className="btn btn-secondary" onClick={requestClose} disabled={isSaving}>
-              Cancel
-            </button>
-            <button className="btn btn-primary" onClick={requestSave} disabled={isSaving || isLoading}>
-              Save
-            </button>
+            <button className="btn btn-secondary" onClick={requestClose} disabled={isSaving}>Cancel</button>
+            <button className="btn btn-primary" onClick={requestSave} disabled={isSaving || isLoading || !title.trim()}>Save</button>
           </div>
         </div>
       </div>

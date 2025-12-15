@@ -13,7 +13,8 @@ import { listAvailableContexts, listAvailableAgents, createContextFile, createAg
 import { KanbanPanel } from './KanbanPanel';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
-import { loadTaskContentById, saveTaskContentById } from '../services/task-content';
+import { loadTaskContentById, saveTaskContentById, saveTaskWithMetadata } from '../services/task-content';
+import { loadTemplateById } from '../services/template';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
@@ -127,6 +128,87 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             const message = error instanceof Error ? error.message : 'Unknown error';
             vscode.window.showErrorMessage(`Failed to save task: ${message}`);
             this._postMessage(createEnvelope('TaskContentSaveFailed', { taskId, error: message }));
+          }
+          break;
+        }
+
+        case 'RequestFullTaskData': {
+          const { taskId } = payload as { taskId: string };
+          try {
+            const root = WorkspaceState.kanbanRoot;
+            if (!root) throw new Error('Kanban workspace not detected.');
+            const { task, content } = await loadTaskContentById(taskId);
+            const templates = await loadTaskTemplates(root);
+            const contexts = await listAvailableContexts(root);
+            const agents = await listAvailableAgents(root);
+            const listing = await listProjectsAndPhases(root);
+
+            this._postMessage(createEnvelope('FullTaskDataLoaded', {
+              taskId,
+              content,
+              metadata: {
+                title: task.title,
+                location: task.project
+                  ? { type: 'project', project: task.project, phase: task.phase }
+                  : { type: 'inbox' },
+                agent: task.agent || null,
+                template: null,
+                contexts: task.contexts || [],
+                tags: task.tags || [],
+              },
+              templates: templates.map(t => ({ id: t.id, name: t.name, description: t.description })),
+              contexts,
+              agents,
+              projects: listing.projects,
+              phasesByProject: listing.phasesByProject,
+            }));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this._postMessage(createEnvelope('FullTaskDataLoadFailed', { taskId, error: message }));
+          }
+          break;
+        }
+
+        case 'SaveTaskWithMetadata': {
+          const { taskId, content, metadata } = payload as {
+            taskId: string;
+            content: string;
+            metadata: {
+              title: string;
+              location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
+              agent: string | null;
+              template: string | null;
+              contexts: string[];
+              tags: string[];
+            };
+          };
+          try {
+            const tasks = await saveTaskWithMetadata(taskId, content, metadata);
+            this.updateTasks(tasks);
+            KanbanPanel.currentPanel?.updateTasks(tasks);
+            this._postMessage(createEnvelope('TaskMetadataSaved', { taskId }));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to save task: ${message}`);
+            this._postMessage(createEnvelope('TaskMetadataSaveFailed', { taskId, error: message }));
+          }
+          break;
+        }
+
+        case 'RequestTemplateContent': {
+          const { templateId } = payload as { templateId: string };
+          try {
+            const template = await loadTemplateById(templateId);
+            this._postMessage(createEnvelope('TemplateContentLoaded', {
+              templateId,
+              content: template.content,
+            }));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this._postMessage(createEnvelope('TemplateContentLoadFailed', {
+              templateId,
+              error: message,
+            }));
           }
           break;
         }

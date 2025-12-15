@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Task Editor Modal</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/glassmorphic.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <style>
+    body {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--k2c-bg-base);
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    /* Enhanced modal - wider for side-by-side layout */
+    .task-editor-modal {
+      width: 95%;
+      max-width: 1100px;
+      height: 85vh;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--k2c-glass-bg);
+      backdrop-filter: blur(var(--k2c-glass-blur));
+      border: 1px solid var(--k2c-border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--k2c-shadow-lg);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--k2c-border-default);
+      flex-shrink: 0;
+    }
+    .modal-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--k2c-text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .modal-title .task-title-text {
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--k2c-text-muted);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .modal-close:hover {
+      background: var(--k2c-bg-hover);
+      color: var(--k2c-text-primary);
+    }
+
+    /* Main content area - side by side layout */
+    .modal-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Left panel - Metadata */
+    .metadata-panel {
+      width: 320px;
+      min-width: 280px;
+      max-width: 360px;
+      border-right: 1px solid var(--k2c-border-default);
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      background: var(--k2c-bg-surface-2);
+      flex-shrink: 0;
+    }
+
+    /* Right panel - Monaco Editor */
+    .editor-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--k2c-bg-surface-1);
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-bottom: 1px solid var(--k2c-border-subtle);
+      background: var(--k2c-bg-surface-2);
+    }
+
+    .editor-title {
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--k2c-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .editor-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* Monaco Editor placeholder */
+    .monaco-placeholder {
+      width: 100%;
+      height: 100%;
+      background: var(--k2c-bg-surface-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--k2c-text-muted);
+      font-family: var(--font-mono);
+      font-size: var(--font-size-sm);
+    }
+
+    .monaco-content {
+      width: 100%;
+      height: 100%;
+      padding: var(--spacing-md);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--k2c-text-primary);
+      background: transparent;
+      border: none;
+      resize: none;
+      outline: none;
+    }
+
+    /* Form Styles */
+    .section-header {
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--k2c-text-muted);
+      margin-bottom: var(--spacing-sm);
+      padding-bottom: var(--spacing-xs);
+      border-bottom: 1px solid var(--k2c-border-subtle);
+    }
+
+    .form-group {
+      margin-bottom: var(--spacing-md);
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--k2c-text-secondary);
+      margin-bottom: var(--spacing-xs);
+    }
+    .form-label .required {
+      color: var(--k2c-error);
+      margin-left: 2px;
+    }
+
+    .form-hint {
+      display: block;
+      font-size: var(--font-size-xs);
+      color: var(--k2c-text-muted);
+      margin-top: 4px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: var(--spacing-sm);
+      font-size: var(--font-size-sm);
+      background: var(--k2c-input-bg);
+      color: var(--k2c-input-text);
+      border: 1px solid var(--k2c-input-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--k2c-border-focus);
+      box-shadow: 0 0 0 1px var(--k2c-input-focus-ring);
+    }
+    .form-input::placeholder {
+      color: var(--k2c-input-placeholder);
+    }
+
+    .form-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 8px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      padding-right: 32px;
+    }
+
+    /* Location type toggle */
+    .location-type-toggle {
+      display: flex;
+      gap: 2px;
+      margin-bottom: var(--spacing-sm);
+      padding: 2px;
+      background: var(--k2c-bg-surface-3);
+      border-radius: var(--radius-sm);
+    }
+    .location-type-btn {
+      flex: 1;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+      color: var(--k2c-text-muted);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .location-type-btn:hover {
+      color: var(--k2c-text-secondary);
+    }
+    .location-type-btn.active {
+      color: var(--k2c-text-primary);
+      background: var(--k2c-accent-muted);
+    }
+
+    /* Context list */
+    .context-list {
+      max-height: 140px;
+      overflow-y: auto;
+      border: 1px solid var(--k2c-input-border);
+      border-radius: var(--radius-sm);
+      background: var(--k2c-input-bg);
+    }
+    .context-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .context-item:hover {
+      background: var(--k2c-bg-hover);
+    }
+    .context-item input[type="checkbox"] {
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: var(--k2c-accent);
+    }
+    .context-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .context-item-name {
+      font-size: var(--font-size-sm);
+      color: var(--k2c-text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .context-item-type {
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: var(--k2c-accent-subtle);
+      color: var(--k2c-accent);
+      margin-left: var(--spacing-xs);
+    }
+
+    /* Tags input */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: var(--spacing-xs);
+      min-height: 34px;
+      background: var(--k2c-input-bg);
+      border: 1px solid var(--k2c-input-border);
+      border-radius: var(--radius-sm);
+      cursor: text;
+    }
+    .tags-container:focus-within {
+      border-color: var(--k2c-border-focus);
+    }
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      background: var(--k2c-tag-feature-bg);
+      color: var(--k2c-tag-feature-text);
+      border-radius: 3px;
+    }
+    .tag-chip.bug { background: var(--k2c-tag-bug-bg); color: var(--k2c-tag-bug-text); }
+    .tag-chip.urgent { background: var(--k2c-tag-urgent-bg); color: var(--k2c-tag-urgent-text); }
+    .tag-chip.mvp { background: var(--k2c-tag-mvp-bg); color: var(--k2c-tag-mvp-text); }
+    .tag-chip.idea { background: var(--k2c-tag-idea-bg); color: var(--k2c-tag-idea-text); }
+    .tag-chip button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      opacity: 0.7;
+    }
+    .tag-chip button:hover {
+      opacity: 1;
+    }
+    .tags-input {
+      flex: 1;
+      min-width: 80px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--k2c-input-text);
+      font-size: var(--font-size-xs);
+      padding: 2px 4px;
+    }
+    .tags-input::placeholder {
+      color: var(--k2c-input-placeholder);
+    }
+
+    /* Template warning */
+    .template-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: var(--k2c-warning-muted);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: var(--radius-sm);
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-xs);
+      color: var(--k2c-warning);
+    }
+    .template-warning-icon {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Link button */
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0;
+      font-size: var(--font-size-xs);
+      color: var(--k2c-accent-hover);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .link-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-top: 1px solid var(--k2c-border-default);
+      background: var(--k2c-bg-surface-2);
+      flex-shrink: 0;
+    }
+
+    .footer-hints {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      font-size: var(--font-size-xs);
+      color: var(--k2c-text-muted);
+    }
+
+    .hint-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kbd {
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      background: var(--k2c-bg-surface-3);
+      border: 1px solid var(--k2c-border-subtle);
+      border-radius: 3px;
+      color: var(--k2c-text-secondary);
+    }
+
+    .dirty-indicator {
+      color: var(--k2c-error);
+      font-weight: 500;
+    }
+
+    .saving-indicator {
+      color: var(--k2c-accent);
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--k2c-btn-primary-bg);
+      color: var(--k2c-btn-primary-text);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--k2c-btn-primary-hover);
+    }
+    .btn-secondary {
+      background: var(--k2c-btn-secondary-bg);
+      color: var(--k2c-btn-secondary-text);
+      border: 1px solid var(--k2c-btn-secondary-border);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--k2c-btn-secondary-hover);
+    }
+
+    /* Icon */
+    .icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .icon-sm {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Divider */
+    .section-divider {
+      height: 1px;
+      background: var(--k2c-border-subtle);
+      margin: var(--spacing-md) 0;
+    }
+
+    /* Scrollbar */
+    .metadata-panel::-webkit-scrollbar,
+    .context-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .metadata-panel::-webkit-scrollbar-track,
+    .context-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .metadata-panel::-webkit-scrollbar-thumb,
+    .context-list::-webkit-scrollbar-thumb {
+      background: var(--k2c-scrollbar-thumb);
+      border-radius: 3px;
+    }
+    .metadata-panel::-webkit-scrollbar-thumb:hover,
+    .context-list::-webkit-scrollbar-thumb:hover {
+      background: var(--k2c-scrollbar-thumb-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="task-editor-modal">
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+          </svg>
+          <span>Edit Task:</span>
+          <span class="task-title-text">Fix auth token refresh bug</span>
+        </div>
+        <button class="modal-close" aria-label="Close">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body - Side by side layout -->
+      <div class="modal-body">
+        <!-- Left: Metadata Panel -->
+        <div class="metadata-panel">
+          <form id="metadataForm">
+            <!-- Title -->
+            <div class="section-header">Basic Info</div>
+            <div class="form-group">
+              <label class="form-label">
+                Title<span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-input"
+                value="Fix auth token refresh bug"
+                placeholder="Task title..."
+              >
+            </div>
+
+            <!-- Location -->
+            <div class="section-divider"></div>
+            <div class="section-header">Location</div>
+
+            <div class="form-group">
+              <div class="location-type-toggle">
+                <button type="button" class="location-type-btn">Inbox</button>
+                <button type="button" class="location-type-btn active">Project</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Project</label>
+              <select class="form-select">
+                <option value="auth-system" selected>auth-system</option>
+                <option value="navbar-redesign">navbar-redesign</option>
+                <option value="api-refactor">api-refactor</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phase</label>
+              <select class="form-select">
+                <option value="">No Phase</option>
+                <option value="phase-1" selected>phase-1</option>
+                <option value="phase-2">phase-2</option>
+              </select>
+              <span class="form-hint">Changing location will move the file</span>
+            </div>
+
+            <!-- Agent -->
+            <div class="section-divider"></div>
+            <div class="section-header">Assignment</div>
+
+            <div class="form-group">
+              <label class="form-label">Agent</label>
+              <select class="form-select">
+                <option value="">No Agent</option>
+                <option value="ncoder" selected>ncoder</option>
+                <option value="react-dev">react-dev</option>
+                <option value="api-builder">api-builder</option>
+              </select>
+              <span class="form-hint">
+                <a href="#" class="link-btn">+ Create new agent</a>
+              </span>
+            </div>
+
+            <!-- Template -->
+            <div class="form-group">
+              <label class="form-label">Template</label>
+              <select class="form-select" id="templateSelect">
+                <option value="">None</option>
+                <option value="bug-fix">Bug Fix</option>
+                <option value="feature">Feature Development</option>
+                <option value="refactor">Refactoring</option>
+              </select>
+              <div class="template-warning" id="templateWarning" style="display: none;">
+                <svg class="template-warning-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                </svg>
+                <span>Changing template will replace content</span>
+              </div>
+              <span class="form-hint">
+                <a href="#" class="link-btn">+ Create new template</a>
+              </span>
+            </div>
+
+            <!-- Context Files -->
+            <div class="section-divider"></div>
+            <div class="section-header">Context Files</div>
+
+            <div class="form-group">
+              <div class="context-list">
+                <label class="context-item">
+                  <input type="checkbox" value="architecture" checked>
+                  <div class="context-item-content">
+                    <div class="context-item-name">
+                      architecture.md
+                      <span class="context-item-type">global</span>
+                    </div>
+                  </div>
+                </label>
+                <label class="context-item">
+                  <input type="checkbox" value="phase-1-context" checked>
+                  <div class="context-item-content">
+                    <div class="context-item-name">
+                      phase-1-context.md
+                      <span class="context-item-type">project</span>
+                    </div>
+                  </div>
+                </label>
+                <label class="context-item">
+                  <input type="checkbox" value="design-system">
+                  <div class="context-item-content">
+                    <div class="context-item-name">
+                      design-system.md
+                      <span class="context-item-type">global</span>
+                    </div>
+                  </div>
+                </label>
+                <label class="context-item">
+                  <input type="checkbox" value="api-spec">
+                  <div class="context-item-content">
+                    <div class="context-item-name">
+                      api-spec.md
+                      <span class="context-item-type">project</span>
+                    </div>
+                  </div>
+                </label>
+              </div>
+              <span class="form-hint">
+                <a href="#" class="link-btn">+ Create new context</a>
+              </span>
+            </div>
+
+            <!-- Tags -->
+            <div class="section-divider"></div>
+            <div class="section-header">Tags</div>
+
+            <div class="form-group">
+              <div class="tags-container" id="tagsContainer">
+                <span class="tag-chip bug">
+                  bug
+                  <button type="button">
+                    <svg class="icon-sm" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                    </svg>
+                  </button>
+                </span>
+                <span class="tag-chip urgent">
+                  urgent
+                  <button type="button">
+                    <svg class="icon-sm" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                    </svg>
+                  </button>
+                </span>
+                <input type="text" class="tags-input" placeholder="Add tag...">
+              </div>
+              <span class="form-hint">Press Enter to add</span>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: Editor Panel -->
+        <div class="editor-panel">
+          <div class="editor-header">
+            <div class="editor-title">
+              <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                <path d="M4.5 12.5A.5.5 0 0 1 5 12h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 10h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm1.639-3.708 1.33.886 1.854-1.855a.25.25 0 0 1 .289-.047l1.888.974V8.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V8s1.54-1.274 1.639-1.208zM6.25 6a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/>
+              </svg>
+              Content (Markdown)
+            </div>
+          </div>
+          <div class="editor-container">
+            <!-- Monaco Editor would be rendered here -->
+            <textarea class="monaco-content" placeholder="Task content...">---
+stage: plan
+agent: ncoder
+tags:
+  - bug
+  - urgent
+contexts:
+  - architecture
+  - phase-1-context
+---
+
+# Fix auth token refresh bug
+
+## Problem
+The authentication token is not being refreshed correctly when it expires, causing users to be logged out unexpectedly.
+
+## Steps to Reproduce
+1. Log in to the application
+2. Wait for token to expire (or manually expire it)
+3. Try to make an authenticated request
+
+## Expected Behavior
+Token should automatically refresh without user intervention.
+
+## Current Behavior
+User is logged out and redirected to login page.
+
+## Technical Notes
+- Check the `refreshToken` function in `src/auth/token.ts`
+- Verify the refresh endpoint is being called
+- Check for race conditions in concurrent requests</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <div class="footer-hints">
+          <span class="hint-item">
+            <span class="kbd">Esc</span> Cancel
+          </span>
+          <span class="hint-item">
+            <span class="kbd">Ctrl+S</span> Save
+          </span>
+          <span class="dirty-indicator">Unsaved changes</span>
+          <!-- <span class="saving-indicator">Saving...</span> -->
+        </div>
+        <div class="footer-actions">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
+            </svg>
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Template warning toggle
+    const templateSelect = document.getElementById('templateSelect');
+    const templateWarning = document.getElementById('templateWarning');
+
+    templateSelect.addEventListener('change', (e) => {
+      templateWarning.style.display = e.target.value ? 'flex' : 'none';
+    });
+
+    // Tags input handling
+    const tagsInput = document.querySelector('.tags-input');
+    const tagsContainer = document.getElementById('tagsContainer');
+
+    tagsInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && tagsInput.value.trim()) {
+        e.preventDefault();
+        const tagChip = document.createElement('span');
+        tagChip.className = 'tag-chip';
+        tagChip.innerHTML = `
+          ${tagsInput.value.trim()}
+          <button type="button">
+            <svg class="icon-sm" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </button>
+        `;
+        tagChip.querySelector('button').addEventListener('click', () => tagChip.remove());
+        tagsContainer.insertBefore(tagChip, tagsInput);
+        tagsInput.value = '';
+      }
+    });
+
+    tagsContainer.addEventListener('click', (e) => {
+      if (e.target === tagsContainer) {
+        tagsInput.focus();
+      }
+    });
+
+    // Location type toggle
+    const locationBtns = document.querySelectorAll('.location-type-btn');
+    locationBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        locationBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        console.log('Save task');
+      }
+      if (e.key === 'Escape') {
+        console.log('Close modal');
+      }
+    });
+
+    // Remove tag buttons
+    document.querySelectorAll('.tag-chip button').forEach(btn => {
+      btn.addEventListener('click', () => btn.parentElement.remove());
+    });
+  </script>
+</body>
+</html>
