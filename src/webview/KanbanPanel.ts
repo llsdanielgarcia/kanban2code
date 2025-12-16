@@ -447,6 +447,28 @@ export class KanbanPanel {
           break;
         }
 
+        case 'PickFolder': {
+          const { requestId } = (payload as { requestId?: string }) ?? {};
+          const options: vscode.OpenDialogOptions = {
+            canSelectMany: false,
+            openLabel: 'Select',
+            canSelectFiles: false,
+            canSelectFolders: true,
+          };
+          const root = WorkspaceState.kanbanRoot;
+          if (root) {
+            options.defaultUri = vscode.Uri.file(root);
+          }
+          const folderUri = await vscode.window.showOpenDialog(options);
+          if (folderUri && folderUri[0]) {
+            const relativePath = root
+              ? folderUri[0].fsPath.replace(root, '').replace(/^[/\\]/, '').replace(/[/\\]$/, '')
+              : folderUri[0].fsPath.replace(/[/\\]$/, '');
+            this._postMessage(createEnvelope('FolderPicked', { path: relativePath, requestId }));
+          }
+          break;
+        }
+
         case 'CreateTemplate': {
           const templatePayload = payload as {
             name?: string;

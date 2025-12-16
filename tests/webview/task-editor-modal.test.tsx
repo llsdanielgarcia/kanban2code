@@ -3,7 +3,7 @@ import './setup-dom';
 import './setup-matchers';
 import React, { act } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createEnvelope } from '../../src/webview/messaging';
 
 vi.mock('@monaco-editor/loader', () => ({
@@ -36,6 +36,15 @@ function dispatchMessage(data: unknown) {
   act(() => {
     window.dispatchEvent(new MessageEvent('message', { data }));
   });
+}
+
+function getLocationTypeButton(name: RegExp) {
+  const buttons = screen.getAllByRole('button', { name });
+  const match = buttons.find((button) => button.classList.contains('location-type-btn'));
+  if (!match) {
+    throw new Error(`Expected to find location type button matching ${name}`);
+  }
+  return match;
 }
 
 describe('TaskEditorModal', () => {
@@ -110,7 +119,58 @@ describe('TaskEditorModal', () => {
     }));
 
     await screen.findByDisplayValue('Loaded Title');
-    expect(screen.getByRole('button', { name: /project/i })).toHaveClass('active');
+    expect(getLocationTypeButton(/project/i)).toHaveClass('active');
+  });
+
+  it('creates a project from LocationPicker and selects it', async () => {
+    const { TaskEditorModal } = await import('../../src/webview/ui/components/TaskEditorModal');
+
+    render(
+      <TaskEditorModal
+        isOpen
+        task={{ id: 't1', title: 'Task 1', filePath: '/tmp/t1.md', stage: 'inbox', content: '' } as any}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(postMessageSpy).toHaveBeenCalled());
+
+    dispatchMessage(createEnvelope('FullTaskDataLoaded', {
+      taskId: 't1',
+      content: '---\nstage: inbox\n---\n\n# Title\n',
+      metadata: {
+        title: 'Loaded Title',
+        location: { type: 'inbox' },
+        agent: null,
+        template: null,
+        contexts: [],
+        tags: [],
+      },
+      templates: [],
+      contexts: [],
+      agents: [],
+      projects: [],
+      phasesByProject: {},
+    }));
+
+    await screen.findByDisplayValue('Loaded Title');
+
+    fireEvent.click(getLocationTypeButton(/project/i));
+    fireEvent.click(screen.getByRole('button', { name: /create project/i }));
+
+    const dialog = screen.getByRole('dialog', { name: /create project/i });
+    fireEvent.change(within(dialog).getByLabelText(/project name/i), { target: { value: 'My Project' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /^create project$/i }));
+
+    await waitFor(() => {
+      const createProject = postMessageSpy.mock.calls.find((call) => (call[0] as any).type === 'CreateProject')?.[0] as any;
+      expect(createProject).toBeTruthy();
+      expect(createProject.payload).toEqual({ name: 'My Project', phases: undefined });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^project$/i)).toHaveValue('my-project');
+    });
   });
 
   it('shows dirty indicator when metadata changes and confirms on cancel', async () => {

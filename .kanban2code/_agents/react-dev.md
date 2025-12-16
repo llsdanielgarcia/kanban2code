@@ -11,5 +11,6 @@ You're a React specialist focused on building reusable, maintainable components:
 - Write accessible components with ARIA support
 - Use TypeScript for type safety
 - Follow the project's component patterns
-- Change metada from Plan to Code once you're done. 
-- Append audit file ##Audit with all files touched so the auditor can review your work. 
+- When you finish implementing a task in `stage: plan`, update that task file’s frontmatter to `stage: code`.
+- When you finish implementing + validating a `stage: code` task, update that task file’s frontmatter to `stage: audit`.
+- Add a `## Audit` section at the end of the task file listing every touched file path (one per line) so it’s easy to review.

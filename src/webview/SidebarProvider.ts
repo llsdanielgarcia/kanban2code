@@ -405,6 +405,28 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
+        case 'PickFolder': {
+          const { requestId } = (payload as { requestId?: string }) ?? {};
+          const options: vscode.OpenDialogOptions = {
+            canSelectMany: false,
+            openLabel: 'Select',
+            canSelectFiles: false,
+            canSelectFolders: true,
+          };
+          const root = WorkspaceState.kanbanRoot;
+          if (root) {
+            options.defaultUri = vscode.Uri.file(root);
+          }
+          const folderUri = await vscode.window.showOpenDialog(options);
+          if (folderUri && folderUri[0]) {
+            const relativePath = root
+              ? folderUri[0].fsPath.replace(root, '').replace(/^[/\\]/, '').replace(/[/\\]$/, '')
+              : folderUri[0].fsPath.replace(/[/\\]$/, '');
+            this._postMessage(createEnvelope('FolderPicked', { path: relativePath, requestId }));
+          }
+          break;
+        }
+
         case 'MoveTask': {
           const { taskId, toStage, newStage } = payload as { taskId: string; toStage?: Stage; newStage?: Stage };
           const stage = toStage ?? newStage;
@@ -530,6 +552,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   public showKeyboardShortcuts() {
     this._postMessage(createEnvelope('ShowKeyboardShortcuts', {}));
+  }
+
+  public openTaskModal() {
+    this._postMessage(createEnvelope('OpenTaskModal', {}));
   }
 
   private _getWebviewContent(webview: vscode.Webview) {

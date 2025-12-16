@@ -106,6 +106,12 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
         return;
       }
 
+      // If no options provided (e.g., from keyboard shortcut), open the modal
+      if (!options) {
+        sidebarProvider.openTaskModal();
+        return;
+      }
+
       const title =
         options?.title ??
         (await vscode.window.showInputBox({

@@ -68,6 +68,23 @@ test('loadCustomContexts rejects unsafe paths', async () => {
   await expect(loadCustomContexts(KANBAN_ROOT, ['../escape'])).rejects.toThrow('Path validation failed');
 });
 
+test('loadCustomContexts expands folder: contexts recursively', async () => {
+  const folder = path.join(KANBAN_ROOT, 'sample-context-folder');
+  await fs.mkdir(path.join(folder, 'nested'), { recursive: true });
+  await fs.writeFile(path.join(folder, 'a.md'), 'A');
+  await fs.writeFile(path.join(folder, 'nested', 'b.ts'), 'B');
+
+  const combined = await loadCustomContexts(KANBAN_ROOT, ['folder:sample-context-folder']);
+  expect(combined).toContain('A');
+  expect(combined).toContain('B');
+  expect(combined).toContain('sample-context-folder/a.md');
+  expect(combined).toContain('sample-context-folder/nested/b.ts');
+});
+
+test('loadCustomContexts rejects unsafe folder: contexts', async () => {
+  await expect(loadCustomContexts(KANBAN_ROOT, ['folder:../escape'])).rejects.toThrow('Path validation failed');
+});
+
 test('loadStageTemplate reads template or returns fallback', async () => {
   const templatesDir = path.join(KANBAN_ROOT, TEMPLATES_FOLDER, 'stages');
   await fs.mkdir(templatesDir, { recursive: true });

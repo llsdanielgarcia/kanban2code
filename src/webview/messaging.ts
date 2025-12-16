@@ -4,6 +4,7 @@ export const MESSAGE_VERSION = 1 as const;
 
 export const HostToWebviewMessageTypes = [
   'ShowKeyboardShortcuts',
+  'OpenTaskModal',
   'TaskUpdated',
   'TaskSelected',
   'ToggleLayout',
@@ -13,6 +14,7 @@ export const HostToWebviewMessageTypes = [
   'ContextsLoaded',
   'AgentsLoaded',
   'FilePicked',
+  'FolderPicked',
   'TaskContentLoaded',
   'TaskContentLoadFailed',
   'TaskContentSaved',
@@ -48,6 +50,7 @@ export const WebviewToHostMessageTypes = [
   'RequestContexts',
   'RequestAgents',
   'PickFile',
+  'PickFolder',
   'RequestTaskContent',
   'SaveTaskContent',
   'RequestFullTaskData',

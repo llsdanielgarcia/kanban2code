@@ -32,9 +32,10 @@ function postMessage(type: string, payload: unknown) {
 interface SidebarProps {
   hasKanban: boolean;
   showKeyboardShortcutsNonce?: number;
+  openTaskModalNonce?: number;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcutsNonce = 0 }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcutsNonce = 0, openTaskModalNonce = 0 }) => {
   const { tasks, templates, contexts, agents, projects, phasesByProject, isLoading } = useTaskData();
   const {
     filterState,
@@ -83,6 +84,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
       setShowKeyboardHelp(true);
     }
   }, [showKeyboardShortcutsNonce]);
+
+  useEffect(() => {
+    if (openTaskModalNonce > 0) {
+      setShowTaskModal(true);
+    }
+  }, [openTaskModalNonce]);
 
   // Ensure we keep a selected task for keyboard-triggered context menu
   useEffect(() => {

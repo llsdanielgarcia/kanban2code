@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Stage } from '../../../types/task';
 import { createMessage } from '../../messaging';
 import { LocationPicker } from './LocationPicker';
 import { TemplatePicker } from './TemplatePicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { AgentPicker, type Agent } from './AgentPicker';
+import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
 
 function postMessage(type: string, payload: unknown) {
@@ -68,6 +69,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   defaultLocation = 'inbox',
   parentTaskId,
 }) => {
+  const folderPickRequestIdRef = useRef<string | null>(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [localProjects, setLocalProjects] = useState<string[]>(projects);
   const [formData, setFormData] = useState<TaskFormData>({
     title: '',
     location: typeof defaultLocation === 'string'
@@ -85,6 +89,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      folderPickRequestIdRef.current = null;
+      setShowProjectModal(false);
       setFormData({
         title: '',
         location: typeof defaultLocation === 'string'
@@ -100,6 +106,41 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setTagInput('');
     }
   }, [isOpen, defaultLocation]);
+
+  useEffect(() => {
+    setLocalProjects((prev) => {
+      const merged = new Set([...prev, ...projects]);
+      return Array.from(merged).sort();
+    });
+  }, [projects]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handler = (event: MessageEvent) => {
+      const message = event.data;
+      if (message?.type !== 'FolderPicked') return;
+      if (!message.payload?.path) return;
+      const requestId = message.payload?.requestId as string | undefined;
+      if (!requestId || requestId !== folderPickRequestIdRef.current) return;
+      folderPickRequestIdRef.current = null;
+
+      const folderRef = `folder:${message.payload.path}`;
+      setFormData((prev) => ({
+        ...prev,
+        contexts: prev.contexts.includes(folderRef) ? prev.contexts : [...prev.contexts, folderRef],
+      }));
+    };
+
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [isOpen]);
+
+  const handlePickFolder = () => {
+    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    folderPickRequestIdRef.current = requestId;
+    postMessage('PickFolder', { requestId });
+  };
 
   // Handle escape key
   useEffect(() => {
@@ -171,6 +212,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
+  const handleProjectCreated = (projectName: string) => {
+    setLocalProjects((prev) => {
+      const merged = new Set([...prev, projectName]);
+      return Array.from(merged).sort();
+    });
+    setFormData((prev) => ({
+      ...prev,
+      location: { type: 'project', project: projectName },
+    }));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -213,10 +265,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* Location */}
           <LocationPicker
             tasks={tasks}
-            projects={projects}
+            projects={localProjects}
             phasesByProject={phasesByProject}
             value={formData.location}
             onChange={(location) => setFormData((prev) => ({ ...prev, location }))}
+            onCreateProject={() => setShowProjectModal(true)}
           />
 
           {/* Stage */}
@@ -256,6 +309,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             selected={formData.contexts}
             onChange={(selectedContexts) => setFormData((prev) => ({ ...prev, contexts: selectedContexts }))}
             onCreateNew={handleCreateContext}
+            onPickFolder={handlePickFolder}
           />
 
           {/* Tags */}
@@ -323,6 +377,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </button>
         </div>
       </div>
+
+      <ProjectModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        onCreated={handleProjectCreated}
+      />
     </div>
   );
 };

@@ -1605,6 +1605,46 @@ body {
   margin-bottom: var(--spacing-md);
 }
 
+.context-picker .form-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.context-custom-section {
+  padding-top: var(--spacing-xs);
+}
+
+.context-custom-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.context-custom-divider {
+  height: 1px;
+  background: var(--vscode-panel-border);
+  margin: var(--spacing-xs) var(--spacing-md);
+  opacity: 0.6;
+}
+
+.context-item-icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--vscode-descriptionForeground);
+  flex: 0 0 auto;
+}
+
+.context-item-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .section-header {
   font-size: var(--font-size-sm);
   font-weight: 600;

@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { Dirent } from 'fs';
 import matter from 'gray-matter';
 import { AGENTS_FOLDER, CONTEXT_FOLDER, PROJECTS_FOLDER, TEMPLATES_FOLDER } from '../core/constants';
 import { Stage } from '../types/task';
@@ -236,6 +237,58 @@ function ensureExtension(name: string): string {
   return name.endsWith('.md') ? name : `${name}.md`;
 }
 
+const FOLDER_CONTEXT_PREFIX = 'folder:' as const;
+
+async function readFolderRecursive(root: string, relativeFolderPath: string): Promise<string> {
+  const normalizedFolder = relativeFolderPath
+    .replace(/^[/\\]+/, '')
+    .replace(/[/\\]+$/, '');
+
+  const folderPath = path.join(root, normalizedFolder);
+  await ensureSafePath(root, folderPath);
+
+  const filePaths: string[] = [];
+
+  const walk = async (relativeDir: string) => {
+    const absoluteDir = path.join(root, relativeDir);
+    await ensureSafePath(root, absoluteDir);
+    let dirEntries: Dirent[];
+    try {
+      dirEntries = await fs.readdir(absoluteDir, { withFileTypes: true });
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') return;
+      console.warn(`Failed to read folder context ${absoluteDir}:`, error);
+      return;
+    }
+
+    for (const entry of dirEntries) {
+      const childRelative = path.join(relativeDir, entry.name);
+      const childAbsolute = path.join(root, childRelative);
+      await ensureSafePath(root, childAbsolute);
+      if (entry.isDirectory()) {
+        await walk(childRelative);
+      } else if (entry.isFile()) {
+        filePaths.push(childRelative);
+      }
+    }
+  };
+
+  // Seed the walk from the requested folder, not necessarily the root.
+  await walk(normalizedFolder);
+
+  const contents = await Promise.all(
+    filePaths
+      .sort((a, b) => a.localeCompare(b))
+      .map(async (relativePath) => {
+        const content = await readFileIfExists(root, relativePath);
+        if (!content) return '';
+        return `<!-- file: ${relativePath} -->\n${content}`;
+      }),
+  );
+
+  return contents.filter(Boolean).join('\n\n');
+}
+
 export async function loadGlobalContext(root: string): Promise<string> {
   const files = ['how-it-works.md', 'architecture.md', 'project-details.md'];
 
@@ -271,6 +324,11 @@ export async function loadCustomContexts(root: string, contextNames?: string[] |
 
   const contents = await Promise.all(
     contextNames.map(async (ctx) => {
+      if (ctx.startsWith(FOLDER_CONTEXT_PREFIX)) {
+        const folderPath = ctx.slice(FOLDER_CONTEXT_PREFIX.length);
+        return readFolderRecursive(root, folderPath);
+      }
+
       const normalized = ensureExtension(ctx);
       const isExplicitPath = normalized.includes('/') || normalized.includes('\\');
       if (isExplicitPath) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import type { Task } from '../../../types/task';
 
 interface LocationPickerProps {
@@ -7,6 +7,7 @@ interface LocationPickerProps {
   phasesByProject?: Record<string, string[]>;
   value: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   onChange: (location: LocationPickerProps['value']) => void;
+  onCreateProject?: () => void;
 }
 
 export const LocationPicker: React.FC<LocationPickerProps> = ({
@@ -15,7 +16,10 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   phasesByProject: knownPhasesByProject = {},
   value,
   onChange,
+  onCreateProject,
 }) => {
+  const projectSelectId = useId();
+  const phaseSelectId = useId();
   const [locationType, setLocationType] = useState<'inbox' | 'project'>(value.type);
   const [selectedProject, setSelectedProject] = useState(
     value.type === 'project' ? value.project : ''
@@ -91,11 +95,12 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     <div className="location-picker">
       <div className="form-group">
         <label className="form-label">Location</label>
-        <div className="location-type-buttons">
+        <div className="location-type-selector">
           <button
             type="button"
             className={`location-type-btn ${locationType === 'inbox' ? 'active' : ''}`}
             onClick={() => handleTypeChange('inbox')}
+            aria-pressed={locationType === 'inbox'}
           >
             📥 Inbox
           </button>
@@ -103,6 +108,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             type="button"
             className={`location-type-btn ${locationType === 'project' ? 'active' : ''}`}
             onClick={() => handleTypeChange('project')}
+            aria-pressed={locationType === 'project'}
           >
             📁 Project
           </button>
@@ -110,10 +116,13 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       </div>
 
       {locationType === 'project' && (
-        <>
+        <div className="location-selects">
           <div className="form-group">
-            <label className="form-label">Project</label>
+            <label className="form-label" htmlFor={projectSelectId}>
+              Project
+            </label>
             <select
+              id={projectSelectId}
               className="form-select"
               value={selectedProject}
               onChange={(e) => handleProjectChange(e.target.value)}
@@ -125,12 +134,22 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
                 </option>
               ))}
             </select>
+            {onCreateProject && (
+              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={onCreateProject}>
+                  Create Project
+                </button>
+              </div>
+            )}
           </div>
 
           {phaseOptions.length > 0 && (
             <div className="form-group">
-              <label className="form-label">Phase (optional)</label>
+              <label className="form-label" htmlFor={phaseSelectId}>
+                Phase (optional)
+              </label>
               <select
+                id={phaseSelectId}
                 className="form-select"
                 value={selectedPhase}
                 onChange={(e) => handlePhaseChange(e.target.value)}
@@ -144,7 +163,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
               </select>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

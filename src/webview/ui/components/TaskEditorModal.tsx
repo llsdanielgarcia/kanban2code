@@ -8,6 +8,7 @@ import { LocationPicker } from './LocationPicker';
 import { TemplatePicker } from './TemplatePicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { AgentPicker, type Agent } from './AgentPicker';
+import { ProjectModal } from './ProjectModal';
 
 const MonacoEditor = React.lazy(async () => {
   const mod = await import('@monaco-editor/react');
@@ -64,6 +65,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   const [error, setError] = useState<string | null>(null);
 
   const taskIdRef = useRef<string>('');
+  const folderPickRequestIdRef = useRef<string | null>(null);
 
   // Metadata state
   const [title, setTitle] = useState<string>('');
@@ -83,6 +85,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
+  const [showProjectModal, setShowProjectModal] = useState(false);
 
   // Template warning state
   const [showTemplateWarning, setShowTemplateWarning] = useState(false);
@@ -167,10 +170,12 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   useEffect(() => {
     if (!isOpen) return;
     taskIdRef.current = task.id;
+    folderPickRequestIdRef.current = null;
     ensureMonacoConfigured();
     setIsLoading(true);
     setIsSaving(false);
     setError(null);
+    setShowProjectModal(false);
     // Reset metadata state
     setTitle('');
     setLocation({ type: 'inbox' });
@@ -185,6 +190,20 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     // Request full task data
     postMessage('RequestFullTaskData', { taskId: task.id });
   }, [isOpen, task.id]);
+
+  const handleProjectCreated = (projectName: string) => {
+    setProjects((prev) => {
+      const merged = new Set([...prev, projectName]);
+      return Array.from(merged).sort();
+    });
+    setLocation({ type: 'project', project: projectName });
+  };
+
+  const handlePickFolder = () => {
+    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    folderPickRequestIdRef.current = requestId;
+    postMessage('PickFolder', { requestId });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -261,6 +280,15 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         setError(payload.error || 'Failed to load template');
         setShowTemplateWarning(false);
         setPendingTemplate(null);
+      }
+
+      if (message.type === 'FolderPicked') {
+        const payload = message.payload as { path?: string; requestId?: string };
+        if (!payload.path) return;
+        if (!payload.requestId || payload.requestId !== folderPickRequestIdRef.current) return;
+        folderPickRequestIdRef.current = null;
+        const folderRef = `folder:${payload.path}`;
+        setContexts((prev) => (prev.includes(folderRef) ? prev : [...prev, folderRef]));
       }
     };
 
@@ -345,6 +373,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                     phasesByProject={phasesByProject}
                     value={location}
                     onChange={setLocation}
+                    onCreateProject={() => setShowProjectModal(true)}
                   />
                   <span className="form-hint">Changing location will move the file</span>
                 </div>
@@ -391,6 +420,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                     selected={contexts}
                     onChange={setContexts}
                     onCreateNew={() => postMessage('CreateContext', {})}
+                    onPickFolder={handlePickFolder}
                   />
                 </div>
 
@@ -479,6 +509,12 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
           </div>
         </div>
       </div>
+
+      <ProjectModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        onCreated={handleProjectCreated}
+      />
     </div>
   );
 };

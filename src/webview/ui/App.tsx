@@ -17,6 +17,7 @@ export const App: React.FC = () => {
   const [context, setContext] = useState<'sidebar' | 'board'>('sidebar');
   const [showKeyboardShortcutsNonce, setShowKeyboardShortcutsNonce] = useState(0);
   const [toggleLayoutNonce, setToggleLayoutNonce] = useState(0);
+  const [openTaskModalNonce, setOpenTaskModalNonce] = useState(0);
 
   useEffect(() => {
     const handler = (event: MessageEvent<MessageEnvelope>) => {
@@ -35,6 +36,10 @@ export const App: React.FC = () => {
 
       if (message.type === 'ToggleLayout') {
         setToggleLayoutNonce((n) => n + 1);
+      }
+
+      if (message.type === 'OpenTaskModal') {
+        setOpenTaskModalNonce((n) => n + 1);
       }
     };
 
@@ -75,6 +80,7 @@ export const App: React.FC = () => {
       <Sidebar
         hasKanban={hasKanban}
         showKeyboardShortcutsNonce={showKeyboardShortcutsNonce}
+        openTaskModalNonce={openTaskModalNonce}
       />
     );
 };
