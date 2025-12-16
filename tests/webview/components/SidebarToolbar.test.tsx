@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 describe('SidebarToolbar', () => {
-  it('renders a prominent Open Board button and triggers callback', async () => {
+  it('renders a prominent View Kanban button and triggers callback', async () => {
     const { SidebarToolbar } = await import('../../../src/webview/ui/components/SidebarToolbar');
 
     const onOpenBoard = vi.fn();
@@ -14,12 +14,12 @@ describe('SidebarToolbar', () => {
 
     render(<SidebarToolbar onOpenBoard={onOpenBoard} onOpenSettings={onOpenSettings} />);
 
-    const openBoardButton = screen.getByRole('button', { name: /open board/i });
-    expect(openBoardButton).toHaveClass('btn-primary');
-    expect(openBoardButton).toHaveClass('btn-board');
-    expect(openBoardButton).toHaveTextContent(/open board/i);
+    const viewKanbanButton = screen.getByRole('button', { name: /view kanban/i });
+    expect(viewKanbanButton).toHaveClass('btn-primary');
+    expect(viewKanbanButton).toHaveClass('btn-board');
+    expect(viewKanbanButton).toHaveTextContent(/view kanban/i);
 
-    fireEvent.click(openBoardButton);
+    fireEvent.click(viewKanbanButton);
     expect(onOpenBoard).toHaveBeenCalledTimes(1);
     expect(onOpenSettings).not.toHaveBeenCalled();
   });

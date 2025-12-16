@@ -1,5 +1,5 @@
 import React from 'react';
-import { SettingsIcon, BoardIcon } from './Icons';
+import { SettingsIcon, KanbanIcon } from './Icons';
 
 interface SidebarToolbarProps {
   onOpenBoard: () => void;
@@ -16,11 +16,11 @@ export const SidebarToolbar: React.FC<SidebarToolbarProps> = ({
       <div className="toolbar-actions">
         <button
           className="btn btn-primary btn-board"
-          aria-label="Open Board"
+          aria-label="View Kanban"
           onClick={onOpenBoard}
         >
-          <BoardIcon />
-          <span className="btn-board-label">Open Board</span>
+          <KanbanIcon />
+          <span className="btn-board-label">View Kanban</span>
         </button>
         <button
           className="btn btn-icon btn-ghost tooltip"

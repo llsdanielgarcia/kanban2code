@@ -1,4 +1,5 @@
 import React from 'react';
+import { Kanban } from 'lucide-react';
 
 interface IconProps {
   className?: string;
@@ -18,6 +19,10 @@ export const BoardIcon: React.FC<IconProps> = ({ className = 'icon', style }) =>
     <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
     <path d="M5 0v16M10 0v16"/>
   </svg>
+);
+
+export const KanbanIcon: React.FC<IconProps> = ({ className = 'icon', style, size = 16 }) => (
+  <Kanban className={className} style={style} size={size} strokeWidth={2} />
 );
 
 export const PlusIcon: React.FC<IconProps> = ({ className = 'icon', style }) => (
@@ -144,6 +149,7 @@ export const ClipboardIcon: React.FC<IconProps> = ({ className = 'icon', style, 
 export const Icons = {
   Settings: SettingsIcon,
   Board: BoardIcon,
+  Kanban: KanbanIcon,
   Plus: PlusIcon,
   Folder: FolderIcon,
   Context: ContextIcon,
