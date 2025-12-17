@@ -1,15 +1,28 @@
-import { expect, test, afterEach, describe } from 'vitest';
+import { beforeAll, beforeEach, afterEach, expect, test, describe, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { scaffoldWorkspace, syncBundledAgents, KANBAN_FOLDER } from '../src/services/scaffolder';
 import { BUNDLED_AGENTS } from '../src/assets/agents';
 
-const TEST_DIR = path.join(os.tmpdir(), 'kanban2code-test-' + Date.now());
+let scaffoldWorkspace: typeof import('../src/services/scaffolder').scaffoldWorkspace;
+let syncBundledAgents: typeof import('../src/services/scaffolder').syncBundledAgents;
+let KANBAN_FOLDER: typeof import('../src/services/scaffolder').KANBAN_FOLDER;
 
-test('scaffolderWorkspace creates expected structure', async () => {
+beforeAll(async () => {
+  const mod = await import('../src/services/scaffolder');
+  scaffoldWorkspace = mod.scaffoldWorkspace;
+  syncBundledAgents = mod.syncBundledAgents;
+  KANBAN_FOLDER = mod.KANBAN_FOLDER;
+});
+
+let TEST_DIR: string;
+
+beforeEach(async () => {
+  TEST_DIR = path.join(os.tmpdir(), 'kanban2code-test-' + Date.now());
   await fs.mkdir(TEST_DIR, { recursive: true });
+});
 
+test('scaffoldWorkspace creates expected structure', async () => {
   await scaffoldWorkspace(TEST_DIR);
 
   const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
@@ -43,7 +56,6 @@ test('scaffolderWorkspace creates expected structure', async () => {
 });
 
 test('scaffoldWorkspace fails if already initialized', async () => {
-  await fs.mkdir(TEST_DIR, { recursive: true });
   await scaffoldWorkspace(TEST_DIR);
 
   await expect(scaffoldWorkspace(TEST_DIR)).rejects.toThrow('Kanban2Code already initialized.');
@@ -51,7 +63,6 @@ test('scaffoldWorkspace fails if already initialized', async () => {
 
 describe('bundled agents scaffolding', () => {
   test('scaffoldWorkspace creates all bundled agent files', async () => {
-    await fs.mkdir(TEST_DIR, { recursive: true });
     await scaffoldWorkspace(TEST_DIR);
 
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
@@ -79,7 +90,6 @@ describe('bundled agents scaffolding', () => {
   });
 
   test('syncBundledAgents adds missing agents without overwriting existing', async () => {
-    await fs.mkdir(TEST_DIR, { recursive: true });
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
     const agentsDir = path.join(kanbanRoot, '_agents');
 
@@ -111,7 +121,6 @@ describe('bundled agents scaffolding', () => {
   });
 
   test('syncBundledAgents creates _agents directory if missing', async () => {
-    await fs.mkdir(TEST_DIR, { recursive: true });
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
 
     // Create only the kanban root, not _agents
@@ -125,6 +134,54 @@ describe('bundled agents scaffolding', () => {
     const agentsDir = path.join(kanbanRoot, '_agents');
     const stat = await fs.stat(agentsDir);
     expect(stat.isDirectory()).toBe(true);
+  });
+
+  test('syncBundledAgents fails if workspace not initialized', async () => {
+    await expect(syncBundledAgents(TEST_DIR)).rejects.toThrow('Kanban2Code not initialized');
+  });
+
+  test('syncBundledAgents throws if an agent path exists but is not a file', async () => {
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    const agentsDir = path.join(kanbanRoot, '_agents');
+    await fs.mkdir(agentsDir, { recursive: true });
+    await fs.mkdir(path.join(agentsDir, 'roadmapper.md'), { recursive: true });
+
+    await expect(syncBundledAgents(TEST_DIR)).rejects.toThrow('Agent path exists but is not a file');
+  });
+
+  test('syncBundledAgents rethrows non-ENOENT stat errors (no overwrite on access failure)', async () => {
+    const localDir = path.join(os.tmpdir(), 'kanban2code-test-mock-' + Date.now());
+    await fs.mkdir(path.join(localDir, '.kanban2code'), { recursive: true });
+
+    let writeFileSpy: ReturnType<typeof vi.fn> | undefined;
+
+    try {
+      vi.resetModules();
+      const actualFs = await vi.importActual<typeof import('fs/promises')>('fs/promises');
+      vi.doMock('fs/promises', () => {
+        writeFileSpy = vi.fn(actualFs.writeFile);
+        return {
+          ...actualFs,
+          writeFile: writeFileSpy,
+          stat: async (statPath: any) => {
+            if (String(statPath).endsWith(`${path.sep}roadmapper.md`)) {
+              const error: any = new Error('EACCES');
+              error.code = 'EACCES';
+              throw error;
+            }
+            return actualFs.stat(statPath);
+          },
+        };
+      });
+
+      const mod = await import('../src/services/scaffolder');
+      await expect(mod.syncBundledAgents(localDir)).rejects.toMatchObject({ code: 'EACCES' });
+      expect(writeFileSpy).toBeDefined();
+      expect(writeFileSpy).not.toHaveBeenCalled();
+    } finally {
+      vi.doUnmock('fs/promises');
+      await fs.rm(localDir, { recursive: true, force: true });
+    }
   });
 });
 

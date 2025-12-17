@@ -1,6 +1,8 @@
 ---
-stage: plan
-tags: [chore, p2]
+stage: completed
+tags:
+  - chore
+  - p2
 agent: coder
 contexts: []
 ---

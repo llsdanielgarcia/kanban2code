@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { Stats } from 'fs';
 import { BUNDLED_AGENTS } from '../assets/agents';
 import {
   HOW_IT_WORKS,
@@ -63,7 +64,22 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
  * Only writes agents that don't already exist (preserves user customizations).
  */
 export async function syncBundledAgents(rootPath: string): Promise<string[]> {
-  const agentsDir = path.join(rootPath, KANBAN_FOLDER, '_agents');
+  const kanbanRoot = path.join(rootPath, KANBAN_FOLDER);
+  let kanbanRootStat: Stats;
+  try {
+    kanbanRootStat = await fs.stat(kanbanRoot);
+  } catch (error: any) {
+    if (error?.code === 'ENOENT') {
+      throw new Error('Kanban2Code not initialized. Run scaffoldWorkspace first.');
+    }
+    throw error;
+  }
+
+  if (!kanbanRootStat.isDirectory()) {
+    throw new Error(`${KANBAN_FOLDER} exists but is not a directory.`);
+  }
+
+  const agentsDir = path.join(kanbanRoot, '_agents');
   const synced: string[] = [];
 
   // Ensure _agents directory exists
@@ -72,10 +88,17 @@ export async function syncBundledAgents(rootPath: string): Promise<string[]> {
   for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
     const agentPath = path.join(agentsDir, filename);
     try {
-      await fs.access(agentPath);
-      // File exists, skip to preserve user customizations
-    } catch {
-      // File doesn't exist, write it
+      const stat = await fs.stat(agentPath);
+      if (!stat.isFile()) {
+        throw new Error(`Agent path exists but is not a file: ${agentPath}`);
+      }
+      // File exists, skip to preserve user customizations.
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+
+      // File doesn't exist, write it.
       await fs.writeFile(agentPath, content);
       synced.push(filename);
     }

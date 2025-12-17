@@ -79,9 +79,9 @@ export type ComponentTag = typeof COMPONENT_TAGS[number];
  * Orchestration tags (agent pipeline state)
  * These tags coordinate handoffs between agents in the orchestration pipeline.
  *
- * State tags (mutually exclusive within type):
- * - missing-architecture: Roadmap needs technical design (Architect task needed)
- * - missing-decomposition: Architecture needs task split (Splitter task needed)
+ * State tags (mutually exclusive within each dimension):
+ * - missing-architecture / architecture-ready
+ * - missing-decomposition / decomposition-ready
  *
  * Type tags (can be combined):
  * - roadmap: Vision/roadmap document
@@ -91,7 +91,9 @@ export type ComponentTag = typeof COMPONENT_TAGS[number];
 export const ORCHESTRATION_TAGS = [
   // State tags - track what's missing/needed
   'missing-architecture',   // Needs Architect to add technical design
+  'architecture-ready',     // Architecture is complete and ready for decomposition
   'missing-decomposition',  // Needs Splitter to generate task files
+  'decomposition-ready',    // Decomposition is complete and ready for execution
 
   // Type tags - categorize orchestration work
   'roadmap',                // Vision document work
@@ -151,8 +153,7 @@ export function getTagCategory(
  * Validate tag usage rules:
  * - Only one type tag
  * - Only one priority tag
- * - Orchestration state tags are mutually exclusive
- * - Orchestration requires proper agent assignment
+ * - Orchestration state tags are mutually exclusive per dimension
  */
 export function validateTags(tags: string[]): {
   valid: boolean;
@@ -164,7 +165,6 @@ export function validateTags(tags: string[]): {
 
   const typeTags = tags.filter(t => isTagInCategory(t, 'type'));
   const priorityTags = tags.filter(t => isTagInCategory(t, 'priority'));
-  const orchestrationTags = tags.filter(t => isTagInCategory(t, 'orchestration'));
 
   if (typeTags.length > 1) {
     errors.push(`Multiple type tags found: ${typeTags.join(', ')}. Pick only one.`);
@@ -177,6 +177,18 @@ export function validateTags(tags: string[]): {
   // Orchestration validation rules
   const hasMissingArch = tags.includes('missing-architecture');
   const hasMissingDecomp = tags.includes('missing-decomposition');
+  const hasArchReady = tags.includes('architecture-ready');
+  const hasDecompReady = tags.includes('decomposition-ready');
+
+  if (hasMissingArch && hasArchReady) {
+    errors.push('Orchestration state conflict: both missing-architecture and architecture-ready are set.');
+  }
+  if (hasMissingDecomp && hasDecompReady) {
+    errors.push('Orchestration state conflict: both missing-decomposition and decomposition-ready are set.');
+  }
+  if (hasDecompReady && !hasArchReady) {
+    errors.push('Orchestration state conflict: decomposition-ready requires architecture-ready.');
+  }
 
   // Both missing-* tags is valid (fresh roadmap from Roadmapper)
   // Only missing-decomposition is valid (Architect finished, needs Splitter)
@@ -186,8 +198,12 @@ export function validateTags(tags: string[]): {
     warnings.push('Task has missing-architecture but not missing-decomposition. Typically both are set together.');
   }
 
+  if (hasMissingDecomp && !hasMissingArch && !hasArchReady) {
+    warnings.push('Task has missing-decomposition but is not marked architecture-ready (or missing-architecture). Consider clarifying the orchestration state.');
+  }
+
   // If task has orchestration state tags, it should likely have p0 priority
-  if ((hasMissingArch || hasMissingDecomp) && !tags.includes('p0')) {
+  if ((hasMissingArch || hasMissingDecomp || hasArchReady || hasDecompReady) && !tags.includes('p0')) {
     warnings.push('Orchestration tasks with missing-* tags are typically high priority (p0).');
   }
 
@@ -237,10 +253,12 @@ export function getTagColor(tag: string): string {
       return '#34495e';
     case 'orchestration':
       // State tags (missing-*) in orange to indicate action needed
+      // State tags (*-ready) in green to indicate ready
       // Type tags (roadmap, architecture, decomposition) in teal
-      return tag.startsWith('missing-') ? '#e67e22' : '#16a085';
+      return tag.startsWith('missing-') ? '#e67e22' :
+             tag.endsWith('-ready') ? '#27ae60' :
+             '#16a085';
     default:
       return '#7f8c8d';
   }
 }
-
