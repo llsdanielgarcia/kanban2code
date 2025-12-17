@@ -6,7 +6,6 @@ Welcome to your new Kanban board!
 - **inbox/**: New tasks start here.
 - **projects/**: Organize tasks by project.
 - **_archive/**: Completed tasks go here.
-- **_templates/**: Markdown templates for tasks.
 
 ## Workflow
 1. Create a task in the sidebar.
@@ -41,27 +40,4 @@ stage: inbox
 # Explore Kanban2Code
 
 This is a sample task. Drag me to 'Plan' to start working on it!
-`;
-
-export const TASK_TEMPLATE_BUG = `---
-type: bug
-created: {date}
-tags: []
----
-
-# {title}
-
-## Description
-[Description of the bug]
-
-## Steps to Reproduce
-1. 
-2. 
-3. 
-`;
-
-export const STAGE_TEMPLATE = (name: string) => `---
-stage: ${name}
----
-Tasks in this stage are being ${name}.
 `;

@@ -259,7 +259,6 @@ export class KanbanPanel {
                   ? { type: 'project', project: task.project, phase: task.phase }
                   : { type: 'inbox' },
                 agent: task.agent || null,
-                template: null,
                 contexts: task.contexts || [],
                 tags: task.tags || [],
               },
@@ -284,7 +283,6 @@ export class KanbanPanel {
               title: string;
               location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
               agent: string | null;
-              template: string | null;
               contexts: string[];
               tags: string[];
             };

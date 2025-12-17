@@ -38,7 +38,6 @@ interface TaskMetadata {
   title: string;
   location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   agent: string | null;
-  template: string | null;
   contexts: string[];
   tags: string[];
 }
@@ -64,7 +63,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   const [title, setTitle] = useState<string>('');
   const [location, setLocation] = useState<{ type: 'inbox' } | { type: 'project'; project: string; phase?: string }>({ type: 'inbox' });
   const [agent, setAgent] = useState<string | null>(null);
-  const [template, setTemplate] = useState<string | null>(null);
   const [contexts, setContexts] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -85,11 +83,10 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
       title !== originalMetadata.title ||
       JSON.stringify(location) !== JSON.stringify(originalMetadata.location) ||
       agent !== originalMetadata.agent ||
-      template !== originalMetadata.template ||
       JSON.stringify([...contexts].sort()) !== JSON.stringify([...originalMetadata.contexts].sort()) ||
       JSON.stringify([...tags].sort()) !== JSON.stringify([...originalMetadata.tags].sort())
     );
-  }, [title, location, agent, template, contexts, tags, originalMetadata]);
+  }, [title, location, agent, contexts, tags, originalMetadata]);
 
   const isDirty = useMemo(() => value !== original || isMetadataDirty, [value, original, isMetadataDirty]);
 
@@ -109,7 +106,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     postMessage('SaveTaskWithMetadata', {
       taskId: task.id,
       content: value,
-      metadata: { title, location, agent, template, contexts, tags }
+      metadata: { title, location, agent, contexts, tags }
     });
   };
 
@@ -144,7 +141,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     setTitle('');
     setLocation({ type: 'inbox' });
     setAgent(null);
-    setTemplate(null);
     setContexts([]);
     setTags([]);
     setTagInput('');
@@ -192,7 +188,6 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         setTitle(payload.metadata.title);
         setLocation(payload.metadata.location);
         setAgent(payload.metadata.agent);
-        setTemplate(payload.metadata.template);
         setContexts(payload.metadata.contexts);
         setTags(payload.metadata.tags);
         setOriginalMetadata(payload.metadata);
@@ -216,7 +211,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         if (payload.taskId !== currentTaskId) return;
         setIsSaving(false);
         setOriginal(value);
-        setOriginalMetadata({ title, location, agent, template, contexts, tags });
+        setOriginalMetadata({ title, location, agent, contexts, tags });
         onSave?.(value);
         onClose();
       }
@@ -240,7 +235,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [isOpen, onClose, onSave, value, title, location, agent, template, contexts, tags]);
+  }, [isOpen, onClose, onSave, value, title, location, agent, contexts, tags]);
 
   useEffect(() => {
     if (!isOpen) return;

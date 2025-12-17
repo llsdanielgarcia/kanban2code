@@ -76,7 +76,6 @@ export async function saveTaskWithMetadata(
     title: string;
     location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
     agent: string | null;
-    template: string | null;
     contexts: string[];
     tags: string[];
   }
@@ -141,4 +140,3 @@ export async function saveTaskWithMetadata(
 
   return loadAllTasks(root);
 }
-

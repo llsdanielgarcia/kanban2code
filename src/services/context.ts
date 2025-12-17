@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { Dirent } from 'fs';
 import matter from 'gray-matter';
-import { AGENTS_FOLDER, CONTEXT_FOLDER, PROJECTS_FOLDER, TEMPLATES_FOLDER } from '../core/constants';
+import { AGENTS_FOLDER, CONTEXT_FOLDER, PROJECTS_FOLDER } from '../core/constants';
 import { Stage } from '../types/task';
 import { ensureSafePath } from '../workspace/validation';
 
@@ -348,12 +348,6 @@ export async function loadCustomContexts(root: string, contextNames?: string[] |
 }
 
 export async function loadStageTemplate(root: string, stage: Stage): Promise<string> {
-  const stageTemplatePath = path.join(TEMPLATES_FOLDER, 'stages', `${stage}.md`);
-  const content = await readFileIfExists(root, stageTemplatePath);
-
-  if (content.trim().length === 0) {
-    return `## Stage: ${stage}\nNo stage template was found for this stage.`;
-  }
-
-  return content;
+  void root;
+  return `## Stage: ${stage}\nNo stage template was found for this stage.`;
 }
