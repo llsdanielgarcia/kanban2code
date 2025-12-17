@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, afterEach, expect, test, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { KANBAN_FOLDER, TEMPLATES_FOLDER } from '../src/core/constants';
+import { KANBAN_FOLDER } from '../src/core/constants';
 import { Task } from '../src/types/task';
 
 const clipboardMock = vi.fn();
@@ -32,10 +32,6 @@ beforeEach(async () => {
   TEST_DIR = path.join(os.tmpdir(), 'kanban-copy-' + Date.now());
   KANBAN_ROOT = path.join(TEST_DIR, KANBAN_FOLDER);
   await fs.mkdir(KANBAN_ROOT, { recursive: true });
-
-  const stageDir = path.join(KANBAN_ROOT, TEMPLATES_FOLDER, 'stages');
-  await fs.mkdir(stageDir, { recursive: true });
-  await fs.writeFile(path.join(stageDir, 'plan.md'), 'STAGE_TEMPLATE');
 });
 
 afterEach(async () => {
@@ -61,7 +57,6 @@ test('buildCopyPayload returns full XML payload by default', async () => {
   expect(payload).toContain('<context>');
   expect(payload).toContain('<task>');
   expect(payload).toContain('Task Body');
-  expect(payload).toContain('STAGE_TEMPLATE');
 });
 
 test('task_only mode omits context but keeps metadata and content', async () => {
@@ -77,7 +72,6 @@ test('context_only mode excludes task content', async () => {
   const task = buildTask();
   const payload = await buildCopyPayload(task, 'context_only', KANBAN_ROOT);
   expect(payload).toContain('<context>');
-  expect(payload).toContain('STAGE_TEMPLATE');
   expect(payload).not.toContain('Task Body');
   expect(payload).not.toContain('<task>');
 });

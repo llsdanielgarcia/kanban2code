@@ -25,8 +25,6 @@ describe('E2E: Core Workflows', () => {
       expect(fs.existsSync(path.join(kanbanPath, 'inbox'))).toBe(true);
       expect(fs.existsSync(path.join(kanbanPath, 'projects'))).toBe(true);
       expect(fs.existsSync(path.join(kanbanPath, '_agents'))).toBe(true);
-      expect(fs.existsSync(path.join(kanbanPath, '_templates'))).toBe(true);
-      expect(fs.existsSync(path.join(kanbanPath, '_templates', 'stages'))).toBe(true);
       expect(fs.existsSync(path.join(kanbanPath, '_archive'))).toBe(true);
       expect(fs.existsSync(path.join(kanbanPath, '_context'))).toBe(true);
 

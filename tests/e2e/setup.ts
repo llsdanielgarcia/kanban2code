@@ -46,9 +46,6 @@ export const e2eUtils = {
       path.join(kanbanPath, 'inbox'),
       path.join(kanbanPath, 'projects'),
       path.join(kanbanPath, '_agents'),
-      path.join(kanbanPath, '_templates'),
-      path.join(kanbanPath, '_templates', 'stages'),
-      path.join(kanbanPath, '_templates', 'tasks'),
       path.join(kanbanPath, '_archive'),
       path.join(kanbanPath, '_context'),
     ];

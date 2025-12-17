@@ -4,12 +4,10 @@ import { WorkspaceState } from '../workspace/state';
 import { findTaskById, loadAllTasks } from '../services/scanner';
 import { changeStageAndReload } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
-import { loadTaskTemplates, createTaskTemplate, updateTaskTemplate } from '../services/template';
 import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
 import { loadTaskContentById, saveTaskContentById, saveTaskWithMetadata } from '../services/task-content';
-import { loadTemplateById, type TaskTemplate } from '../services/template';
 import type { Task, Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 import { getSidebarProvider } from './viewRegistry';
@@ -20,7 +18,6 @@ export class KanbanPanel {
   private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
   private _tasks: Task[] = [];
-  private _templates: TaskTemplate[] = [];
   private _contexts: ContextFile[] = [];
   private _agents: Agent[] = [];
   private _webviewReady = false;
@@ -249,7 +246,6 @@ export class KanbanPanel {
             const root = WorkspaceState.kanbanRoot;
             if (!root) throw new Error('Kanban workspace not detected.');
             const { task, content } = await loadTaskContentById(taskId);
-            const templates = await loadTaskTemplates(root);
             const contexts = await listAvailableContexts(root);
             const agents = await listAvailableAgents(root);
             const listing = await listProjectsAndPhases(root);
@@ -267,7 +263,7 @@ export class KanbanPanel {
                 contexts: task.contexts || [],
                 tags: task.tags || [],
               },
-              templates: templates.map(t => ({ id: t.id, name: t.name, description: t.description })),
+              templates: [],
               contexts,
               agents,
               projects: listing.projects,
@@ -308,19 +304,10 @@ export class KanbanPanel {
 
         case 'RequestTemplateContent': {
           const { templateId } = payload as { templateId: string };
-          try {
-            const template = await loadTemplateById(templateId);
-            this._postMessage(createEnvelope('TemplateContentLoaded', {
-              templateId,
-              content: template.content,
-            }));
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            this._postMessage(createEnvelope('TemplateContentLoadFailed', {
-              templateId,
-              error: message,
-            }));
-          }
+          this._postMessage(createEnvelope('TemplateContentLoadFailed', {
+            templateId,
+            error: 'Task templates have been removed.',
+          }));
           break;
         }
 
@@ -470,63 +457,12 @@ export class KanbanPanel {
         }
 
         case 'CreateTemplate': {
-          const templatePayload = payload as {
-            name?: string;
-            description?: string;
-            icon?: string;
-            defaultStage?: Stage;
-            defaultTags?: string[];
-            content?: string;
-          };
-          if (templatePayload.name) {
-            const root = WorkspaceState.kanbanRoot;
-            if (root) {
-              try {
-                await createTaskTemplate(root, {
-                  name: templatePayload.name,
-                  description: templatePayload.description || '',
-                  icon: templatePayload.icon,
-                  defaultStage: templatePayload.defaultStage,
-                  defaultTags: templatePayload.defaultTags,
-                  content: templatePayload.content || '',
-                });
-                await this._sendInitialState();
-              } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              }
-            }
-          }
+          vscode.window.showErrorMessage('Task templates have been removed.');
           break;
         }
 
         case 'UpdateTemplate': {
-          const updatePayload = payload as {
-            templateId: string;
-            name?: string;
-            description?: string;
-            icon?: string;
-            defaultStage?: Stage;
-            defaultTags?: string[];
-            content?: string;
-          };
-          if (updatePayload.templateId) {
-            const root = WorkspaceState.kanbanRoot;
-            if (root) {
-              try {
-                await updateTaskTemplate(root, updatePayload.templateId, {
-                  name: updatePayload.name,
-                  description: updatePayload.description,
-                  icon: updatePayload.icon,
-                  defaultStage: updatePayload.defaultStage,
-                  defaultTags: updatePayload.defaultTags,
-                  content: updatePayload.content,
-                });
-                await this._sendInitialState();
-              } catch (error) {
-                vscode.window.showErrorMessage(`Failed to update template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              }
-            }
-          }
+          vscode.window.showErrorMessage('Task templates have been removed.');
           break;
         }
       }
@@ -542,15 +478,13 @@ export class KanbanPanel {
     let phasesByProject: Record<string, string[]> = {};
     if (hasKanban && kanbanRoot) {
       try {
-        const [tasks, templates, contexts, agents, listing] = await Promise.all([
+        const [tasks, contexts, agents, listing] = await Promise.all([
           loadAllTasks(kanbanRoot),
-          loadTaskTemplates(kanbanRoot),
           listAvailableContexts(kanbanRoot),
           listAvailableAgents(kanbanRoot),
           listProjectsAndPhases(kanbanRoot),
         ]);
         this._tasks = tasks;
-        this._templates = templates;
         this._contexts = contexts;
         this._agents = agents;
         projects = listing.projects;
@@ -558,7 +492,6 @@ export class KanbanPanel {
       } catch (error) {
         console.error('Error loading tasks for board:', error);
         this._tasks = [];
-        this._templates = [];
         this._contexts = [];
         this._agents = [];
         projects = [];
@@ -566,7 +499,6 @@ export class KanbanPanel {
       }
     } else {
       this._tasks = [];
-      this._templates = [];
       this._contexts = [];
       this._agents = [];
       projects = [];
@@ -577,7 +509,7 @@ export class KanbanPanel {
       context: 'board',
       hasKanban,
       tasks: this._tasks,
-      templates: this._templates,
+      templates: [],
       contexts: this._contexts,
       agents: this._agents,
       projects,

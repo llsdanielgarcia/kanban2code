@@ -8,19 +8,16 @@ import type { Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 import { changeStageAndReload, moveTaskToLocation, type TaskLocation } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
-import { loadTaskTemplates, createTaskTemplate, updateTaskTemplate, type TaskTemplate } from '../services/template';
 import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
 import { KanbanPanel } from './KanbanPanel';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
 import { loadTaskContentById, saveTaskContentById, saveTaskWithMetadata } from '../services/task-content';
-import { loadTemplateById } from '../services/template';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
   private _view?: vscode.WebviewView;
   private _tasks: Task[] = [];
-  private _templates: TaskTemplate[] = [];
   private _contexts: ContextFile[] = [];
   private _agents: Agent[] = [];
   private _filterState: FilterState | null = null;
@@ -138,7 +135,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             const root = WorkspaceState.kanbanRoot;
             if (!root) throw new Error('Kanban workspace not detected.');
             const { task, content } = await loadTaskContentById(taskId);
-            const templates = await loadTaskTemplates(root);
             const contexts = await listAvailableContexts(root);
             const agents = await listAvailableAgents(root);
             const listing = await listProjectsAndPhases(root);
@@ -156,7 +152,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 contexts: task.contexts || [],
                 tags: task.tags || [],
               },
-              templates: templates.map(t => ({ id: t.id, name: t.name, description: t.description })),
+              templates: [],
               contexts,
               agents,
               projects: listing.projects,
@@ -197,19 +193,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
         case 'RequestTemplateContent': {
           const { templateId } = payload as { templateId: string };
-          try {
-            const template = await loadTemplateById(templateId);
-            this._postMessage(createEnvelope('TemplateContentLoaded', {
-              templateId,
-              content: template.content,
-            }));
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            this._postMessage(createEnvelope('TemplateContentLoadFailed', {
-              templateId,
-              error: message,
-            }));
-          }
+          this._postMessage(createEnvelope('TemplateContentLoadFailed', {
+            templateId,
+            error: 'Task templates have been removed.',
+          }));
           break;
         }
 
@@ -302,65 +289,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
 
         case 'CreateTemplate': {
-          const templatePayload = payload as {
-            name?: string;
-            description?: string;
-            icon?: string;
-            defaultStage?: Stage;
-            defaultTags?: string[];
-            content?: string;
-          };
-          if (templatePayload.name) {
-            const root = WorkspaceState.kanbanRoot;
-            if (root) {
-              try {
-                await createTaskTemplate(root, {
-                  name: templatePayload.name,
-                  description: templatePayload.description || '',
-                  icon: templatePayload.icon,
-                  defaultStage: templatePayload.defaultStage,
-                  defaultTags: templatePayload.defaultTags,
-                  content: templatePayload.content || '',
-                });
-                await this._sendInitialState();
-              } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              }
-            }
-          } else {
-            await vscode.commands.executeCommand('kanban2code.newTemplate');
-          }
+          vscode.window.showErrorMessage('Task templates have been removed.');
           break;
         }
 
         case 'UpdateTemplate': {
-          const updatePayload = payload as {
-            templateId: string;
-            name?: string;
-            description?: string;
-            icon?: string;
-            defaultStage?: Stage;
-            defaultTags?: string[];
-            content?: string;
-          };
-          if (updatePayload.templateId) {
-            const root = WorkspaceState.kanbanRoot;
-            if (root) {
-              try {
-                await updateTaskTemplate(root, updatePayload.templateId, {
-                  name: updatePayload.name,
-                  description: updatePayload.description,
-                  icon: updatePayload.icon,
-                  defaultStage: updatePayload.defaultStage,
-                  defaultTags: updatePayload.defaultTags,
-                  content: updatePayload.content,
-                });
-                await this._sendInitialState();
-              } catch (error) {
-                vscode.window.showErrorMessage(`Failed to update template: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              }
-            }
-          }
+          vscode.window.showErrorMessage('Task templates have been removed.');
           break;
         }
 
@@ -496,15 +430,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     if (hasKanban && kanbanRoot) {
       try {
-        const [tasks, templates, contexts, agents, listing] = await Promise.all([
+        const [tasks, contexts, agents, listing] = await Promise.all([
           loadAllTasks(kanbanRoot),
-          loadTaskTemplates(kanbanRoot),
           listAvailableContexts(kanbanRoot),
           listAvailableAgents(kanbanRoot),
           listProjectsAndPhases(kanbanRoot),
         ]);
         this._tasks = tasks;
-        this._templates = templates;
         this._contexts = contexts;
         this._agents = agents;
         projects = listing.projects;
@@ -512,7 +444,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       } catch (error) {
         console.error('Error loading tasks:', error);
         this._tasks = [];
-        this._templates = [];
         this._contexts = [];
         this._agents = [];
         projects = [];
@@ -520,7 +451,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       }
     } else {
       this._tasks = [];
-      this._templates = [];
       this._contexts = [];
       this._agents = [];
       projects = [];
@@ -531,7 +461,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       context: 'sidebar',
       hasKanban,
       tasks: this._tasks,
-      templates: this._templates,
+      templates: [],
       contexts: this._contexts,
       agents: this._agents,
       projects,

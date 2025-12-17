@@ -8,9 +8,8 @@ import {
   loadGlobalContext,
   loadPhaseContext,
   loadProjectContext,
-  loadStageTemplate,
 } from '../src/services/context';
-import { AGENTS_FOLDER, KANBAN_FOLDER, PROJECTS_FOLDER, TEMPLATES_FOLDER } from '../src/core/constants';
+import { AGENTS_FOLDER, KANBAN_FOLDER, PROJECTS_FOLDER } from '../src/core/constants';
 
 let TEST_DIR: string;
 let KANBAN_ROOT: string;
@@ -83,14 +82,4 @@ test('loadCustomContexts expands folder: contexts recursively', async () => {
 
 test('loadCustomContexts rejects unsafe folder: contexts', async () => {
   await expect(loadCustomContexts(KANBAN_ROOT, ['folder:../escape'])).rejects.toThrow('Path validation failed');
-});
-
-test('loadStageTemplate reads template or returns fallback', async () => {
-  const templatesDir = path.join(KANBAN_ROOT, TEMPLATES_FOLDER, 'stages');
-  await fs.mkdir(templatesDir, { recursive: true });
-  await fs.writeFile(path.join(templatesDir, 'plan.md'), 'PLAN');
-
-  expect(await loadStageTemplate(KANBAN_ROOT, 'plan')).toBe('PLAN');
-  const fallback = await loadStageTemplate(KANBAN_ROOT, 'audit');
-  expect(fallback.toLowerCase()).toContain('audit');
 });

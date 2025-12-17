@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { buildContextOnlyPrompt, buildXMLPrompt } from '../src/services/prompt-builder';
-import { KANBAN_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER, TEMPLATES_FOLDER } from '../src/core/constants';
+import { KANBAN_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER } from '../src/core/constants';
 import { Task } from '../src/types/task';
 
 let TEST_DIR: string;
@@ -37,10 +37,6 @@ async function seedContextFiles() {
   await fs.writeFile(path.join(phaseDir, '_context.md'), 'PHASE');
 
   await fs.writeFile(path.join(KANBAN_ROOT, 'custom-ctx.md'), 'CUSTOM');
-
-  const stageDir = path.join(KANBAN_ROOT, TEMPLATES_FOLDER, 'stages');
-  await fs.mkdir(stageDir, { recursive: true });
-  await fs.writeFile(path.join(stageDir, 'plan.md'), 'STAGE');
 }
 
 test('buildXMLPrompt assembles 9-layer ordering and wraps in system/task', async () => {
@@ -64,7 +60,7 @@ test('buildXMLPrompt assembles 9-layer ordering and wraps in system/task', async
   expect(xml.startsWith('<system>')).toBe(true);
   expect(xml.includes('<task>')).toBe(true);
 
-  const tokens = ['HOW', 'ARCH', 'DETAIL', 'AGENT', 'PROJECT', 'PHASE', 'STAGE', 'CUSTOM', 'TASK_BODY'];
+  const tokens = ['HOW', 'ARCH', 'DETAIL', 'AGENT', 'PROJECT', 'PHASE', 'CUSTOM', 'TASK_BODY'];
   const positions = tokens.map((token) => xml.indexOf(token));
   positions.forEach((pos) => expect(pos).toBeGreaterThanOrEqual(0));
   for (let i = 1; i < positions.length; i++) {
@@ -72,7 +68,7 @@ test('buildXMLPrompt assembles 9-layer ordering and wraps in system/task', async
   }
 });
 
-test('buildContextOnlyPrompt omits task content but includes stage template', async () => {
+test('buildContextOnlyPrompt omits task content', async () => {
   await seedContextFiles();
 
   const task: Task = {
@@ -86,7 +82,6 @@ test('buildContextOnlyPrompt omits task content but includes stage template', as
   const xml = await buildContextOnlyPrompt(task, KANBAN_ROOT);
   expect(xml).toContain('<context>');
   expect(xml).not.toContain('<task>');
-  expect(xml).toContain('STAGE');
   expect(xml).not.toContain('ONLY_TASK');
 });
 
