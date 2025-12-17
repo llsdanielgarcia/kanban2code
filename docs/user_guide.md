@@ -9,7 +9,7 @@
 5. [Board Interface](#board-interface)
 6. [Keyboard Shortcuts](#keyboard-shortcuts)
 7. [Context and Agent Systems](#context-and-agent-systems)
-8. [Templates and Projects](#templates-and-projects)
+8. [Projects](#projects)
 9. [Troubleshooting](#troubleshooting)
 
 ## Getting Started
@@ -39,15 +39,28 @@ When you first create a Kanban workspace, Kanban2Code generates the following fo
 ├── inbox/              # New/unplanned tasks
 ├── projects/           # Project-organized tasks
 ├── _agents/            # AI agent configurations
-├── _templates/
-│   ├── tasks/          # Task templates
-│   └── stages/         # Stage-specific templates
 ├── _context/           # Context files for AI prompts
 ├── _archive/           # Archived completed tasks
 ├── how-it-works.md     # Usage documentation
 ├── architecture.md     # Project architecture context
 └── project-details.md  # Project details context
 ```
+
+### Legacy `_templates/` folder (migration)
+
+Older Kanban2Code workspaces may include `.kanban2code/_templates/` (task/stage/context templates). Newer versions no longer create or use this folder; it is safe to keep for reference or delete.
+
+What you might see:
+- `.kanban2code/_templates/tasks/*.md`: legacy task templates (e.g. bug report, feature, spike)
+- `.kanban2code/_templates/stages/*`: legacy stage templates (may be empty)
+- `.kanban2code/_templates/context/*.md`: legacy context templates (e.g. phase context, audit phase)
+
+Migration guidance:
+1. If you never customized these templates: delete `.kanban2code/_templates/` or move it under `.kanban2code/_archive/` to reduce clutter.
+2. If you customized task templates: copy the relevant sections into new tasks created under `.kanban2code/inbox/` or `.kanban2code/projects/<project>/...` (the extension only scans tasks in those locations).
+3. If you customized stage/context templates: move the guidance into either:
+   - `.kanban2code/_context/*.md` (shared prompt context), and/or
+   - `.kanban2code/_agents/*.md` (agent-specific instructions).
 
 ### Creating Your First Workspace
 
@@ -108,11 +121,10 @@ The sidebar provides comprehensive task management capabilities:
 
 ### Actions
 
-- **New Task**: Create tasks with location, stage, tags, and template selection
+- **New Task**: Create tasks with location, stage, tags, and agent assignment
 - **New Project**: Create project folders with context files
 - **New Context**: Create context files for AI prompts
 - **New Agent**: Create AI agent configurations
-- **New Template**: Create task and stage templates
 
 ### Task Operations
 
@@ -211,43 +223,7 @@ Three modes for copying task information:
 2. **Task Only**: Just the task content and metadata
 3. **Context Only**: System and context files without task content
 
-## Templates and Projects
-
-### Task Templates
-
-Create reusable task templates in `_templates/tasks/`:
-
-```yaml
----
-name: Bug Report
-description: Track and fix a bug
----
-
-# {title}
-
-## Steps to Reproduce
-1. 
-2. 
-3. 
-
-## Expected Behavior
-...
-
-## Actual Behavior
-...
-```
-
-### Stage Templates
-
-Define stage-specific guidance in `_templates/stages/`:
-
-- `inbox.md`: Guidelines for new tasks
-- `plan.md`: Planning phase instructions
-- `code.md`: Development guidelines
-- `audit.md`: Review and testing checklist
-- `completed.md`: Completion criteria
-
-### Projects
+## Projects
 
 Organize tasks by project:
 
