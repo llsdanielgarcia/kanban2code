@@ -23,60 +23,64 @@ The technology stack uses Bun as the runtime and package manager, TypeScript for
 ## Directory Structure
 
 ```
-phase-0-foundation/
-├── .gitkeep                               # Placeholder file to ensure directory tracking in git
-├── phase-0-audit.md                       # Audit file documenting the completion and status of Phase 0 tasks
-├── task0.0_initialize-project-and-build-tooling.md    # Task specification for project initialization using Bun and build tooling setup
-├── task0.1_create-vs-code-extension-skeleton.md      # Task specification for creating the basic VS Code extension structure
-├── task0.2_implement-core-webview-infrastructure.md   # Task specification for implementing React webview infrastructure
-├── task0.3_implement-kanban2code-workspace-scaffolder.md # Task specification for implementing workspace scaffolding functionality
-├── task0.4_define-core-types-and-constants.md         # Task specification for defining shared types and constants
-├── task0.5_implement-workspace-detection-and-validation.md # Task specification for workspace validation and detection
-├── task0.6_define-extension-activation-and-lifecycle.md # Task specification for extension activation events and lifecycle
-├── task0.7_initialize-project-and-build-tooling-superseded.md # Superseded task that points to task0.0
-├── task0.8_phase-0-audit-and-sign-off.md               # Task specification for the final Phase 0 audit and sign-off
-└── docs/
-    └── architecture.md                    # This file containing project architecture documentation
+.kanban2code/                               # Scaffolded kanban workspace state (created in user workspaces; committed here for dogfooding)
+├── .gitignore                              # Repo-local ignore rules for `.kanban2code` contents
+├── ARCHIVE_LOG.md                          # Human-readable archive/move log
+├── config.json                             # User-configurable defaults (agents, templates, etc.)
+├── inbox/                                  # Inbox tasks (markdown w/ frontmatter)
+│   └── .gitkeep
+├── projects/                               # Project folders containing phase/task markdown
+│   └── .gitkeep
+├── _agents/                                # Agent definitions (markdown)
+│   ├── .gitkeep
+│   ├── code-reviewer.md
+│   ├── context-gatherer-agent.md
+│   ├── react-dev.md
+│   └── roadmap-splitter.md
+├── _context/                               # Global context files (markdown)
+│   └── ai-guide.md
+├── _templates/                             # Scaffold templates
+│   ├── context/
+│   │   ├── audit-phase.md
+│   │   └── phase-context.md
+│   ├── tasks/
+│   │   ├── .gitkeep
+│   │   ├── audit-phase.md
+│   │   ├── bug-report.md
+│   │   ├── create-roadmap.md
+│   │   ├── design-task.md
+│   │   ├── documentation.md
+│   │   ├── feature.md
+│   │   ├── refactor.md
+│   │   ├── roadmap.md
+│   │   ├── security-review.md
+│   │   ├── spike-research.md
+│   │   ├── split-phase.md
+│   │   ├── test.md
+│   │   └── ui-component.md
+│   └── stages/                             # Stage folder templates
+│       └── .gitkeep
+└── _archive/                               # Internal backups/snapshots
+    └── context-backups/
+        ├── audit-phase1.md
+        ├── audit-phase2.md
+        ├── audit-phase3.md
+        ├── audit-phase4.md
+        └── audit-phase5.md
 
-phase-1-filesystem-and-tasks/
-├── .gitkeep                               # Placeholder file to ensure directory tracking in git
-├── phase-1-audit.md                       # Audit file documenting the completion and status of Phase 1 tasks
-├── phase1-context.md                       # Context documentation for Phase 1
-├── task1.1_implement-task-parsing-and-serialization.md    # Task specification for task parsing and serialization
-├── task1.2_implement-recursive-task-loading.md      # Task specification for recursive task loading
-├── task1.3_implement-stage-update-service.md   # Task specification for stage update service
-├── task1.4_implement-archive-behavior-for-tasks-and-projects.md # Task specification for archive behavior
-├── task1.5_implement-workspace-detection-and-validation-extended.md # Task specification for extended workspace validation
-├── task1.6_implement-unit-tests-for-frontmatter-parsing.md         # Task specification for frontmatter parsing tests
-├── task1.7_implement-integration-tests-for-task-loading.md         # Task specification for task loading integration tests
-├── task1.8_implement-file-watcher-for-task-changes.md               # Task specification for file watcher implementation
-├── task1.9_define-webview-architecture-and-messaging-protocol.md   # Task specification for webview architecture
-└── task1.10_phase-1-audit-and-sign-off.md               # Task specification for the final Phase 1 audit and sign-off
+archive/
+└── roadmap/                                # Historical phase task specs/audits (non-runtime)
+    ├── phase-0-foundation/
+    ├── phase-1-filesystem-and-tasks/
+    ├── phase-2-context-system/
+    ├── phase-3-sidebar-ui/
+    ├── phase-4-board-webview/
+    ├── phase-5-polish-and-docs/
+    └── phase-6-bugs-and-features/
 
-phase-2-context-system/
-├── .gitkeep                               # Placeholder file to ensure directory tracking in git
-├── phase-2-audit.md                       # Audit file documenting the completion and status of Phase 2 tasks
-├── phase2-context.md                       # Context documentation for Phase 2
-├── task2.1_implement-context-file-loaders.md    # Task specification for context file loaders
-├── task2.2_implement-xml-prompt-builder-9-layer-context.md      # Task specification for XML prompt builder
-├── task2.3_implement-stage-template-resolution.md   # Task specification for stage template resolution
-├── task2.4_implement-copy-modes-and-copy-payload-builder.md # Task specification for copy modes and payload builder
-├── task2.5_integrate-copy-with-context-with-vs-code-clipboard.md # Task specification for clipboard integration
-├── task2.6_implement-unit-tests-for-context-system.md         # Task specification for context system tests
-└── task2.7_phase-2-audit-and-sign-off.md               # Task specification for the final Phase 2 audit and sign-off
-
-phase-3-sidebar-ui/
-├── .gitkeep                               # Placeholder file to ensure directory tracking in git
-├── phase-3-audit.md                       # Audit file documenting the completion and status of Phase 3 tasks
-├── phase3-context.md                       # Context documentation for Phase 3
-├── task3.0_design-sidebar-shell-ui-only.md    # Task specification for sidebar shell design
-├── task3.1_implement-kanban2code-sidebar-shell-wired.md      # Task specification for sidebar shell implementation
-├── task3.2_implement-filters-and-quick-views-in-sidebar.md   # Task specification for filters and quick views
-├── task3.3_implement-inbox-and-project-tree-in-sidebar.md # Task specification for inbox and project tree
-├── task3.4_implement-new-task-modal.md         # Task specification for new task modal
-├── task3.5_implement-sidebar-task-context-menus.md         # Task specification for task context menus
-├── task3.6_implement-keyboard-navigation-for-sidebar-webview.md               # Task specification for keyboard navigation
-└── task3.7_phase-3-audit-and-sign-off.md               # Task specification for the final Phase 3 audit and sign-off
+docs/                                      # Documentation (user guide, architecture, design mockups)
+examples/                                  # Example `.kanban2code` layouts/projects
+prompts/                                   # Prompt material used during development
 
 src/
 ├── extension.ts                            # Main extension entry point handling activation and command registration
@@ -89,10 +93,13 @@ src/
 │   └── rules.ts                           # Business rules and validation logic
 ├── services/
 │   ├── archive.ts                         # Service for archiving completed tasks and projects
+│   ├── config.ts                          # Service for reading/validating `.kanban2code/config.json`
 │   ├── context.ts                         # Service for loading and managing context files
 │   ├── copy.ts                            # Service for copying task context to clipboard
 │   ├── delete-task.ts                     # Service for deleting tasks by ID
+│   ├── error-recovery.ts                  # Error handling + retry/recovery helpers
 │   ├── frontmatter.ts                     # Service for parsing and serializing task frontmatter
+│   ├── logging.ts                         # Structured logging + Output Channel integration
 │   ├── prompt-builder.ts                  # Service for building XML prompts with 9-layer context
 │   ├── projects.ts                        # Service for listing/creating projects and phases
 │   ├── scaffolder.ts                      # Service for scaffolding new Kanban2Code workspaces
@@ -102,8 +109,11 @@ src/
 │   ├── task-watcher.ts                    # Debounced filesystem watcher for task events (create/update/delete/move)
 │   └── template.ts                        # Service for loading task templates from filesystem
 ├── types/
+│   ├── config.ts                          # Configuration schema/types
 │   ├── context.ts                         # Type definitions for context system
 │   ├── copy.ts                            # Type definitions for copy functionality
+│   ├── errors.ts                          # Typed error classes with recovery hints
+│   ├── filters.ts                         # Filter state + tag taxonomy + helpers
 │   ├── gray-matter.d.ts                   # Type definitions for gray-matter library
 │   └── task.ts                            # Core type definitions for tasks and stages
 ├── utils/
@@ -112,77 +122,122 @@ src/
 │   ├── KanbanPanel.ts                     # Webview panel implementation for the Kanban board
 │   ├── messaging.ts                       # Message passing between extension and webviews
 │   ├── SidebarProvider.ts                 # VS Code sidebar webview provider
+│   ├── viewRegistry.ts                    # Creates/registers the shared webview (sidebar + board)
 │   ├── ui/
 │   │   ├── App.tsx                        # Main React component for webviews
 │   │   ├── main.tsx                       # Entry point for React webview application
 │   │   ├── vscodeApi.ts                   # Shared VS Code API instance (singleton pattern)
 │   │   ├── components/                    # React components for the sidebar UI (Phase 3)
+│   │   │   ├── AgentModal.tsx             # Create/edit agent modal
 │   │   │   ├── AgentPicker.tsx            # Agent selection dropdown (used by create/edit task flows)
+│   │   │   ├── Board.tsx                  # Board surface (shared bundle)
+│   │   │   ├── BoardHeader.tsx            # Board header controls (filters/layout)
+│   │   │   ├── BoardHorizontal.tsx        # Horizontal layout board renderer
+│   │   │   ├── BoardSwimlane.tsx          # Swimlane layout board renderer
 │   │   │   ├── ContextMenu.tsx            # Reusable context menu component
+│   │   │   ├── ContextModal.tsx           # Create/edit context modal
 │   │   │   ├── ContextPicker.tsx          # Multi-select list of context files (used by create/edit task flows)
 │   │   │   ├── EmptyState.tsx             # Empty state display component
 │   │   │   ├── FilterBar.tsx              # Project/tag filters with collapsible UI
 │   │   │   ├── Icons.tsx                  # Icon components for the UI
 │   │   │   ├── index.ts                   # Export barrel for components
 │   │   │   ├── KeyboardHelp.tsx           # Keyboard shortcuts overlay
+│   │   │   ├── LayoutToggle.tsx           # Columns ↔ swimlanes toggle
 │   │   │   ├── LocationPicker.tsx         # Inbox/Project location selector for new tasks
 │   │   │   ├── MoveModal.tsx              # Task relocation modal
+│   │   │   ├── ProjectModal.tsx           # Create project modal
 │   │   │   ├── QuickFilters.tsx          # Stage filter chips
 │   │   │   ├── QuickViews.tsx             # Preset filter buttons
 │   │   │   ├── Sidebar.tsx                # Main sidebar container component
 │   │   │   ├── SidebarActions.tsx         # Action buttons section
 │   │   │   ├── SidebarToolbar.tsx         # Top toolbar with title
+│   │   │   ├── Swimlane.tsx               # Swimlane container
+│   │   │   ├── TaskCard.tsx               # Task card for board view
 │   │   │   ├── TaskEditorModal.tsx        # Split-panel task editor (metadata + markdown content editor)
 │   │   │   ├── TaskContextMenu.tsx        # Task-specific context menu
 │   │   │   ├── TaskItem.tsx               # Individual task item component
 │   │   │   ├── TaskModal.tsx              # Task creation modal
 │   │   │   ├── TaskTree.tsx               # Tree container with ARIA tree role
+│   │   │   ├── TemplateModal.tsx          # Create/edit template modal
 │   │   │   ├── TemplatePicker.tsx         # Template dropdown for new tasks
 │   │   │   ├── TreeNode.tsx               # Project/phase tree node component
-│   │   │   └── TreeSection.tsx            # Inbox/Projects tree sections
+│   │   │   ├── TreeSection.tsx            # Inbox/Projects tree sections
+│   │   │   ├── monaco-theme.ts            # Monaco editor theme definition
+│   │   │   └── Column.tsx                 # Board column renderer
 │   │   ├── hooks/                         # React hooks for state management (Phase 3)
+│   │   │   ├── useBoardLayout.ts          # Board layout state (columns/swimlanes)
 │   │   │   ├── useFilters.ts              # Hook for filter state management
 │   │   │   ├── useKeyboard.ts             # Hook for keyboard navigation
 │   │   │   └── useTaskData.ts             # Hook for task data management
 │   │   └── styles/
-│   │       └── main.css                   # CSS styles for webview components
+│   │       ├── main.css                   # CSS styles for webview components
+│   │       └── palette.css                # Shared color palette (fixed token set)
 └── workspace/
     ├── state.ts                           # Workspace state management
     └── validation.ts                      # Workspace validation and detection logic
 
 tests/
+├── ai-guide.test.ts                       # Unit tests for AI guide/context conventions
 ├── archive.test.ts                        # Unit tests for archive service
+├── config-service.test.ts                 # Unit tests for config loading/validation
 ├── context-service.test.ts                # Unit tests for context system (Phase 2)
 ├── copy-service.test.ts                   # Unit tests for copy functionality (Phase 2)
+├── delete-task.test.ts                    # Unit tests for delete task service
+├── error-recovery.test.ts                 # Unit tests for error recovery helpers
+├── errors.test.ts                         # Unit tests for typed errors
 ├── frontmatter.test.ts                    # Unit tests for frontmatter parsing and serialization
+├── logging.test.ts                        # Unit tests for logging service
 ├── prompt-builder.test.ts                 # Unit tests for XML prompt builder (Phase 2)
+├── rules.test.ts                          # Unit tests for business rules
 ├── scaffolder.test.ts                     # Unit tests for workspace scaffolding
 ├── smoke.test.ts                          # Basic smoke tests for core functionality
 ├── stage-manager.test.ts                  # Unit tests for stage management service
 ├── state.test.ts                          # Unit tests for workspace state management
+├── tag-taxonomy.test.ts                   # Unit tests for tag taxonomy + validation
+├── task-content.test.ts                   # Unit tests for task content load/save + relocation
 ├── task-loading.test.ts                   # Integration tests for task loading from filesystem
 ├── task-watcher.test.ts                   # Unit tests for debounced watcher events and move detection
+├── template-service.test.ts               # Unit tests for template service
 ├── types.test.ts                          # Unit tests for type definitions and utilities
 ├── utils.test.ts                          # Unit tests for utility functions
 ├── validation.test.ts                     # Unit tests for workspace validation
-├── webview.test.ts                        # Unit tests for message envelope validation
+├── webview.test.ts                        # Unit tests for webview message envelope validation
+├── vscode-stub.ts                         # Minimal VS Code API stub for tests
+├── setup.ts                               # Global test setup and shared helpers
+├── e2e/
+│   ├── core-workflows.test.ts             # E2E workflows against temp workspaces
+│   └── setup.ts                           # E2E workspace helpers
 └── webview/
-    └── task-editor-modal.test.tsx         # UI tests for the split-panel TaskEditorModal
+    ├── board.test.tsx                     # Component tests for board rendering
+    ├── column.test.tsx                    # Component tests for columns
+    ├── setup-dom.ts                       # jsdom + Monaco setup
+    ├── setup-matchers.ts                  # Jest DOM matchers
+    ├── task-editor-modal.test.tsx         # UI tests for the split-panel TaskEditorModal
+    ├── task-modal-create-project.test.tsx # UI tests: create project flow from task modal
+    ├── taskcard.test.tsx                  # Component tests for task cards
+    └── components/
+        └── SidebarToolbar.test.tsx        # Component tests for sidebar toolbar
 
 media/                                     # Extension assets (e.g. activity bar icon in package.json)
 
-webview/                                   # Build output directory for webview assets
+dist/                                      # Build output (`bun run build.ts`)
 
 .gitignore                                 # Git ignore configuration
 .prettierrc                                # Prettier code formatting configuration
+.vscodeignore                              # VS Code packaging exclusions
 build.ts                                   # Build script configuration for esbuild
 bun.lock                                   # Bun lockfile for dependency management
 eslint.config.mjs                          # ESLint configuration for code linting
 package.json                               # NPM package configuration with dependencies and scripts
-README.md                                  # Project README with setup instructions
-roadmap.md                                 # Comprehensive development roadmap with phase breakdown
 tsconfig.json                              # TypeScript compiler configuration
+vitest.config.ts                           # Vitest config (unit/integration/component)
+vitest.e2e.config.ts                       # Vitest config (E2E)
+roadmap_sync.sh                            # Roadmap sync helper script
+major-refactor-roadmap.md                  # Project roadmap/notes (dogfooding)
+kanban2code-0.0.1.vsix                     # Packaged extension artifact (local)
+README.md                                  # Project README with setup instructions
 .vscode/                                   # VS Code workspace configuration
+```
 
 ## Phase 3 Sidebar UI Implementation
 

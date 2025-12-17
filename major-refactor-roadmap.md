@@ -128,10 +128,13 @@ tags: [feature, p1]  # Goes through: inbox → plan → code → audit → compl
 ```
 
 **Implementation:**
+- **IMPORTANT**: These agents must ship with the extension, not just live in project workspaces
+- Agent files should be bundled with the extension and copied/scaffolded into new workspaces
 - Create agent markdown files in `.kanban2code/_agents/`
 - Document handoff protocol in ai-guide.md
 - Update user guide with orchestration workflow
 - Add examples of full pipeline
+- Update scaffolder to include these agents in new workspaces
 
 **Files to Create:**
 
