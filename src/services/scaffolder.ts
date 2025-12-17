@@ -2,14 +2,11 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
   HOW_IT_WORKS,
-  TASK_TEMPLATE_BUG,
-  STAGE_TEMPLATE,
   ARCHITECTURE,
   PROJECT_DETAILS,
   AGENT_OPUS,
   INBOX_TASK_SAMPLE,
 } from '../assets/templates';
-import { STAGES } from '../core/constants';
 
 export const KANBAN_FOLDER = '.kanban2code';
 
@@ -33,8 +30,6 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
     'projects',
     '_agents',
     '_context',
-    '_templates/stages',
-    '_templates/tasks',
     '_archive',
   ];
 
@@ -52,18 +47,6 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
     path.join(kanbanRoot, 'inbox/sample-task.md'),
     INBOX_TASK_SAMPLE.replace('{date}', new Date().toISOString())
   );
-
-  await fs.writeFile(
-    path.join(kanbanRoot, '_templates/tasks/bug.md'),
-    TASK_TEMPLATE_BUG.replace('{date}', new Date().toISOString())
-  );
-
-  for (const stage of STAGES) {
-    await fs.writeFile(
-      path.join(kanbanRoot, `_templates/stages/${stage}.md`),
-      STAGE_TEMPLATE(stage)
-    );
-  }
 
   // Create .gitignore for _archive
   await fs.writeFile(path.join(kanbanRoot, '.gitignore'), '_archive/\n');

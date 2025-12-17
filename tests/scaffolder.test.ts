@@ -20,6 +20,10 @@ test('scaffolderWorkspace creates expected structure', async () => {
   const statsArchive = await fs.stat(path.join(kanbanRoot, '_archive'));
   expect(statsArchive.isDirectory()).toBe(true);
 
+  await expect(fs.stat(path.join(kanbanRoot, '_templates'))).rejects.toMatchObject({ code: 'ENOENT' });
+  await expect(fs.stat(path.join(kanbanRoot, '_templates', 'tasks'))).rejects.toMatchObject({ code: 'ENOENT' });
+  await expect(fs.stat(path.join(kanbanRoot, '_templates', 'stages'))).rejects.toMatchObject({ code: 'ENOENT' });
+
   // Check files
   const howItWorks = await fs.readFile(path.join(kanbanRoot, 'how-it-works.md'), 'utf-8');
   expect(howItWorks).toContain('# How Kanban2Code Works');
