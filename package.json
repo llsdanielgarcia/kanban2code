@@ -3,9 +3,9 @@
   "publisher": "cynic",
   "displayName": "Kanban2Code",
   "description": "Kanban board for coding tasks",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
-    "vscode": "^1.98.0"
+    "vscode": "^1.107.0"
   },
   "categories": [
     "Productivity"
