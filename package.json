@@ -4,6 +4,7 @@
   "displayName": "Kanban2Code",
   "description": "Kanban board for coding tasks",
   "version": "0.0.3",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.107.0"
   },
