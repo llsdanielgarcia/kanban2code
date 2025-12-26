@@ -35,6 +35,12 @@
       "primaryUse": ["ui"],
       "secondaryUse": [],
       "model": "gemini-2.0-flash"
+    },
+    "conversational": {
+      "description": "Friendly high-level conversation and prompt refinement",
+      "primaryUse": ["ideation", "brainstorming", "prompting"],
+      "secondaryUse": ["requirements-clarification"],
+      "model": "claude-sonnet-4"
     }
   },
   "tags": {

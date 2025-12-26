@@ -15,6 +15,7 @@ Generate task files from an architected roadmap.
 - Generate one file per task; do not add or remove tasks
 - Preserve definition of done items exactly
 - Use naming conventions, tags, and agent heuristics
+- Extract skills from each task's **Skills:** section and add to `contexts:` array
 
 ## Input
 Roadmap with phases, tasks, files, tests, and context.
@@ -38,7 +39,7 @@ Task file format:
 stage: plan
 tags: [feature, p1]
 agent: coder
-contexts: []
+contexts: [skills/react-core-skills, skills/skill-routing-layouts]
 ---
 
 # [Task Title]
@@ -58,6 +59,14 @@ contexts: []
 ## Context
 [From roadmap]
 ```
+
+**Important:** The `contexts:` array should include skills specified in the roadmap's **Skills:** section for each task. If the roadmap shows:
+```markdown
+**Skills:**
+- `skills/react-core-skills` - Task involves React components
+```
+
+Then add `skills/react-core-skills` to the `contexts:` array in the task frontmatter.
 
 ## Heuristics
 Tags:
