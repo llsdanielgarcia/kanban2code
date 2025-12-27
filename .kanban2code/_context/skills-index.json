@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2025-12-18",
+  "last_updated": "2025-12-26",
   "framework_detection": {
     "nextjs": {
       "files": ["next.config.js", "next.config.ts", "next.config.mjs"],
@@ -153,6 +153,232 @@
         ]
       },
       "description": "Parallel routes (default.js requirement), intercepting routes syntax (.)/(..)/(...), async params in layouts, loading.js and error.js patterns."
+    },
+    {
+      "name": "next-intl (App Router i18n)",
+      "file": "_context/skills/skill-next-intl.md",
+      "framework": "nextjs",
+      "triggers": {
+        "keywords": [
+          "next-intl",
+          "i18n",
+          "internationalization",
+          "localization",
+          "locale",
+          "locales",
+          "translations",
+          "NextIntlClientProvider",
+          "setRequestLocale",
+          "defineRouting",
+          "createNavigation",
+          "getRequestConfig",
+          "localePrefix"
+        ],
+        "files": [
+          "**/i18n/routing.ts",
+          "**/i18n/navigation.ts",
+          "**/i18n/request.ts",
+          "**/middleware.ts",
+          "messages/*.json"
+        ],
+        "task_patterns": [
+          "i18n setup",
+          "localize routes",
+          "localized navigation",
+          "translate UI",
+          "multi-language",
+          "locale detection"
+        ]
+      },
+      "description": "Next.js 16 App Router i18n with next-intl: async params, setRequestLocale, NextIntlClientProvider, defineRouting, middleware matcher, and navigation wrappers."
+    },
+    {
+      "name": "Drizzle ORM (PostgreSQL)",
+      "file": "_context/skills/skill-drizzle-orm.md",
+      "framework": "node",
+      "triggers": {
+        "keywords": [
+          "drizzle",
+          "drizzle-orm",
+          "drizzle-kit",
+          "pgTable",
+          "jsonb",
+          "$type",
+          "db:push",
+          "db:generate",
+          "db:migrate",
+          "postgres",
+          "postgresql",
+          "migration"
+        ],
+        "files": [
+          "**/drizzle.config.ts",
+          "**/src/db/schema.ts",
+          "**/src/db/client.ts",
+          "drizzle/**/*.sql"
+        ],
+        "task_patterns": [
+          "drizzle orm",
+          "database schema",
+          "postgres migrations",
+          "jsonb handling",
+          "connection pooling"
+        ]
+      },
+      "description": "Drizzle ORM patterns for PostgreSQL: schema in TS, jsonb $type typing, pg Pool usage, indexes in pgTable callback, and dev/prod migration workflow."
+    },
+    {
+      "name": "HTTP Security Headers (Next.js)",
+      "file": "_context/skills/skill-http-security-headers.md",
+      "framework": "nextjs",
+      "triggers": {
+        "keywords": [
+          "Content-Security-Policy",
+          "CSP",
+          "security headers",
+          "headers()",
+          "next.config",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy",
+          "Permissions-Policy",
+          "clickjacking",
+          "XSS",
+          "nonce",
+          "strict-dynamic"
+        ],
+        "files": [
+          "**/next.config.ts",
+          "**/next.config.js",
+          "**/next.config.mjs",
+          "**/proxy.ts",
+          "**/middleware.ts"
+        ],
+        "task_patterns": [
+          "security hardening",
+          "post-incident",
+          "add CSP",
+          "configure headers",
+          "prevent clickjacking",
+          "tighten referrer policy"
+        ]
+      },
+      "description": "Next.js HTTP response header hardening: baseline headers, CSP (static vs nonce), Report-Only rollout, and next.config headers() patterns."
+    },
+    {
+      "name": "Tailwind CSS v4 (CSS-first)",
+      "file": "_context/skills/skill-tailwindcss-v4.md",
+      "framework": "react",
+      "triggers": {
+        "keywords": [
+          "tailwind v4",
+          "tailwindcss v4",
+          "tailwindcss",
+          "@theme",
+          "@source",
+          "@config",
+          "@tailwindcss/postcss",
+          "postcss.config",
+          "globals.css",
+          "tw-animate-css",
+          "tailwind.config.js",
+          "@tailwind base",
+          "@tailwind utilities"
+        ],
+        "files": [
+          "**/postcss.config.*",
+          "**/app/globals.css",
+          "**/src/app/globals.css",
+          "**/*.css"
+        ],
+        "task_patterns": [
+          "tailwind setup",
+          "tailwind migration",
+          "css-first",
+          "design tokens",
+          "theme variables",
+          "animate utilities"
+        ]
+      },
+      "description": "Tailwind CSS v4 CSS-first setup: @import \"tailwindcss\", @theme tokens, @tailwindcss/postcss, @source scan paths, legacy @config, and tw-animate-css integration."
+    },
+    {
+      "name": "Testing Stack (Vitest + Playwright)",
+      "file": "_context/skills/skill-vitest-playwright-testing.md",
+      "framework": "nextjs",
+      "triggers": {
+        "keywords": [
+          "vitest",
+          "playwright",
+          "jsdom",
+          "@vitejs/plugin-react",
+          "vitest.config",
+          "playwright.config",
+          "*.test.ts",
+          "*.test.tsx",
+          "tests/*.spec.ts",
+          "coverage",
+          "next/headers",
+          "cookies()",
+          "headers()",
+          "supabase",
+          "vi.mock"
+        ],
+        "files": [
+          "**/vitest.config.ts",
+          "**/vitest.setup.ts",
+          "**/playwright.config.ts",
+          "tests/**/*.spec.ts"
+        ],
+        "task_patterns": [
+          "testing stack",
+          "add tests",
+          "unit tests",
+          "e2e tests",
+          "coverage",
+          "mock next headers",
+          "mock supabase"
+        ]
+      },
+      "description": "Conventions for Vitest (unit/component) + Playwright (E2E): file patterns, config baselines, coverage requirements, and mocking Next.js request scope and Supabase."
+    },
+    {
+      "name": "Supabase Auth SSR (@supabase/ssr)",
+      "file": "_context/skills/skill-supabase-ssr.md",
+      "framework": "nextjs",
+      "triggers": {
+        "keywords": [
+          "@supabase/ssr",
+          "supabase ssr",
+          "supabase auth",
+          "createServerClient",
+          "createBrowserClient",
+          "proxy.ts",
+          "cookies.setAll",
+          "next/headers",
+          "getUser",
+          "getClaims",
+          "getSession",
+          "RLS",
+          "auth.uid",
+          "@supabase/auth-helpers-nextjs"
+        ],
+        "files": [
+          "proxy.ts",
+          "**/lib/supabase/client.ts",
+          "**/lib/supabase/server.ts",
+          "**/lib/supabase/proxy.ts"
+        ],
+        "task_patterns": [
+          "supabase auth",
+          "ssr auth",
+          "session leakage",
+          "cookie handling",
+          "rls policies",
+          "nextjs supabase"
+        ]
+      },
+      "description": "Security-first Supabase Auth for Next.js App Router using @supabase/ssr: browser vs server clients, cookie plumbing, proxy.ts session refresh, and RLS coordination."
     },
     {
       "name": "Metadata & SEO",
