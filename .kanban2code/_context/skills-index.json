@@ -381,6 +381,42 @@
       "description": "Security-first Supabase Auth for Next.js App Router using @supabase/ssr: browser vs server clients, cookie plumbing, proxy.ts session refresh, and RLS coordination."
     },
     {
+      "name": "PostHog Analytics (Next.js)",
+      "file": "_context/skills/skill-posthog-analytics.md",
+      "framework": "nextjs",
+      "triggers": {
+        "keywords": [
+          "posthog",
+          "posthog-js",
+          "posthog-node",
+          "@posthog/react",
+          "analytics",
+          "$pageview",
+          "$pageleave",
+          "autocapture",
+          "server-only",
+          "client-only",
+          "runtime",
+          "nodejs"
+        ],
+        "files": [
+          "**/app/providers.tsx",
+          "**/lib/posthog-server.ts",
+          "**/lib/analytics/client.ts",
+          "**/lib/analytics/server.ts"
+        ],
+        "task_patterns": [
+          "add analytics",
+          "posthog integration",
+          "pageview tracking",
+          "custom events",
+          "server tracking",
+          "client tracking"
+        ]
+      },
+      "description": "PostHog integration patterns for Next.js App Router: strict client/server separation, provider setup, Node server tracking with flush/shutdown, pageview strategy, and standard event properties."
+    },
+    {
       "name": "Metadata & SEO",
       "file": "_context/skills/skill-metadata-seo.md",
       "framework": "nextjs",

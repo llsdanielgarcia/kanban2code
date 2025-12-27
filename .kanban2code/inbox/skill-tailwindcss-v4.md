@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 agent: auditor
 tags:
   - docs
