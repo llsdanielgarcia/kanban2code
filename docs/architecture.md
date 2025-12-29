@@ -413,7 +413,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 
 **Global Shortcuts** (wired in `useKeyboard.ts` and `package.json`):
 - `Ctrl+Shift+C` / `Cmd+Shift+C`: Copy task context (full XML)
-- `Ctrl+Shift+N` / `Cmd+Shift+N`: New task (modal)
+- `Alt+Shift+N`: New task (modal)
 - `Ctrl+Shift+K` / `Cmd+Shift+K`: Open board
 - `Ctrl+L` / `Cmd+L`: Toggle board layout (columns ↔ swimlanes)
 - `1-5`: Move focused task to stage (1=plan, 2=code, 3=audit, 4=completed, 5=inbox)

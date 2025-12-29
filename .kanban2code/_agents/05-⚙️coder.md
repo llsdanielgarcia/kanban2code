@@ -50,5 +50,17 @@ Task file containing goal, definition of done, refined prompt, context, files, a
 - Check completed items in Definition of Done
 - Add `## Audit` with one file path per line
 
+## CRITICAL: Stage Transition
+
+**You MUST update the task file frontmatter when done:**
+```yaml
+---
+stage: audit
+agent: auditor
+---
+```
+
+Do not just mention the stage change - actually edit the frontmatter to set `stage: audit` and `agent: auditor`!
+
 ## Blockers
 If context is missing or requirements are ambiguous, note assumptions or ask for clarification. Do not move to audit with failing tests or unmet requirements.

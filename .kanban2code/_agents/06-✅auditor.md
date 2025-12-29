@@ -74,3 +74,27 @@ Append a Review section to the task file:
 5. Update stage based on rating:
    - If rating >= 8: set stage to `completed` (keep agent as `auditor`)
    - If rating < 8: set stage to `code` and agent to `coder`
+6. **If rating >= 8 (ACCEPTED)**: Update `.kanban2code/_context/architecture.md` to add any new files created during the task implementation
+
+## Architecture Updates (On Acceptance)
+
+When a task passes (rating 8+), you MUST update the architecture documentation:
+
+1. Open `.kanban2code/_context/architecture.md`
+2. Add new files from the Audit section to the appropriate location in the directory structure
+3. Add brief descriptions for new services, components, or utilities
+4. Update any relevant sections that describe functionality affected by the changes
+
+This ensures the architecture documentation stays current with the codebase.
+
+## CRITICAL: Stage Transition
+
+**You MUST update the task file frontmatter when changing stages:**
+```yaml
+---
+stage: completed   # or 'code' if needs work
+agent: auditor     # or 'coder' if needs work
+---
+```
+
+Do not just mention the stage change in your review - actually edit the frontmatter!

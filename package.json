@@ -110,8 +110,8 @@
       },
       {
         "command": "kanban2code.newTask",
-        "key": "ctrl+shift+n",
-        "mac": "cmd+shift+n",
+        "key": "alt+shift+n",
+        "mac": "alt+shift+n",
         "when": "kanban2code:isActive"
       },
       {

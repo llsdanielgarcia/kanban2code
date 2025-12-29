@@ -25,7 +25,7 @@ Kanban2Code is a VS Code extension that brings Kanban board functionality direct
 ### Quick Start
 
 1. **Create a Kanban workspace**: Use the "Create Kanban" button in the sidebar
-2. **Add your first task**: Click "New Task" or use `Ctrl+Shift+N` (Cmd+Shift+N on Mac)
+2. **Add your first task**: Click "New Task" or use `Alt+Shift+N` (`Option+Shift+N` on macOS)
 3. **Open the board**: Click "View Kanban" or use `Ctrl+Shift+K` (Cmd+Shift+K on Mac)
 
 ## Workspace Setup
@@ -192,7 +192,7 @@ Each task card displays:
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+Shift+N` / `Cmd+Shift+N` | New Task |
+| `Alt+Shift+N` | New Task |
 | `Ctrl+Shift+K` / `Cmd+Shift+K` | Open Board |
 | `Ctrl+Shift+C` / `Cmd+Shift+C` | Copy Task Context (Full XML) |
 | `Ctrl+L` / `Cmd+L` | Toggle Board Layout |

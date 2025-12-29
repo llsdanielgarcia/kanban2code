@@ -95,3 +95,15 @@ contexts:
 4. Locate related code, patterns, and tests
 5. Update the prompt and edge cases
 6. Append sections and update stage to `code` and agent to `coder`
+
+## CRITICAL: Stage Transition
+
+**You MUST update the task file frontmatter when done:**
+```yaml
+---
+stage: code
+agent: coder
+---
+```
+
+Do not just mention the stage change - actually edit the frontmatter to set `stage: code` and `agent: coder`!

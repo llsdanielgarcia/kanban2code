@@ -63,7 +63,7 @@ Phase 5 is **100% complete** with all core deliverables shipped. The extension i
 | Shortcut | Action | Category |
 |----------|--------|----------|
 | `Ctrl+Shift+C` / `Cmd+Shift+C` | Copy task context (full XML) | Context |
-| `Ctrl+Shift+N` / `Cmd+Shift+N` | New task (modal) | Actions |
+| `Alt+Shift+N` | New task (modal) | Actions |
 | `Ctrl+Shift+K` / `Cmd+Shift+K` | Open board | Actions |
 | `Ctrl+L` / `Cmd+L` | Toggle board layout | Actions |
 | `1-5` | Move to stage (plan/code/audit/completed/inbox) | Stages |
