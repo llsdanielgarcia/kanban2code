@@ -69,15 +69,20 @@ ISO timestamp recommended (e.g. `2025-12-14T03:00:00.000Z`).
 
 ### `agent` (string)
 
-Assigns responsibility to an agent identifier. Recommended values are defined in `.kanban2code/config.json` under `agents`, e.g.:
-- `opus`
-- `codex`
-- `sonnet`
-- `glm`
-- `gemini`
+Assigns responsibility to an agent identifier. The agent value should match the `name` field in one of the agent definition files at `.kanban2code/_agents/`.
 
-In practice, any `agent` value is allowed, but it should correspond to a real agent instruction file at:
-- `.kanban2code/_agents/<agent>.md`
+**Execution agents** (stage-specific):
+- `planner` - works tasks in `stage: plan`
+- `coder` - works tasks in `stage: code`
+- `auditor` - works tasks in `stage: audit`
+
+**Orchestration agents** (for creating/shaping work):
+- `roadmapper` - creates vision documents
+- `architect` - adds technical design to roadmaps
+- `splitter` - generates task files from roadmaps
+- `conversational` - brainstorming and prompt refinement
+
+**IMPORTANT**: Use the agent `name` (e.g., `planner`, `coder`, `auditor`), NOT the filename (e.g., NOT `04-📋planner.md`).
 
 ### `tags` (array of strings)
 
@@ -381,7 +386,7 @@ All examples below are valid task files (Markdown + YAML frontmatter). Adjust fi
 ---
 stage: inbox
 created: 2025-12-14T03:00:00.000Z
-agent: codex
+agent: planner
 tags: [bug, p0, blocked, board]
 contexts: [ai-guide]
 ---
@@ -409,7 +414,7 @@ Include a brief stack trace or log excerpt if available.
 ---
 stage: plan
 created: 2025-12-14T03:00:00.000Z
-agent: codex
+agent: planner
 tags: [feature, p2, filters]
 contexts: [ai-guide]
 ---
@@ -431,7 +436,7 @@ Allow users to save/load named filter presets in the board UI.
 ---
 stage: plan
 created: 2025-12-14T03:00:00.000Z
-agent: codex
+agent: planner
 tags: [refactor, p3, performance]
 ---
 
@@ -448,7 +453,7 @@ tags: [refactor, p3, performance]
 ---
 stage: inbox
 created: 2025-12-14T03:00:00.000Z
-agent: sonnet
+agent: planner
 tags: [spike, p2, performance]
 ---
 
@@ -465,7 +470,7 @@ tags: [spike, p2, performance]
 ---
 stage: code
 created: 2025-12-14T03:00:00.000Z
-agent: opus
+agent: coder
 tags: [docs, p2]
 ---
 
@@ -482,7 +487,7 @@ tags: [docs, p2]
 ---
 stage: code
 created: 2025-12-14T03:00:00.000Z
-agent: codex
+agent: coder
 tags: [test, p1, ci]
 ---
 
@@ -499,7 +504,7 @@ tags: [test, p1, ci]
 ---
 stage: plan
 created: 2025-12-14T03:00:00.000Z
-agent: opus
+agent: planner
 tags: [feature, p2, sidebar]
 ---
 
@@ -516,7 +521,7 @@ tags: [feature, p2, sidebar]
 ---
 stage: audit
 created: 2025-12-14T03:00:00.000Z
-agent: codex
+agent: auditor
 tags: [chore, p1, security]
 contexts: [_context/security-notes.md]
 ---
@@ -534,7 +539,7 @@ contexts: [_context/security-notes.md]
 ---
 stage: plan
 created: 2025-12-14T03:00:00.000Z
-agent: gemini
+agent: planner
 tags: [feature, p3, accessibility]
 ---
 
@@ -551,7 +556,7 @@ tags: [feature, p3, accessibility]
 ---
 stage: plan
 created: 2025-12-14T03:00:00.000Z
-agent: opus
+agent: architect
 tags: [chore, p2, mvp]
 ---
 

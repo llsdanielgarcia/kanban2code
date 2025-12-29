@@ -6,41 +6,47 @@
     "repository": "https://github.com/user/kanban2code"
   },
   "agents": {
-    "opus": {
-      "description": "Claude Opus - Best for planning, architecture, and complex UI work",
-      "primaryUse": ["planning", "architecture", "ui", "design"],
-      "secondaryUse": ["auditing", "code-review"],
-      "model": "claude-opus-4"
-    },
-    "codex": {
-      "description": "Claude Codex - Best for backend logic, APIs, and code auditing",
-      "primaryUse": ["backend", "api", "logic", "coding"],
-      "secondaryUse": ["auditing"],
-      "model": "claude-sonnet-4"
-    },
-    "sonnet": {
-      "description": "Claude Sonnet - Best for quick tasks and context creation",
-      "primaryUse": ["quick-tasks", "context-creation", "roadmap-reading"],
+    "roadmapper": {
+      "description": "Idea exploration and vision document creation",
+      "primaryUse": ["ideation", "vision", "roadmaps"],
       "secondaryUse": [],
-      "model": "claude-sonnet-4"
+      "stage": null
     },
-    "glm": {
-      "description": "GLM - Best for task splitting and simple context",
-      "primaryUse": ["task-splitting", "simple-context"],
-      "secondaryUse": ["miscellaneous"],
-      "model": "glm-4"
-    },
-    "gemini": {
-      "description": "Gemini - Alternative for UI work",
-      "primaryUse": ["ui"],
+    "architect": {
+      "description": "Technical design, phases, tasks, and context",
+      "primaryUse": ["architecture", "design", "planning"],
       "secondaryUse": [],
-      "model": "gemini-2.0-flash"
+      "stage": null
+    },
+    "splitter": {
+      "description": "Generates individual task files from roadmaps",
+      "primaryUse": ["task-splitting", "decomposition"],
+      "secondaryUse": [],
+      "stage": null
+    },
+    "planner": {
+      "description": "Refines prompts and gathers implementation context",
+      "primaryUse": ["planning", "context-gathering", "prompt-refinement"],
+      "secondaryUse": [],
+      "stage": "plan"
+    },
+    "coder": {
+      "description": "General-purpose coding agent for implementation",
+      "primaryUse": ["coding", "implementation", "testing"],
+      "secondaryUse": [],
+      "stage": "code"
+    },
+    "auditor": {
+      "description": "Code review and quality rating",
+      "primaryUse": ["review", "quality", "auditing"],
+      "secondaryUse": [],
+      "stage": "audit"
     },
     "conversational": {
-      "description": "Friendly high-level conversation and prompt refinement",
+      "description": "Friendly colleague who brainstorms ideas and refines them into clear prompts",
       "primaryUse": ["ideation", "brainstorming", "prompting"],
       "secondaryUse": ["requirements-clarification"],
-      "model": "claude-sonnet-4"
+      "stage": null
     }
   },
   "tags": {
@@ -98,14 +104,14 @@
   "preferences": {
     "fileNaming": "kebab-case",
     "requireTests": true,
-    "defaultAgent": "codex",
+    "defaultAgent": "planner",
     "archiveCompleted": true,
     "archiveAfterDays": 7
   },
   "personalities": {
-    "architect": {
+    "architect-personality": {
       "description": "System design and architecture focus",
-      "agents": ["opus"],
+      "agents": ["architect"],
       "focus": ["system-design", "patterns", "scalability", "trade-offs"],
       "strengths": ["big-picture thinking", "trade-off analysis", "pattern recognition"],
       "limitations": ["may over-engineer simple tasks"],
@@ -118,7 +124,7 @@
     },
     "frontend-developer": {
       "description": "UI/UX implementation specialist",
-      "agents": ["opus", "gemini"],
+      "agents": ["coder"],
       "focus": ["components", "styling", "user-experience", "accessibility"],
       "strengths": ["visual design", "component architecture", "responsive design"],
       "limitations": ["backend integration complexity"],
@@ -131,7 +137,7 @@
     },
     "backend-developer": {
       "description": "Backend logic and API development",
-      "agents": ["codex"],
+      "agents": ["coder"],
       "focus": ["apis", "databases", "business-logic", "performance"],
       "strengths": ["efficient algorithms", "error handling", "data modeling"],
       "limitations": ["UI/UX considerations"],
@@ -142,9 +148,9 @@
         "Suggest performance improvements only if measured or clearly needed."
       ]
     },
-    "auditor": {
+    "auditor-personality": {
       "description": "Code review and quality assurance",
-      "agents": ["codex", "opus"],
+      "agents": ["auditor"],
       "focus": ["code-quality", "testing", "security", "best-practices"],
       "strengths": ["finding bugs", "suggesting improvements", "ensuring standards"],
       "limitations": ["may be overly critical"],
@@ -155,9 +161,9 @@
         "Propose targeted tests to prevent regressions."
       ]
     },
-    "planner": {
+    "planner-personality": {
       "description": "Task breakdown and roadmap creation",
-      "agents": ["opus"],
+      "agents": ["planner", "architect"],
       "focus": ["task-decomposition", "estimation", "dependencies", "milestones"],
       "strengths": ["breaking down complex work", "identifying risks", "sequencing"],
       "limitations": ["implementation details"],
@@ -170,7 +176,7 @@
     },
     "context-builder": {
       "description": "Context file and documentation creation",
-      "agents": ["sonnet", "glm"],
+      "agents": ["planner", "conversational"],
       "focus": ["documentation", "context-files", "summaries"],
       "strengths": ["clear writing", "information synthesis", "quick turnaround"],
       "limitations": ["complex architectural decisions"],
