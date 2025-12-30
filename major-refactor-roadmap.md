@@ -6,7 +6,7 @@ This document tracks planned breaking changes and major refactors for Kanban2Cod
 
 ### 1. Remove Template System
 
-**Status:** Planned
+**Status:** Completed
 **Priority:** High
 **Reason:** Templates are passive, take up conceptual space, and don't fit the agent-driven workflow
 
@@ -65,7 +65,7 @@ This document tracks planned breaking changes and major refactors for Kanban2Cod
 
 ### 2. Agent-Driven Orchestration Pipeline
 
-**Status:** Design Phase
+**Status:** Completed
 **Priority:** High
 
 **Goal:**
