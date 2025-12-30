@@ -32,7 +32,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const agentDisplayName = useMemo(() => {
     if (!task.agent) return 'unassigned';
     if (!agents || agents.length === 0) return task.agent;
-    const found = agents.find((a) => a.id === task.agent);
+    // Try matching by ID first, then by name (for when AI writes canonical names like "coder")
+    const found = agents.find((a) => a.id === task.agent) ?? agents.find((a) => a.name === task.agent);
     return found ? found.name : task.agent;
   }, [task.agent, agents]);
 

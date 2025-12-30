@@ -24,14 +24,6 @@ export const PROJECT_DETAILS = `# Project Details
 - **Goal:**
 `;
 
-export const AGENT_OPUS = `---
-name: Opus
-model: claude-3-opus
-context: high
----
-You are a senior architect.
-`;
-
 export const INBOX_TASK_SAMPLE = `---
 created: {date}
 stage: inbox

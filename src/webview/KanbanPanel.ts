@@ -4,7 +4,7 @@ import { WorkspaceState } from '../workspace/state';
 import { findTaskById, loadAllTasks } from '../services/scanner';
 import { changeStageAndReload } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
-import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
+import { listAvailableContexts, listAvailableAgents, listAvailableSkills, createContextFile, createAgentFile, type ContextFile, type Agent, type SkillFile } from '../services/context';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
 import { loadTaskContentById, saveTaskContentById, saveTaskWithMetadata } from '../services/task-content';
@@ -19,6 +19,7 @@ export class KanbanPanel {
   private _disposables: vscode.Disposable[] = [];
   private _tasks: Task[] = [];
   private _contexts: ContextFile[] = [];
+  private _skills: SkillFile[] = [];
   private _agents: Agent[] = [];
   private _webviewReady = false;
   private _pendingMessages: MessageEnvelope[] = [];
@@ -247,6 +248,7 @@ export class KanbanPanel {
             if (!root) throw new Error('Kanban workspace not detected.');
             const { task, content } = await loadTaskContentById(taskId);
             const contexts = await listAvailableContexts(root);
+            const skills = await listAvailableSkills(root);
             const agents = await listAvailableAgents(root);
             const listing = await listProjectsAndPhases(root);
 
@@ -260,9 +262,11 @@ export class KanbanPanel {
                   : { type: 'inbox' },
                 agent: task.agent || null,
                 contexts: task.contexts || [],
+                skills: task.skills || [],
                 tags: task.tags || [],
               },
               contexts,
+              skills,
               agents,
               projects: listing.projects,
               phasesByProject: listing.phasesByProject,
@@ -283,6 +287,7 @@ export class KanbanPanel {
               location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
               agent: string | null;
               contexts: string[];
+              skills: string[];
               tags: string[];
             };
           };

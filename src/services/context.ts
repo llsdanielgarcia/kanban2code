@@ -15,6 +15,17 @@ export interface ContextFile {
   scope?: 'global' | 'project';
 }
 
+export interface SkillFile {
+  id: string;
+  name: string;
+  description: string;
+  path: string;
+  framework?: string;
+  priority?: 'high' | 'medium' | 'low';
+  alwaysAttach?: boolean;
+  triggers?: string[];
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -23,7 +34,7 @@ export interface Agent {
 }
 
 /**
- * List all available context files from the _context/ directory.
+ * List all available context files from the _context/ directory, excluding skills.
  */
 export async function listAvailableContexts(kanbanRoot: string): Promise<ContextFile[]> {
   const contextDir = path.join(kanbanRoot, CONTEXT_FOLDER);
@@ -38,6 +49,10 @@ export async function listAvailableContexts(kanbanRoot: string): Promise<Context
       for (const entry of dirEntries) {
         const entryPath = path.join(absoluteDir, entry.name);
         if (entry.isDirectory()) {
+          // Skip the skills directory
+          if (entry.name === 'skills' && absoluteDir === contextDir) {
+            continue;
+          }
           await walk(entryPath);
         } else if (entry.isFile() && entry.name.endsWith('.md')) {
           filePaths.push(entryPath);
@@ -89,6 +104,90 @@ export async function listAvailableContexts(kanbanRoot: string): Promise<Context
   }
 
   return contexts.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * List all available skills from the _context/skills/ directory.
+ */
+export async function listAvailableSkills(kanbanRoot: string): Promise<SkillFile[]> {
+  const skillsDir = path.join(kanbanRoot, CONTEXT_FOLDER, 'skills');
+  const skills: SkillFile[] = [];
+
+  try {
+    const filePaths: string[] = [];
+    const normalizeSlashes = (value: string) => value.replace(/\\/g, '/');
+
+    const walk = async (absoluteDir: string) => {
+      const dirEntries = await fs.readdir(absoluteDir, { withFileTypes: true });
+      for (const entry of dirEntries) {
+        const entryPath = path.join(absoluteDir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(entryPath);
+        } else if (entry.isFile() && entry.name.endsWith('.md')) {
+          filePaths.push(entryPath);
+        }
+      }
+    };
+
+    await walk(skillsDir);
+
+    for (const filePath of filePaths) {
+      const relativeFromSkillsDir = normalizeSlashes(path.relative(skillsDir, filePath));
+      const relativeFromKanbanRoot = normalizeSlashes(path.relative(kanbanRoot, filePath));
+      const baseId = path.basename(filePath, '.md');
+
+      // Use the filename as ID for flat skills directory, or relative path if nested
+      const isTopLevel = !relativeFromSkillsDir.includes('/');
+      const id = isTopLevel ? baseId : relativeFromSkillsDir;
+
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const parsed = matter(content);
+
+        const rawName =
+          typeof parsed.data.skill_name === 'string'
+            ? parsed.data.skill_name
+            : typeof parsed.data.name === 'string'
+              ? parsed.data.name
+              : formatContextName(baseId);
+
+        skills.push({
+          id,
+          name: rawName,
+          description: typeof parsed.data.description === 'string' ? parsed.data.description : '',
+          path: relativeFromKanbanRoot,
+          framework: typeof parsed.data.framework === 'string' ? parsed.data.framework : undefined,
+          priority: ['high', 'medium', 'low'].includes(parsed.data.priority as string) 
+            ? parsed.data.priority as 'high' | 'medium' | 'low' 
+            : undefined,
+          alwaysAttach: typeof parsed.data.always_attach === 'boolean' ? parsed.data.always_attach : false,
+          triggers: Array.isArray(parsed.data.triggers) ? parsed.data.triggers : undefined,
+        });
+      } catch {
+        skills.push({
+          id,
+          name: formatContextName(baseId),
+          description: '',
+          path: relativeFromKanbanRoot,
+        });
+      }
+    }
+  } catch {
+    // Directory doesn't exist or can't be read
+    return [];
+  }
+
+  return skills.sort((a, b) => {
+    // Sort by priority first (high > medium > low > undefined)
+    const priorityOrder = { high: 0, medium: 1, low: 2, undefined: 3 };
+    const pA = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 3;
+    const pB = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 3;
+    
+    if (pA !== pB) return pA - pB;
+    
+    // Then by name
+    return a.name.localeCompare(b.name);
+  });
 }
 
 /**
@@ -330,10 +429,34 @@ export async function loadGlobalContext(root: string): Promise<string> {
   return contents.filter(Boolean).join('\n\n');
 }
 
+/**
+ * Resolve an agent identifier (either file ID or frontmatter name) to the actual file path.
+ * Returns the relative path from kanban root, or undefined if not found.
+ */
+export async function resolveAgentPath(root: string, agentIdentifier: string): Promise<string | undefined> {
+  // First, try direct file path (agent ID is the filename without extension)
+  const directPath = path.join(AGENTS_FOLDER, ensureExtension(agentIdentifier));
+  if (await fileExists(root, directPath)) {
+    return directPath;
+  }
+
+  // Fallback: scan all agents and find one whose frontmatter 'name' matches
+  const agents = await listAvailableAgents(root);
+  const matchByName = agents.find((a) => a.name === agentIdentifier);
+  if (matchByName) {
+    return matchByName.path;
+  }
+
+  return undefined;
+}
+
 export async function loadAgentContext(root: string, agentName?: NullableString): Promise<string> {
   if (!agentName) return '';
-  const agentPath = path.join(AGENTS_FOLDER, ensureExtension(agentName));
-  return readFileIfExists(root, agentPath);
+
+  const resolvedPath = await resolveAgentPath(root, agentName);
+  if (!resolvedPath) return '';
+
+  return readFileIfExists(root, resolvedPath);
 }
 
 export async function loadProjectContext(root: string, projectName?: NullableString): Promise<string> {

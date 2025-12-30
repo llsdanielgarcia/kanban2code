@@ -24,6 +24,10 @@ export function validateTaskFileContent(content: string): void {
   if (data.contexts !== undefined && !Array.isArray(data.contexts)) {
     throw new Error('Invalid frontmatter: "contexts" must be an array');
   }
+
+  if (data.skills !== undefined && !Array.isArray(data.skills)) {
+    throw new Error('Invalid frontmatter: "skills" must be an array');
+  }
 }
 
 export async function loadTaskContentById(taskId: string): Promise<{ task: Task; content: string }> {
@@ -77,6 +81,7 @@ export async function saveTaskWithMetadata(
     location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
     agent: string | null;
     contexts: string[];
+    skills: string[];
     tags: string[];
   }
 ): Promise<Task[]> {
@@ -121,6 +126,7 @@ export async function saveTaskWithMetadata(
     title: metadata.title,
     agent: metadata.agent || undefined,
     contexts: metadata.contexts.length > 0 ? metadata.contexts : undefined,
+    skills: metadata.skills.length > 0 ? metadata.skills : undefined,
     tags: metadata.tags.length > 0 ? metadata.tags : undefined,
     content: body,
   };

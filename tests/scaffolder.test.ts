@@ -48,8 +48,9 @@ test('scaffoldWorkspace creates expected structure', async () => {
   const architecture = await fs.readFile(path.join(kanbanRoot, 'architecture.md'), 'utf-8');
   expect(architecture).toContain('# Architecture');
 
-  const agent = await fs.readFile(path.join(kanbanRoot, '_agents/opus.md'), 'utf-8');
-  expect(agent).toContain('name: Opus');
+  // Verify bundled agents are created (not legacy opus.md)
+  const coder = await fs.readFile(path.join(kanbanRoot, '_agents/05-⚙️coder.md'), 'utf-8');
+  expect(coder).toContain('name: coder');
 
   const inboxTask = await fs.readFile(path.join(kanbanRoot, 'inbox/sample-task.md'), 'utf-8');
   expect(inboxTask).toContain('# Explore Kanban2Code');

@@ -7,7 +7,6 @@ import {
   HOW_IT_WORKS,
   ARCHITECTURE,
   PROJECT_DETAILS,
-  AGENT_OPUS,
   INBOX_TASK_SAMPLE,
 } from '../assets/seed-content';
 
@@ -50,7 +49,6 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
   await fs.writeFile(path.join(kanbanRoot, 'how-it-works.md'), HOW_IT_WORKS);
   await fs.writeFile(path.join(kanbanRoot, 'architecture.md'), ARCHITECTURE);
   await fs.writeFile(path.join(kanbanRoot, 'project-details.md'), PROJECT_DETAILS);
-  await fs.writeFile(path.join(kanbanRoot, '_agents/opus.md'), AGENT_OPUS);
 
   // Write bundled agents (orchestration + execution pipeline agents)
   for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
@@ -110,7 +108,6 @@ export async function syncWorkspace(rootPath: string): Promise<SyncReport> {
     'architecture.md': ARCHITECTURE,
     'project-details.md': PROJECT_DETAILS,
     '.gitignore': '_archive/\n',
-    '_agents/opus.md': AGENT_OPUS,
   };
 
   for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {

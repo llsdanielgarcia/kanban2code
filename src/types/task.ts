@@ -11,6 +11,7 @@ export interface Task {
   parent?: string; // ID of parent task
   tags?: string[];
   contexts?: string[];
+  skills?: string[];
   order?: number;
   created?: string; // ISO Date
   content: string; // The markdown content body

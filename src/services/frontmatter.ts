@@ -50,6 +50,24 @@ export function parseTaskContent(content: string, filePath: string, options: Par
   const stage = STAGES.includes(data.stage as Stage) ? (data.stage as Stage) : 'inbox';
   const { project, phase } = inferProjectAndPhase(filePath);
 
+  let contexts = Array.isArray(data.contexts) ? data.contexts.map(String) : [];
+  let skills = Array.isArray(data.skills) ? data.skills.map(String) : [];
+
+  // Migration: Move skills from contexts to skills
+  const migratedContexts: string[] = [];
+  for (const ctx of contexts) {
+    // Check for _context/skills/ prefix which was used for nested context files
+    if (ctx.startsWith('_context/skills/') || ctx.startsWith('skills/')) {
+      const basename = path.basename(ctx, '.md');
+      if (!skills.includes(basename)) {
+        skills.push(basename);
+      }
+    } else {
+      migratedContexts.push(ctx);
+    }
+  }
+  contexts = migratedContexts;
+
   const task: Task = {
     id: path.basename(filePath, '.md'),
     filePath,
@@ -60,7 +78,8 @@ export function parseTaskContent(content: string, filePath: string, options: Par
     agent: typeof data.agent === 'string' ? data.agent : undefined,
     parent: typeof data.parent === 'string' ? data.parent : undefined,
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
-    contexts: Array.isArray(data.contexts) ? data.contexts.map(String) : [],
+    contexts,
+    skills,
     order: typeof data.order === 'number' ? data.order : undefined,
     created: typeof data.created === 'string' ? data.created : undefined,
     content: body,
@@ -94,6 +113,7 @@ export function stringifyTaskFile(task: Task, originalContent?: string, options:
     parent: task.parent,
     tags: task.tags ?? [],
     contexts: task.contexts ?? [],
+    skills: task.skills ?? [],
     order: task.order,
     created: task.created,
   };

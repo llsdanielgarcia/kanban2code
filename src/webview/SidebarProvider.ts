@@ -8,7 +8,7 @@ import type { Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 import { changeStageAndReload, moveTaskToLocation, type TaskLocation } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
-import { listAvailableContexts, listAvailableAgents, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
+import { listAvailableContexts, listAvailableAgents, listAvailableSkills, createContextFile, createAgentFile, type ContextFile, type Agent } from '../services/context';
 import { KanbanPanel } from './KanbanPanel';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
@@ -136,6 +136,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             if (!root) throw new Error('Kanban workspace not detected.');
             const { task, content } = await loadTaskContentById(taskId);
             const contexts = await listAvailableContexts(root);
+            const skills = await listAvailableSkills(root);
             const agents = await listAvailableAgents(root);
             const listing = await listProjectsAndPhases(root);
 
@@ -149,9 +150,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                   : { type: 'inbox' },
                 agent: task.agent || null,
                 contexts: task.contexts || [],
+                skills: task.skills || [],
                 tags: task.tags || [],
               },
               contexts,
+              skills,
               agents,
               projects: listing.projects,
               phasesByProject: listing.phasesByProject,
@@ -172,6 +175,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
               agent: string | null;
               contexts: string[];
+              skills: string[];
               tags: string[];
             };
           };

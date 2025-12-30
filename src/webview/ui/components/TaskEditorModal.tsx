@@ -6,6 +6,7 @@ import loader from '@monaco-editor/loader';
 import { defineNavyNightTheme, NAVY_NIGHT_MONACO_THEME } from './monaco-theme';
 import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
+import { SkillPicker, type SkillFile } from './SkillPicker';
 import { AgentPicker, type Agent } from './AgentPicker';
 import { ProjectModal } from './ProjectModal';
 
@@ -39,6 +40,7 @@ interface TaskMetadata {
   location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   agent: string | null;
   contexts: string[];
+  skills: string[];
   tags: string[];
 }
 
@@ -64,6 +66,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   const [location, setLocation] = useState<{ type: 'inbox' } | { type: 'project'; project: string; phase?: string }>({ type: 'inbox' });
   const [agent, setAgent] = useState<string | null>(null);
   const [contexts, setContexts] = useState<string[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
@@ -72,6 +75,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
   // Available options from backend
   const [availableContexts, setAvailableContexts] = useState<ContextFile[]>([]);
+  const [availableSkills, setAvailableSkills] = useState<SkillFile[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
@@ -84,9 +88,10 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
       JSON.stringify(location) !== JSON.stringify(originalMetadata.location) ||
       agent !== originalMetadata.agent ||
       JSON.stringify([...contexts].sort()) !== JSON.stringify([...originalMetadata.contexts].sort()) ||
+      JSON.stringify([...skills].sort()) !== JSON.stringify([...originalMetadata.skills].sort()) ||
       JSON.stringify([...tags].sort()) !== JSON.stringify([...originalMetadata.tags].sort())
     );
-  }, [title, location, agent, contexts, tags, originalMetadata]);
+  }, [title, location, agent, contexts, skills, tags, originalMetadata]);
 
   const isDirty = useMemo(() => value !== original || isMetadataDirty, [value, original, isMetadataDirty]);
 
@@ -106,7 +111,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     postMessage('SaveTaskWithMetadata', {
       taskId: task.id,
       content: value,
-      metadata: { title, location, agent, contexts, tags }
+      metadata: { title, location, agent, contexts, skills, tags }
     });
   };
 
@@ -142,6 +147,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     setLocation({ type: 'inbox' });
     setAgent(null);
     setContexts([]);
+    setSkills([]);
     setTags([]);
     setTagInput('');
     setOriginalMetadata(null);
@@ -178,6 +184,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
           content: string;
           metadata: TaskMetadata;
           contexts: ContextFile[];
+          skills: SkillFile[];
           agents: Agent[];
           projects: string[];
           phasesByProject: Record<string, string[]>;
@@ -189,9 +196,11 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         setLocation(payload.metadata.location);
         setAgent(payload.metadata.agent);
         setContexts(payload.metadata.contexts);
+        setSkills(payload.metadata.skills);
         setTags(payload.metadata.tags);
         setOriginalMetadata(payload.metadata);
         setAvailableContexts(payload.contexts);
+        setAvailableSkills(payload.skills);
         setAgents(payload.agents);
         setProjects(payload.projects);
         setPhasesByProject(payload.phasesByProject);
@@ -211,7 +220,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         if (payload.taskId !== currentTaskId) return;
         setIsSaving(false);
         setOriginal(value);
-        setOriginalMetadata({ title, location, agent, contexts, tags });
+        setOriginalMetadata({ title, location, agent, contexts, skills, tags });
         onSave?.(value);
         onClose();
       }
@@ -235,7 +244,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [isOpen, onClose, onSave, value, title, location, agent, contexts, tags]);
+  }, [isOpen, onClose, onSave, value, title, location, agent, contexts, skills, tags]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -343,6 +352,18 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                     onChange={setContexts}
                     onCreateNew={() => postMessage('CreateContext', {})}
                     onPickFolder={handlePickFolder}
+                  />
+                </div>
+
+                <div className="task-editor-divider" />
+
+                {/* Skills */}
+                <div className="task-editor-section">
+                  <div className="task-editor-section-title">Skills</div>
+                  <SkillPicker
+                    skills={availableSkills}
+                    selected={skills}
+                    onChange={setSkills}
                   />
                 </div>
 
