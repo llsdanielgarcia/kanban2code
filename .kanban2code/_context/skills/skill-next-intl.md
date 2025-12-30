@@ -22,6 +22,8 @@ triggers:
 <!--
 LLM INSTRUCTION: Use for Next.js App Router i18n with next-intl.
 CRITICAL: In Next.js 16, params are Promises in layouts/pages. Always await.
+CRITICAL: In async server components, use getTranslations (async) from next-intl/server. NEVER use useTranslations hook in async functions.
+useTranslations hook is ONLY for client components ('use client').
 Always call setRequestLocale(locale) in every layout/page that uses params.
 Use NextIntlClientProvider in the root locale layout.
 Use createNavigation() wrappers; never use next/link or next/navigation directly for localized routes.
@@ -36,6 +38,7 @@ Do NOT use next-intl/client or createSharedPathnamesNavigation (deprecated).
 
 - **Sync params access** → Next.js 16 params are Promises; sync destructuring breaks.
 - **Missing setRequestLocale** → causes dynamic rendering errors or wrong locale.
+- **Using useTranslations in async server components** → hooks can't be called in async functions; use `getTranslations` from `next-intl/server` instead.
 - **Using next/link** → bypasses localized pathnames.
 - **No NextIntlClientProvider** → client hooks fail.
 - **Missing matcher for unprefixed routes** → localePrefix: 'as-needed' breaks.
@@ -45,12 +48,15 @@ Do NOT use next-intl/client or createSharedPathnamesNavigation (deprecated).
 ### ✅ DO
 - **Type params as Promise** and `await` them in layouts/pages.
 - **Call setRequestLocale(locale)** before any server-side translations.
+- **Use `getTranslations` from `next-intl/server`** in async server components (pages/layouts).
+- **Use `useTranslations` from `next-intl`** only in client components (`'use client'`).
 - **Wrap with NextIntlClientProvider** in `[locale]/layout.tsx`.
 - **Use createNavigation wrappers** for Link/redirect/useRouter/usePathname.
 - **Validate locale** with hasLocale and fallback to defaultLocale.
 
 ### ❌ DON'T
 - **Don't destructure params synchronously** (`{ params: { locale } }`).
+- **Don't use `useTranslations` in async server components** → use `getTranslations` instead.
 - **Don't import from next-intl/client** (deprecated).
 - **Don't use createSharedPathnamesNavigation** (superseded).
 - **Don't use next/link or next/navigation directly** for localized routes.
@@ -183,10 +189,9 @@ export default async function LocaleLayout({
 }
 ```
 
-### Page (`app/[locale]/page.tsx`)
+### Server Component Page (`app/[locale]/page.tsx`)
 ```tsx
-import { useTranslations } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 export default async function HomePage({
   params
@@ -196,10 +201,12 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = useTranslations('HomePage');
+  const t = await getTranslations('HomePage');
   return <h1>{t('title')}</h1>;
 }
 ```
+
+> **Note:** Use `getTranslations` (async) in server components. Use `useTranslations` (hook) only in client components.
 
 ### Client Component (`'use client'`)
 ```tsx

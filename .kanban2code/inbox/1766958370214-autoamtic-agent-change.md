@@ -1,6 +1,9 @@
 ---
-stage: inbox
-created: 2025-12-28T21:46:10.217Z
+stage: plan
+tags: []
+contexts:
+  - ai-guide
+agent: "04-\U0001F4CBplanner"
 ---
 
 # Autoamtic agent change

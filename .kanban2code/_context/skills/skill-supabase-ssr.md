@@ -2,7 +2,7 @@
 skill_name: skill-supabase-ssr
 version: "1.0"
 framework: Next.js
-last_verified: "2025-12-26"
+last_verified: "2025-12-29"
 always_attach: false
 priority: 8
 triggers:
@@ -28,13 +28,13 @@ FORBID: @supabase/auth-helpers-nextjs (deprecated; don't mix with @supabase/ssr)
 Use separate clients: createBrowserClient (client components) and createServerClient (server).
 Server Components may throw on setting cookies: wrap cookies.setAll in try/catch.
 Use a Proxy (proxy.ts) to refresh sessions and write cookies to BOTH request and response to avoid desync.
-Never rely on getSession() for server-side protection; prefer getUser() for high-trust checks.
+Never rely on getSession() for server-side protection; prefer getClaims() (JWT verification) or getUser() (server revalidation).
 Coordinate RLS policies with schema: policies depend on columns like user_id/tenant_id and auth.uid().
 -->
 
 # Supabase Auth (SSR) for Next.js App Router
 
-> **Target:** Next.js + `@supabase/ssr` | **Last Verified:** 2025-12-26
+> **Target:** Next.js + `@supabase/ssr` | **Last Verified:** 2025-12-29
 
 ## 1. What AI Models Get Wrong
 
@@ -53,7 +53,7 @@ Coordinate RLS policies with schema: policies depend on columns like user_id/ten
   - `createServerClient` for Server Components/Actions/Route Handlers with cookie plumbing.
 - In Server Components, implement `cookies.getAll()` + `cookies.setAll()` and **catch `setAll` errors**.
 - Use `proxy.ts` to refresh sessions early and keep cookies consistent per request.
-- Use `getUser()` for high-trust server checks; use `getClaims()` only for fast JWT validation flows.
+- For server-side protection, use `getClaims()` (recommended) or `getUser()` (strongest, revalidated).
 
 ### ❌ DON'T
 - Don’t trust `getSession()` in server code for protection.
@@ -63,16 +63,16 @@ Coordinate RLS policies with schema: policies depend on columns like user_id/ten
 ## 3. Minimal File Layout
 
 ```
-proxy.ts
-src/lib/supabase/client.ts
-src/lib/supabase/server.ts
-src/lib/supabase/proxy.ts
+proxy.ts                    # Root Next.js middleware entrypoint
+lib/supabase/client.ts      # Browser client (createBrowserClient)
+lib/supabase/server.ts      # Server client (createServerClient)
+lib/supabase/proxy.ts       # Session refresh with getClaims()
 ```
 
 ## 4. Client Component: Browser Client
 
 ```ts
-// src/lib/supabase/client.ts
+// lib/supabase/client.ts
 import { createBrowserClient } from '@supabase/ssr';
 
 export function createClient() {
@@ -86,7 +86,7 @@ export function createClient() {
 ## 5. Server: Per-request Client + Cookie Safety
 
 ```ts
-// src/lib/supabase/server.ts
+// lib/supabase/server.ts
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -135,7 +135,7 @@ export const config = {
 };
 ```
 
-### Session updater (`src/lib/supabase/proxy.ts`)
+### Session updater (`lib/supabase/proxy.ts`)
 ```ts
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -162,8 +162,9 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh/validate early to keep cookies in sync for downstream server rendering.
-  await supabase.auth.getUser();
+  // IMPORTANT: Avoid writing logic between createServerClient(...) and getClaims().
+  // IMPORTANT: Don't remove getClaims(); it both validates and keeps sessions/cookies in sync.
+  await supabase.auth.getClaims();
 
   return response;
 }
@@ -171,9 +172,9 @@ export async function updateSession(request: NextRequest) {
 
 ## 7. Authorization Guidance (Server-side)
 
-- **Never** rely on `supabase.auth.getSession()` for server protection.
-- Use `supabase.auth.getUser()` for security-sensitive checks (server revalidation).
-- Use `getClaims()` when you only need fast JWT validation and accept that revocation/logout may not be checked.
+- **Never** rely on `supabase.auth.getSession()` for server protection (it reads from storage/cookies and is not a strong guarantee).
+- Use `supabase.auth.getClaims()` to protect pages/user data when JWT validation is sufficient (verifies against JWKS/public keys; commonly used in middleware/proxy).
+- Use `supabase.auth.getUser()` when you need the strongest server-side check (revalidated with Supabase Auth).
 
 ## 8. RLS + Schema Coordination (Security Invariant)
 
@@ -188,5 +189,5 @@ export async function updateSession(request: NextRequest) {
 - [ ] Server code uses per-request `createServerClient` with `getAll/setAll` cookie plumbing.
 - [ ] `setAll` errors are caught in Server Components.
 - [ ] `proxy.ts` refreshes sessions and updates both request and response cookies.
-- [ ] Server authorization uses `getUser()` (not `getSession()`).
+- [ ] Server protection uses `getClaims()` or `getUser()` (not `getSession()`).
 - [ ] RLS policies and schema evolve together.
