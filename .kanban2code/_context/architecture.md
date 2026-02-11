@@ -174,3 +174,19 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `tests/runner-log.test.ts` - Tests for runner log generation and persistence
   - tests-added:
     - 4 tests: markdown headers, summary counts, per-task fields, zero-task handling
+
+- date: 2026-02-11
+  - task: `task4.7-register-runner-vs-code-commands`
+  - files-updated:
+    - `src/commands/index.ts` (registered runner commands)
+    - `src/extension.ts` (runner singleton lifecycle, progress API)
+    - `package.json` (added runner commands)
+  - new-files-created:
+    - `tests/runner-singleton.test.ts` - Tests for runner singleton and cancellation
+
+- date: 2026-02-11
+  - task: `task5.1-update-messaging-protocol-for-modes-and-runner`
+  - files-updated:
+    - `src/webview/messaging.ts` (added mode-management and runner-control message types; added `RunnerState` type/schema/parser)
+    - `tests/webview.test.ts` (added EnvelopeSchema coverage for new message types and RunnerState validation tests)
+  - new-files-created: none

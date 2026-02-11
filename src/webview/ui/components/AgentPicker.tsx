@@ -1,63 +1,58 @@
 import React, { useMemo } from 'react';
 
-export interface Agent {
+export interface LlmProvider {
   id: string;
   name: string;
   description: string;
+  primaryUse?: string[];
+  secondaryUse?: string[];
 }
 
 interface AgentPickerProps {
-  agents: Agent[];
+  providers: LlmProvider[];
   value: string | null;
-  onChange: (agentId: string | null) => void;
-  onCreateNew: () => void;
+  onChange: (providerId: string | null) => void;
 }
 
 /**
- * Find an agent by ID or by canonical name.
- * Supports both file IDs (e.g., "06-✅auditor") and frontmatter names (e.g., "auditor").
+ * Find an LLM provider by ID or by canonical name.
+ * Supports both provider IDs (e.g., "opus", "codex") and display names.
  */
-function findAgent(agents: Agent[], identifier: string | null): Agent | undefined {
+function findProvider(providers: LlmProvider[], identifier: string | null): LlmProvider | undefined {
   if (!identifier) return undefined;
-  return agents.find((a) => a.id === identifier) ?? agents.find((a) => a.name === identifier);
+  return providers.find((p) => p.id === identifier) ?? providers.find((p) => p.name === identifier);
 }
 
 export const AgentPicker: React.FC<AgentPickerProps> = ({
-  agents,
+  providers,
   value,
   onChange,
-  onCreateNew,
 }) => {
-  // Resolve the value to an agent ID (handles both ID and canonical name)
-  const resolvedAgent = useMemo(() => findAgent(agents, value), [agents, value]);
-  const selectValue = resolvedAgent?.id ?? '';
+  // Resolve the value to a provider ID (handles both ID and canonical name)
+  const resolvedProvider = useMemo(() => findProvider(providers, value), [providers, value]);
+  const selectValue = resolvedProvider?.id ?? '';
 
   return (
     <div className="agent-picker">
       <div className="form-group">
-        <label className="form-label">Agent (optional)</label>
+        <label className="form-label">Agent (LLM Provider)</label>
         <select
           className="form-select"
           value={selectValue}
           onChange={(e) => onChange(e.target.value || null)}
         >
-          <option value="">No agent</option>
-          {agents.map((agent) => (
-            <option key={agent.id} value={agent.id}>
-              {agent.name}
+          <option value="">No selection</option>
+          {providers.map((provider) => (
+            <option key={provider.id} value={provider.id}>
+              {provider.name}
             </option>
           ))}
         </select>
-        {resolvedAgent && (
+        {resolvedProvider && (
           <p className="form-hint">
-            {resolvedAgent.description}
+            {resolvedProvider.description}
           </p>
         )}
-        <span className="form-hint">
-          <button type="button" className="link-button" onClick={onCreateNew}>
-            Create new agent
-          </button>
-        </span>
       </div>
     </div>
   );

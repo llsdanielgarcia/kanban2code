@@ -7,7 +7,7 @@ import { defineNavyNightTheme, NAVY_NIGHT_MONACO_THEME } from './monaco-theme';
 import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { SkillPicker, type SkillFile } from './SkillPicker';
-import { AgentPicker, type Agent } from './AgentPicker';
+import { AgentPicker, type LlmProvider } from './AgentPicker';
 import { ProjectModal } from './ProjectModal';
 
 const MonacoEditor = React.lazy(async () => {
@@ -85,7 +85,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
   // Available options from backend
   const [availableContexts, setAvailableContexts] = useState<ContextFile[]>([]);
   const [availableSkills, setAvailableSkills] = useState<SkillFile[]>([]);
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [providers, setProviders] = useState<LlmProvider[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -200,7 +200,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
           metadata: TaskMetadata;
           contexts: ContextFile[];
           skills: SkillFile[];
-          agents: Agent[];
+          agents: LlmProvider[];
           projects: string[];
           phasesByProject: Record<string, string[]>;
         };
@@ -217,7 +217,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
         setOriginalMetadata(payload.metadata);
         setAvailableContexts(payload.contexts);
         setAvailableSkills(payload.skills);
-        setAgents(payload.agents);
+        setProviders(payload.agents);
         setProjects(payload.projects);
         setPhasesByProject(payload.phasesByProject);
         setIsLoading(false);
@@ -368,10 +368,9 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                 <div className="task-editor-section">
                   <div className="task-editor-section-title">Assignment</div>
                   <AgentPicker
-                    agents={agents}
+                    providers={providers}
                     value={agent}
                     onChange={setAgent}
-                    onCreateNew={() => postMessage('CreateAgent', {})}
                   />
                 </div>
 

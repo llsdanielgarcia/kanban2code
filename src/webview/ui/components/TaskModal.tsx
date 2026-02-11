@@ -4,7 +4,7 @@ import { createMessage } from '../../messaging';
 import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { SkillPicker, type SkillFile } from './SkillPicker';
-import { AgentPicker, type Agent } from './AgentPicker';
+import { AgentPicker, type LlmProvider } from './AgentPicker';
 import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
 
@@ -19,7 +19,7 @@ interface TaskModalProps {
   tasks: Task[];
   contexts?: ContextFile[];
   skills?: SkillFile[];
-  agents?: Agent[];
+  agents?: LlmProvider[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
   onClose: () => void;
@@ -198,11 +198,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
-  const handleCreateAgent = () => {
-    if (onOpenAgentModal) {
-      onOpenAgentModal();
-    }
-  };
 
   const handleProjectCreated = (projectName: string) => {
     setLocalProjects((prev) => {
@@ -281,10 +276,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Agent */}
           <AgentPicker
-            agents={agents}
+            providers={agents}
             value={formData.agent}
             onChange={(agent) => setFormData((prev) => ({ ...prev, agent }))}
-            onCreateNew={handleCreateAgent}
           />
 
           {/* Context Files */}

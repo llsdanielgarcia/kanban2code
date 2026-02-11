@@ -29,12 +29,7 @@
     "onCommand:kanban2code.showKeyboardShortcuts",
     "onCommand:kanban2code.newProject",
     "onCommand:kanban2code.newAgent",
-    "onCommand:kanban2code.openSettings",
-    "onCommand:kanban2code.migrateAgentsModes",
-    "onCommand:kanban2code.runTask",
-    "onCommand:kanban2code.runColumn",
-    "onCommand:kanban2code.stopRunner",
-    "onCommand:kanban2code.runNightShift"
+    "onCommand:kanban2code.openSettings"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -106,10 +101,6 @@
         "title": "Kanban2Code: Open Settings"
       },
       {
-        "command": "kanban2code.migrateAgentsModes",
-        "title": "Kanban2Code: Migrate Agents to Modes"
-      },
-      {
         "command": "kanban2code.runTask",
         "title": "Kanban2Code: Run Task"
       },
@@ -118,12 +109,12 @@
         "title": "Kanban2Code: Run Column"
       },
       {
-        "command": "kanban2code.stopRunner",
-        "title": "Kanban2Code: Stop Runner"
-      },
-      {
         "command": "kanban2code.runNightShift",
         "title": "Kanban2Code: Run Night Shift"
+      },
+      {
+        "command": "kanban2code.stopRunner",
+        "title": "Kanban2Code: Stop Runner"
       }
     ],
     "keybindings": [

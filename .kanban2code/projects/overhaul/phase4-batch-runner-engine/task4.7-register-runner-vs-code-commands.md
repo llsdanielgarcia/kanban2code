@@ -1,8 +1,11 @@
 ---
-stage: audit
-tags: [feature, p1]
+stage: completed
+tags:
+  - feature
+  - p1
 agent: auditor
 contexts: []
+skills: []
 ---
 
 # Register runner VS Code commands

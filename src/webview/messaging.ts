@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Stage } from '../types/task';
 
 export const MESSAGE_VERSION = 1 as const;
 
@@ -22,6 +23,8 @@ export const HostToWebviewMessageTypes = [
   'FullTaskDataLoadFailed',
   'TaskMetadataSaved',
   'TaskMetadataSaveFailed',
+  'ModesLoaded',
+  'RunnerStateChanged',
 ] as const;
 
 export const WebviewToHostMessageTypes = [
@@ -53,10 +56,19 @@ export const WebviewToHostMessageTypes = [
   'RequestState',
   // Basic demo/ping path used by the placeholder UI
   'ALERT',
+  // Mode management
+  'RequestModes',
+  'CreateMode',
+  'UpdateMode',
+  'DeleteMode',
+  // Runner control
+  'RunTask',
+  'RunColumn',
+  'StopRunner',
 ] as const;
 
-export type HostToWebviewType = typeof HostToWebviewMessageTypes[number];
-export type WebviewToHostType = typeof WebviewToHostMessageTypes[number];
+export type HostToWebviewType = (typeof HostToWebviewMessageTypes)[number];
+export type WebviewToHostType = (typeof WebviewToHostMessageTypes)[number];
 export type MessageType = HostToWebviewType | WebviewToHostType;
 
 export interface MessageEnvelope<TPayload = unknown> {
@@ -70,10 +82,7 @@ export type WebviewMessage<TPayload = unknown> = MessageEnvelope<TPayload>;
 
 export const EnvelopeSchema = z.object({
   version: z.literal(MESSAGE_VERSION),
-  type: z.union([
-    z.enum(HostToWebviewMessageTypes),
-    z.enum(WebviewToHostMessageTypes),
-  ]),
+  type: z.union([z.enum(HostToWebviewMessageTypes), z.enum(WebviewToHostMessageTypes)]),
   payload: z.unknown(),
 });
 
@@ -81,7 +90,10 @@ export const DeleteTaskPayloadSchema = z.object({
   taskId: z.string().min(1),
 });
 
-export function createEnvelope<TPayload>(type: MessageType, payload: TPayload): MessageEnvelope<TPayload> {
+export function createEnvelope<TPayload>(
+  type: MessageType,
+  payload: TPayload,
+): MessageEnvelope<TPayload> {
   return { version: MESSAGE_VERSION, type, payload };
 }
 
@@ -101,5 +113,26 @@ export function parseDeleteTaskPayload(payload: unknown): { taskId: string } {
   return parsed.data;
 }
 
-// Convenience helper for UI/host callers who expect a simple creator
+export interface RunnerState {
+  isRunning: boolean;
+  activeTaskId?: string;
+  activeStage?: Stage;
+  progress?: number;
+}
+
+export const RunnerStateSchema = z.object({
+  isRunning: z.boolean(),
+  activeTaskId: z.string().optional(),
+  activeStage: z.enum(['inbox', 'plan', 'code', 'audit', 'completed']).optional(),
+  progress: z.number().min(0).max(100).optional(),
+});
+
+export function parseRunnerState(payload: unknown): RunnerState {
+  const parsed = RunnerStateSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(`Invalid RunnerState payload: ${parsed.error.message}`);
+  }
+  return parsed.data;
+}
+
 export const createMessage = createEnvelope;
