@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags: [feature, p1]
 agent: auditor
 contexts: []
@@ -40,3 +40,44 @@ The `getDefaultModeForStage` function scans `_modes/` files to find the first mo
 
 - src/services/stage-manager.ts
 - tests/stage-manager.test.ts
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+Clean, well-structured implementation that correctly extends the existing agent auto-assignment pattern to support mode-aware assignment. All 21 tests pass including 5 new tests covering the mode-aware functionality.
+
+### Findings
+
+#### Blockers
+_None._
+
+#### High Priority
+_None._
+
+#### Medium Priority
+_None._
+
+#### Low Priority / Nits
+- [ ] Duplicated agent fallback branch: The `shouldAutoUpdateAgent` → `getDefaultAgentForStage` fallback logic is duplicated in both the `shouldUpdateMode=true && !newMode` branch (L196–203) and the `shouldUpdateMode=false` branch (L205–213) of `updateTaskStage`. Could be extracted into a helper to reduce duplication. - `src/services/stage-manager.ts:196-213`
+- [ ] `listModesWithStage` and `listAgentsWithStage` are structurally identical — consider a shared generic `listFilesWithStage` helper in a future refactor. - `src/services/stage-manager.ts:22-51,77-106`
+
+### Test Assessment
+- Coverage: **Adequate** — 5 new mode-aware tests cover the key scenarios: `getDefaultModeForStage` matching, `getDefaultAgentForMode` from config, auto-set mode+agent on `code` stage, auto-set on `audit` stage, and manual mode preservation.
+- Missing tests: No critical gaps. Could optionally add a test for the backward-compat branch where no modes exist but agents do (to verify the fallback to `getDefaultAgentForStage`), but the existing `updateTaskStage auto-assigns agent when transitioning stages` test covers this path since that test has no `_modes/` directory.
+
+### What's Good
+- `shouldAutoUpdateMode` mirrors the `shouldAutoUpdateAgent` pattern perfectly — easy to reason about.
+- Clean fallback hierarchy: mode-based agent assignment takes priority, then falls back to stage-based agent assignment for backward compatibility.
+- `ModeInfo` interface parallels `AgentInfo` for consistency.
+- `getDefaultModeForStage` correctly returns `undefined` for `inbox` and `completed` stages, matching `getDefaultAgentForStage` behavior.
+- `getDefaultAgentForMode` cleanly delegates to `configService.getModeDefault()` — no unnecessary abstraction.
+- Test setup uses `configService.initialize(kanbanRoot)` to ensure `modeDefaults` are available.
+
+### Recommendations
+- Consider extracting the duplicated agent-fallback block into a private helper like `tryAutoUpdateAgent(root, freshTask, oldStage, newStage)` to DRY up the `updateTaskStage` function.

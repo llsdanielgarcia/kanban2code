@@ -69,3 +69,12 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - new-files-created: none
   - tests-added:
     - `tests/prompt-builder.test.ts` (5 new tests: mode loading, agent-to-mode fallback, agent fallback, runner prompt shape, runner automated flag)
+
+- date: 2026-02-11
+  - task: `task2.5-update-stage-manager-for-mode-aware-auto-assignment`
+  - files-updated:
+    - `src/services/stage-manager.ts` (added `ModeInfo`, `listModesWithStage`, `getDefaultModeForStage`, `getDefaultAgentForMode`, `shouldAutoUpdateMode`; updated `updateTaskStage` to auto-set `mode` and `agent` from mode defaults with fallback to stage-based agent assignment)
+  - new-files-created: none
+  - tests-added:
+    - `tests/stage-manager.test.ts` (5 new tests: mode-for-stage lookup, agent-for-mode config lookup, auto-set mode+agent on code/audit stages, manual mode preservation)
+
