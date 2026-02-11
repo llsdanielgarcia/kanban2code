@@ -12,6 +12,7 @@ import * as path from 'path';
 import type { Stage } from '../types/task';
 import { parseTaskFile } from '../services/frontmatter';
 import type { Task } from '../types/task';
+import { migrateAgentsToModes } from '../services/migration';
 
 export function registerCommands(context: vscode.ExtensionContext, sidebarProvider: SidebarProvider) {
   async function resolveTaskForCommand(kanbanRoot: string, taskInput?: string | { id: string }): Promise<Task | null> {
@@ -438,6 +439,61 @@ Describe the agent's role and expertise.
         const message = error instanceof Error ? error.message : 'Unknown error';
         vscode.window.showErrorMessage(`Failed to create agent: ${message}`);
       }
+    }),
+
+    // Migrate Agents to Modes command
+    vscode.commands.registerCommand('kanban2code.migrateAgentsModes', async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders || workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage('No workspace open. Please open a folder first.');
+        return;
+      }
+
+      const rootPath = workspaceFolders[0].uri.fsPath;
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Kanban2Code: Migrating agents to modes…',
+          cancellable: false,
+        },
+        async (progress) => {
+          try {
+            progress.report({ message: 'Scanning workspace…' });
+            const report = await migrateAgentsToModes(rootPath);
+
+            progress.report({ message: 'Finalizing…' });
+
+            const parts: string[] = [];
+            if (report.movedModes.length > 0) {
+              parts.push(`${report.movedModes.length} mode(s) created`);
+            }
+            if (report.createdAgents.length > 0) {
+              parts.push(`${report.createdAgents.length} agent config(s) created`);
+            }
+            if (report.updatedTasks.length > 0) {
+              parts.push(`${report.updatedTasks.length} task(s) updated`);
+            }
+            if (report.skipped.length > 0) {
+              parts.push(`${report.skipped.length} skipped`);
+            }
+
+            const summary = parts.length > 0
+              ? `Migration complete: ${parts.join(', ')}.`
+              : 'Migration complete: nothing to migrate.';
+
+            vscode.window.showInformationMessage(summary);
+
+            // Refresh sidebar if kanban root is active
+            if (WorkspaceState.kanbanRoot) {
+              await sidebarProvider.refresh();
+            }
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Migration failed: ${message}`);
+          }
+        },
+      );
     }),
   );
 }

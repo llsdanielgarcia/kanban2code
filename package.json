@@ -29,7 +29,8 @@
     "onCommand:kanban2code.showKeyboardShortcuts",
     "onCommand:kanban2code.newProject",
     "onCommand:kanban2code.newAgent",
-    "onCommand:kanban2code.openSettings"
+    "onCommand:kanban2code.openSettings",
+    "onCommand:kanban2code.migrateAgentsModes"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -99,6 +100,10 @@
       {
         "command": "kanban2code.openSettings",
         "title": "Kanban2Code: Open Settings"
+      },
+      {
+        "command": "kanban2code.migrateAgentsModes",
+        "title": "Kanban2Code: Migrate Agents to Modes"
       }
     ],
     "keybindings": [

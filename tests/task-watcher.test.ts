@@ -87,4 +87,32 @@ describe('TaskWatcher', () => {
     expect(handler).toHaveBeenCalledWith({ type: 'moved', from: '/tmp/.kanban2code/inbox/old.md', to: '/tmp/.kanban2code/inbox/new.md' });
     watcher.dispose();
   });
+
+  test('ignores _modes/ files', async () => {
+    const watcher = createWatcher();
+    const handler = vi.fn();
+    watcher.on('event', handler);
+
+    fake.changeListeners.forEach((fn) => fn('/tmp/.kanban2code/_modes/coder.md'));
+    fake.createListeners.forEach((fn) => fn('/tmp/.kanban2code/_modes/auditor.md'));
+    fake.deleteListeners.forEach((fn) => fn('/tmp/.kanban2code/_modes/planner.md'));
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(handler).not.toHaveBeenCalled();
+    watcher.dispose();
+  });
+
+  test('ignores _agents/ files', async () => {
+    const watcher = createWatcher();
+    const handler = vi.fn();
+    watcher.on('event', handler);
+
+    fake.changeListeners.forEach((fn) => fn('/tmp/.kanban2code/_agents/opus.md'));
+    fake.createListeners.forEach((fn) => fn('/tmp/.kanban2code/_agents/codex.md'));
+    fake.deleteListeners.forEach((fn) => fn('/tmp/.kanban2code/_agents/kimi.md'));
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(handler).not.toHaveBeenCalled();
+    watcher.dispose();
+  });
 });
