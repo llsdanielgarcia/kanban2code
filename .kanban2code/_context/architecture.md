@@ -190,3 +190,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `src/webview/messaging.ts` (added mode-management and runner-control message types; added `RunnerState` type/schema/parser)
     - `tests/webview.test.ts` (added EnvelopeSchema coverage for new message types and RunnerState validation tests)
   - new-files-created: none
+
+- date: 2026-02-11
+  - task: `task5.2-modepicker-component-update-agentpicker`
+  - files-updated:
+    - `src/webview/ui/components/AgentPicker.tsx` (Agent picker now targets LLM providers, updates label to "Agent (LLM Provider)", and keeps provider description hint behavior)
+    - `src/webview/ui/components/TaskEditorModal.tsx` (uses provider-based AgentPicker wiring)
+    - `src/webview/ui/components/TaskModal.tsx` (uses provider-based AgentPicker wiring)
+    - `tests/webview/components/AgentPicker.test.tsx` (covers provider rendering, label text, no-selection behavior, and canonical name resolution)
+  - new-files-created:
+    - `src/webview/ui/components/ModePicker.tsx` - Mode dropdown component with mode description hint and "Create new mode" action
+    - `tests/webview/components/ModePicker.test.tsx` - ModePicker component tests for rendering, selection, callbacks, and no-selection behavior

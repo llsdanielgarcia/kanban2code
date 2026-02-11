@@ -7,6 +7,10 @@ import { Column } from './Column';
 interface BoardHorizontalProps {
   tasksByStage: Record<Stage, Task[]>;
   agents?: Agent[];
+  isRunnerActive?: boolean;
+  onRunTopTask?: (stage: Stage) => void;
+  onRunColumn?: (stage: Stage) => void;
+  onStopRunner?: () => void;
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -26,6 +30,10 @@ const STAGE_TITLES: Record<Stage, string> = {
 export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({
   tasksByStage,
   agents,
+  isRunnerActive,
+  onRunTopTask,
+  onRunColumn,
+  onStopRunner,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -42,6 +50,10 @@ export const BoardHorizontal: React.FC<BoardHorizontalProps> = ({
           title={STAGE_TITLES[stage]}
           tasks={tasksByStage[stage] || []}
           agents={agents}
+          isRunnerActive={isRunnerActive}
+          onRunTopTask={onRunTopTask}
+          onRunColumn={onRunColumn}
+          onStopRunner={onStopRunner}
           onMoveTask={onMoveTask}
           onOpenTask={onOpenTask}
           onFocusTask={onFocusTask}

@@ -31,7 +31,7 @@ const mockModes: Mode[] = [
 ];
 
 describe('ModePicker', () => {
-  it('renders mode list with "No mode" option', () => {
+  it('renders mode list with "No selection" option', () => {
     const onChange = vi.fn();
     const onCreateNew = vi.fn();
 
@@ -47,7 +47,7 @@ describe('ModePicker', () => {
     const select = screen.getByRole('combobox');
     expect(select).toBeInTheDocument();
 
-    const noModeOption = screen.getByRole('option', { name: /no mode/i });
+    const noModeOption = screen.getByRole('option', { name: /no selection/i });
     expect(noModeOption).toBeInTheDocument();
     expect(select).toHaveValue('');
   });
@@ -110,7 +110,7 @@ describe('ModePicker', () => {
     expect(onChange).toHaveBeenCalledWith('auditor');
   });
 
-  it('fires onChange with null when "No mode" is selected', () => {
+  it('fires onChange with null when "No selection" is selected', () => {
     const onChange = vi.fn();
     const onCreateNew = vi.fn();
 

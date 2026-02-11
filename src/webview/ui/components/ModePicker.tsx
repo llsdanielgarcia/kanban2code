@@ -43,7 +43,7 @@ export const ModePicker: React.FC<ModePickerProps> = ({
           value={selectValue}
           onChange={(e) => onChange(e.target.value || null)}
         >
-          <option value="">No mode</option>
+          <option value="">No selection</option>
           {modes.map((mode) => (
             <option key={mode.id} value={mode.id}>
               {mode.name}

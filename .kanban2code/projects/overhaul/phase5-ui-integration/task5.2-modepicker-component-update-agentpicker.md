@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags: [feature, p1]
 agent: auditor
 contexts: [skills/react-core-skills]
@@ -36,3 +36,38 @@ src/webview/ui/components/TaskEditorModal.tsx
 src/webview/ui/components/TaskModal.tsx
 tests/webview/components/ModePicker.test.tsx
 tests/webview/components/AgentPicker.test.tsx
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+The previous Definition of Done gap has been fixed. `ModePicker` now includes the required "No selection" option and tests are aligned and passing.
+
+### Findings
+
+#### Blockers
+- [ ] None.
+
+#### High Priority
+- [ ] None.
+
+#### Medium Priority
+- [ ] None.
+
+#### Low Priority / Nits
+- [ ] None.
+
+### Test Assessment
+- Coverage: Adequate
+- Missing tests: None identified for this scope.
+
+### What's Good
+- Agent/provider transition is implemented cleanly with consistent picker UX, canonical-name resolution support, and focused component tests.
+
+### Recommendations
+- Optional: add an integration assertion in task modal tests verifying both pickers render the expected empty-state option labels in context.

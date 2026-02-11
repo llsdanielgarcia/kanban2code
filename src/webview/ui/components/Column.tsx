@@ -3,11 +3,17 @@ import type { Stage, Task } from '../../../types/task';
 import type { Agent } from '../hooks/useTaskData';
 import { TaskCard } from './TaskCard';
 
+const RUNNER_STAGES: Stage[] = ['plan', 'code', 'audit'];
+
 interface ColumnProps {
   stage: Stage;
   title: string;
   tasks: Task[];
   agents?: Agent[];
+  isRunnerActive?: boolean;
+  onRunTopTask?: (stage: Stage) => void;
+  onRunColumn?: (stage: Stage) => void;
+  onStopRunner?: () => void;
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -21,6 +27,10 @@ export const Column: React.FC<ColumnProps> = ({
   title,
   tasks,
   agents,
+  isRunnerActive = false,
+  onRunTopTask,
+  onRunColumn,
+  onStopRunner,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -61,7 +71,44 @@ export const Column: React.FC<ColumnProps> = ({
     >
       <header className="column-header">
         <div className="column-title">{title}</div>
-        <div className="column-count">{tasks.length}</div>
+        <div className="column-header-right">
+          {RUNNER_STAGES.includes(stage) && (
+            <div className="runner-controls">
+              <button
+                type="button"
+                className="runner-btn"
+                title="Run top task"
+                disabled={isRunnerActive}
+                onClick={() => onRunTopTask?.(stage)}
+                aria-label="Run top task"
+              >
+                ▶
+              </button>
+              <button
+                type="button"
+                className="runner-btn"
+                title="Run column"
+                disabled={isRunnerActive}
+                onClick={() => onRunColumn?.(stage)}
+                aria-label="Run column"
+              >
+                ▶▶
+              </button>
+              {isRunnerActive && (
+                <button
+                  type="button"
+                  className="runner-btn runner-btn-stop"
+                  title="Stop runner"
+                  onClick={() => onStopRunner?.()}
+                  aria-label="Stop runner"
+                >
+                  ⏹
+                </button>
+              )}
+            </div>
+          )}
+          <div className="column-count">{tasks.length}</div>
+        </div>
       </header>
       <div className="column-body">
         {tasks.map((task) => (
