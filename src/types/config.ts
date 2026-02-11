@@ -58,6 +58,7 @@ export interface Kanban2CodeConfig {
   stages: Record<string, StageConfig>;
   preferences: PreferencesConfig;
   personalities?: Record<string, PersonalityConfig>;
+  modeDefaults?: Record<string, string>;
 }
 
 /**
@@ -150,5 +151,12 @@ export const DEFAULT_CONFIG: Kanban2CodeConfig = {
     defaultAgent: 'codex',
     archiveCompleted: true,
     archiveAfterDays: 7,
+  },
+  modeDefaults: {
+    coder: 'opus',
+    auditor: 'opus',
+    planner: 'sonnet',
+    contextBuilder: 'sonnet',
+    splitter: 'glm',
   },
 };

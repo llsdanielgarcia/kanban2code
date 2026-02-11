@@ -88,6 +88,7 @@ class ConfigService {
       stages: { ...DEFAULT_CONFIG.stages, ...loaded.stages },
       preferences: { ...DEFAULT_CONFIG.preferences, ...loaded.preferences },
       personalities: loaded.personalities,
+      modeDefaults: { ...DEFAULT_CONFIG.modeDefaults, ...loaded.modeDefaults },
     };
   }
 
@@ -218,6 +219,20 @@ class ConfigService {
    */
   getProject() {
     return this.config.project;
+  }
+
+  /**
+   * Get default agent for a mode
+   */
+  getModeDefault(modeName: string): string | undefined {
+    return this.config.modeDefaults?.[modeName];
+  }
+
+  /**
+   * Get all mode defaults
+   */
+  getModeDefaults(): Record<string, string> {
+    return this.config.modeDefaults ?? {};
   }
 
   /**

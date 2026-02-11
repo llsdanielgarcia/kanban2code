@@ -5,6 +5,7 @@
 Kanban2Code is a VS Code extension that brings Kanban board functionality directly into the editor, integrating AI agents and rich task context. The project aims to streamline task management for developers by providing a visual workflow system that seamlessly integrates with the coding environment.
 
 Key features include:
+
 - A Kanban board with five stages: Inbox, Plan, Code, Audit, and Completed
 - Filesystem-based task management using markdown files with frontmatter
 - AI agent integration for context-aware task handling
@@ -29,19 +30,23 @@ Kanban2Code supports an agent-driven workflow that turns an idea into executable
 Agents are Markdown files under `.kanban2code/_agents/` and are scaffolded into new workspaces by the extension.
 
 Bundled agent templates live in:
+
 - `src/assets/agents.ts`
 
 Scaffolding writes them via:
+
 - `src/services/scaffolder.ts`
 
 ### Two Layers: Orchestration vs Execution
 
 **Orchestration meta-tasks** (shape work):
+
 - `roadmapper` → produces a vision/roadmap document under `.kanban2code/projects/<project>/`
 - `architect` → edits the roadmap to add technical design, phases, and task specs
 - `splitter` → generates phase folders + task files from the roadmap (no new decisions)
 
 **Execution tasks** (build + verify, per task):
+
 - `planner` (`stage: plan`) → refines prompt and gathers code/test context
 - `coder` (`stage: code`) → implements and writes tests
 - `auditor` (`stage: audit`) → reviews and gates completion
@@ -49,10 +54,12 @@ Scaffolding writes them via:
 ### Orchestration State Tags
 
 The pipeline commonly uses status tags to track whether a project is ready to proceed:
+
 - `missing-architecture` (remove once the roadmap has technical design + phases/tasks and is approved)
 - `missing-decomposition` (remove once the roadmap has been split into phase/task files)
 
 Canonical protocol and examples are documented in:
+
 - `.kanban2code/_context/ai-guide.md`
 
 ## Directory Structure
@@ -147,13 +154,15 @@ src/
 │   ├── task-watcher.ts                    # Debounced filesystem watcher for task events (create/update/delete/move)
 │   └── fs-move.ts                          # Atomic-ish move helper used by task relocation
 ├── types/
-│   ├── config.ts                          # Configuration schema/types
-│   ├── context.ts                         # Type definitions for context system
-│   ├── copy.ts                            # Type definitions for copy functionality
-│   ├── errors.ts                          # Typed error classes with recovery hints
-│   ├── filters.ts                         # Filter state + tag taxonomy + helpers
-│   ├── gray-matter.d.ts                   # Type definitions for gray-matter library
-│   └── task.ts                            # Core type definitions for tasks and stages
+│   ├── agent.ts                          # Agent CLI configuration interface and Zod schema
+│   ├── config.ts                         # Configuration schema/types
+│   ├── context.ts                        # Type definitions for context system
+│   ├── copy.ts                           # Type definitions for copy functionality
+│   ├── errors.ts                         # Typed error classes with recovery hints
+│   ├── filters.ts                        # Filter state + tag taxonomy + helpers
+│   ├── gray-matter.d.ts                  # Type definitions for gray-matter library
+│   ├── mode.ts                          # Mode configuration interface and Zod schema
+│   └── task.ts                           # Core type definitions for tasks and stages
 ├── utils/
 │   └── text.ts                            # Text processing utilities
 ├── webview/
@@ -214,6 +223,7 @@ src/
 
 tests/
 ├── ai-guide.test.ts                       # Unit tests for AI guide/context conventions
+├── agent-mode-schemas.test.ts             # Unit tests for agent and mode schema validation
 ├── archive.test.ts                        # Unit tests for archive service
 ├── config-service.test.ts                 # Unit tests for config loading/validation
 ├── context-service.test.ts                # Unit tests for context system (Phase 2)
@@ -279,6 +289,7 @@ README.md                                  # Project README with setup instructi
 Phase 3 implemented a comprehensive sidebar interface with the following key features:
 
 ### Component Architecture
+
 - **Main Container**: [`Sidebar.tsx`](../src/webview/ui/components/Sidebar.tsx) provides the overall layout and state coordination
 - **Navigation**: [`SidebarToolbar.tsx`](../src/webview/ui/components/SidebarToolbar.tsx) and [`SidebarActions.tsx`](../src/webview/ui/components/SidebarActions.tsx) handle top-level actions
 - **Filtering System**: [`FilterBar.tsx`](../src/webview/ui/components/FilterBar.tsx), [`QuickFilters.tsx`](../src/webview/ui/components/QuickFilters.tsx), and [`QuickViews.tsx`](../src/webview/ui/components/QuickViews.tsx) provide multi-dimensional filtering
@@ -288,11 +299,13 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 - **Accessibility**: Full ARIA support with keyboard navigation via [`KeyboardHelp.tsx`](../src/webview/ui/components/KeyboardHelp.tsx)
 
 ### State Management Hooks
+
 - [`useTaskData.ts`](../src/webview/ui/hooks/useTaskData.ts): Manages task data loading and transformation
 - [`useFilters.ts`](../src/webview/ui/hooks/useFilters.ts): Handles filter state and logic
 - [`useKeyboard.ts`](../src/webview/ui/hooks/useKeyboard.ts): Implements keyboard navigation and shortcuts
 
 ### Key Features
+
 - **Hierarchical Task Display**: Tasks organized by inbox/projects/phases with collapsible tree structure
 - **Multi-dimensional Filtering**: Stage filters, project/tag filters, and preset quick views
 - **Task Creation**: Modal-based task creation with agent assignment and location selection
@@ -301,6 +314,7 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 - **Real-time Updates**: Live synchronization with filesystem changes through the messaging system
 
 ### Design System
+
 - Navy Night Gradient theme with glassmorphic effects
 - Consistent spacing and typography
 - Responsive design that adapts to sidebar width constraints
@@ -327,19 +341,23 @@ Phase 3 implemented a comprehensive sidebar interface with the following key fea
 ## Phase 3 Implementation Notes (Post-Completion Fixes)
 
 ### Issue: Webview Race Condition
+
 **Problem**: The sidebar appeared blank with only "Kanban2Code" title visible.
 
 **Root Cause**: The host was sending `InitState` before React had mounted and set up its message listener, causing the critical initialization message to be lost.
 
 **Solution**: Implemented a ready handshake pattern:
+
 1. React app sends `RequestState` message when it mounts (via `App.tsx` useEffect)
 2. `SidebarProvider` receives `RequestState` and responds with `InitState`
 3. React app receives `InitState` and sets `hasKanban` state, triggering full UI render
 
 ### Issue: VS Code API Acquisition Error
+
 **Problem**: Console showed "Error: An instance of the VS Code API has already been acquired" and webview failed to load.
 
 **Root Cause**: Multiple components were calling `acquireVsCodeApi()` independently:
+
 - `App.tsx`
 - `Sidebar.tsx`
 - `TaskContextMenu.tsx`
@@ -390,12 +408,14 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 ### Test Infrastructure (Task 5.0)
 
 **Configuration Files:**
+
 - [`vitest.config.ts`](../vitest.config.ts): Main Vitest config with coverage thresholds (70% statements/lines/functions, 65% branches) and reporter setup
 - [`vitest.e2e.config.ts`](../vitest.e2e.config.ts): Separate E2E config with longer timeouts and sequential execution
 - [`tests/setup.ts`](../tests/setup.ts): Global test setup with VS Code mocks and test utilities
 - [`tests/e2e/setup.ts`](../tests/e2e/setup.ts): E2E workspace utilities for creating test workspaces and tasks
 
 **Test Coverage:**
+
 - **Unit/Integration/Component Tests**: 128 tests covering core services and utilities
   - Logging service (11 tests)
   - Error types (20 tests)
@@ -406,12 +426,14 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - **E2E Tests**: Core workflows including workspace creation, task progression, filtering (13 tests)
 
 **CI Integration (Provider-Specific):**
+
 - Run `bun run typecheck`, `bun run lint`, `bun run test`, `bun run test:coverage`, and `bun run test:e2e`
 - Release packaging: `bun run package`
 
 ### Keyboard Shortcuts and Command Palette (Task 5.1)
 
 **Global Shortcuts** (wired in `useKeyboard.ts` and `package.json`):
+
 - `Ctrl+Shift+C` / `Cmd+Shift+C`: Copy task context (full XML)
 - `Alt+Shift+N`: New task (modal)
 - `Ctrl+Shift+K` / `Cmd+Shift+K`: Open board
@@ -426,6 +448,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - `Escape`: Close modal/clear focus
 
 **Command Palette** (`package.json` contributes):
+
 - Kanban2Code: Open Board
 - Kanban2Code: New Task
 - Kanban2Code: Copy Task Context (Full XML)
@@ -440,6 +463,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 ### Error Handling and Logging (Task 5.2)
 
 **Logging Service** (`src/services/logging.ts`):
+
 - Structured logging with levels: debug, info, warn, error
 - Module-specific loggers via `createModuleLogger()`
 - Circular buffer (max 1000 entries) stored in memory
@@ -448,6 +472,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - Timestamp and context tracking for each entry
 
 **Error Types** (`src/types/errors.ts`):
+
 - `KanbanError`: Base class for all typed errors
 - `FileSystemError`: File I/O failures with recovery hints
 - `StageTransitionError`: Invalid stage transitions
@@ -458,6 +483,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - `ArchiveError`: Archive workflow errors
 
 **Error Recovery** (`src/services/error-recovery.ts`):
+
 - `handleError()`: Display user-friendly notifications with "Show Details" and "Retry" buttons
 - `withRecovery()`: Wrapper for async functions with automatic error handling
 - `createRecoverableOperation()`: Implements exponential backoff retry logic (max 3 attempts)
@@ -467,6 +493,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 ### Tag Taxonomy and Conventions (Task 5.7)
 
 **Tag Categories** (defined in `src/types/filters.ts`):
+
 - **Type Tags** (pick 1): feature, bug, spike, refactor, docs, test, chore
 - **Priority Tags** (pick 1): p0/critical, p1/high, p2/medium, p3/low
 - **Status Tags** (informational): blocked, in-progress, review, approved, shipped
@@ -474,6 +501,7 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - **Component Tags** (multiple OK): sidebar, board, messaging, keyboard, filters, context, copy, archive, test
 
 **Validation Rules:**
+
 - Only one type tag per task
 - At most one priority tag recommended
 - MVP tasks with p3 priority trigger warning
@@ -481,13 +509,13 @@ Phase 5 focuses on production-readiness: test infrastructure, keyboard shortcuts
 - Color-coded in UI based on tag type
 
 **Usage Example:**
+
 ```yaml
 ---
 stage: code
 tags: [feature, mvp, keyboard, board]
 agent: sonnet
 ---
-
 # Implement Keyboard Shortcuts
 
 Add Ctrl+N, 1-5, and copy shortcuts globally.
@@ -496,16 +524,19 @@ Add Ctrl+N, 1-5, and copy shortcuts globally.
 ### New Services and Files Added
 
 **Core Services:**
+
 - `src/services/logging.ts` (315 lines) - Structured logging with VS Code integration
 - `src/services/error-recovery.ts` (295 lines) - Error handling with retry and recovery
 - `src/types/errors.ts` (230 lines) - Typed error classes with context and recovery hints
 
 **Enhanced Utilities:**
+
 - `src/types/filters.ts` - Extended with tag taxonomy, validation, and color utilities
 - `src/webview/ui/hooks/useKeyboard.ts` - Enhanced with Phase 5.1 shortcuts (1-5, copy, layout toggle)
 - `package.json` - Updated with commands, keybindings, and test scripts
 
 **Tests:**
+
 - `tests/logging.test.ts` (11 tests) - Logger functionality
 - `tests/errors.test.ts` (20 tests) - Error type creation and recovery
 - `tests/tag-taxonomy.test.ts` (23 tests) - Tag validation and UI colors
@@ -513,6 +544,7 @@ Add Ctrl+N, 1-5, and copy shortcuts globally.
 - `tests/e2e/setup.ts` - E2E workspace utilities
 
 **Configuration:**
+
 - `vitest.config.ts` - Coverage thresholds, reporter setup
 - `vitest.e2e.config.ts` - E2E-specific configuration
 - `tests/setup.ts` - Global test mocks and utilities
@@ -560,6 +592,7 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 ### Test Results Summary
 
 **All tests passing:**
+
 - Unit/Integration/Component Tests: 128 passed
 - Integration Tests: 10+ tests for filesystem operations
 - Component Tests: 5+ tests for board and sidebar
@@ -569,6 +602,7 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 ### Integration with Existing Code
 
 **Non-Breaking Changes:**
+
 - New services are opt-in; existing services unchanged
 - Error types are throw-only; regular Error objects still work
 - Logging is optional; no logs written without explicit calls
@@ -576,6 +610,7 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 - Keyboard hook additions are backward-compatible
 
 **Extension Host Integration:**
+
 - Logging service can be initialized in `extension.ts` during activation
 - Error recovery helpers used in command implementations
 - Tag validation used during task creation modal (future enhancement)
@@ -595,6 +630,7 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 **Next Phase: Phase 6 - Bug Fixes and Feature Completion**
 
 Phase 6 addresses critical bugs and implements remaining design features:
+
 - Fix delete button in Board view (Task 6.0)
 - Implement fixed Navy Night Gradient color palette (Task 6.1)
 - Fix swimlane layout: Rows = Stages, Columns = Projects (Task 6.2)
@@ -605,6 +641,7 @@ Phase 6 addresses critical bugs and implements remaining design features:
 - Add Monaco Editor for in-place task editing (Task 6.7)
 
 Design references in `docs/design/`:
+
 - `forms/task.html` - Task modal with context selection
 - `forms/context.html` - Context creation modal
 - `forms/agent.html` - Agent creation modal

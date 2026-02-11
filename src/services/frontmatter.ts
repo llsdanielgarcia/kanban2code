@@ -34,7 +34,11 @@ function extractTitle(content: string): string | undefined {
   return match ? match[1].trim() : undefined;
 }
 
-export function parseTaskContent(content: string, filePath: string, options: ParseOptions = {}): Task {
+export function parseTaskContent(
+  content: string,
+  filePath: string,
+  options: ParseOptions = {},
+): Task {
   let data: Record<string, unknown> = {};
   let body = content;
 
@@ -76,12 +80,14 @@ export function parseTaskContent(content: string, filePath: string, options: Par
     project,
     phase,
     agent: typeof data.agent === 'string' ? data.agent : undefined,
+    mode: typeof data.mode === 'string' ? data.mode : undefined,
     parent: typeof data.parent === 'string' ? data.parent : undefined,
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
     contexts,
     skills,
     order: typeof data.order === 'number' ? data.order : undefined,
     created: typeof data.created === 'string' ? data.created : undefined,
+    attempts: typeof data.attempts === 'number' ? data.attempts : undefined,
     content: body,
   };
 
@@ -93,7 +99,11 @@ export async function parseTaskFile(filePath: string, options: ParseOptions = {}
   return parseTaskContent(content, filePath, options);
 }
 
-export function stringifyTaskFile(task: Task, originalContent?: string, options: ParseOptions = {}): string {
+export function stringifyTaskFile(
+  task: Task,
+  originalContent?: string,
+  options: ParseOptions = {},
+): string {
   let existingData: Record<string, unknown> = {};
 
   if (originalContent) {
@@ -102,7 +112,10 @@ export function stringifyTaskFile(task: Task, originalContent?: string, options:
       existingData = parsed.data ?? {};
     } catch (error) {
       const warn = options.warn ?? defaultWarn;
-      warn(`Invalid frontmatter while serializing ${task.filePath}; preserving known fields only.`, error);
+      warn(
+        `Invalid frontmatter while serializing ${task.filePath}; preserving known fields only.`,
+        error,
+      );
     }
   }
 
@@ -110,12 +123,14 @@ export function stringifyTaskFile(task: Task, originalContent?: string, options:
     ...existingData,
     stage: task.stage,
     agent: task.agent,
+    mode: task.mode,
     parent: task.parent,
     tags: task.tags ?? [],
     contexts: task.contexts ?? [],
     skills: task.skills ?? [],
     order: task.order,
     created: task.created,
+    attempts: task.attempts,
   };
 
   // project/phase are inferred from the path and should never be written to frontmatter
@@ -132,6 +147,10 @@ export function stringifyTaskFile(task: Task, originalContent?: string, options:
 }
 
 // Backward compatibility for existing imports
-export function serializeTask(task: Task, originalContent?: string, options: ParseOptions = {}): string {
+export function serializeTask(
+  task: Task,
+  originalContent?: string,
+  options: ParseOptions = {},
+): string {
   return stringifyTaskFile(task, originalContent, options);
 }

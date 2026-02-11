@@ -8,11 +8,13 @@ export interface Task {
   project?: string;
   phase?: string;
   agent?: string;
+  mode?: string;
   parent?: string; // ID of parent task
   tags?: string[];
   contexts?: string[];
   skills?: string[];
   order?: number;
   created?: string; // ISO Date
+  attempts?: number;
   content: string; // The markdown content body
 }

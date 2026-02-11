@@ -72,6 +72,41 @@ test('loads config.json and merges with defaults', async () => {
   expect(configService.getAllowedTransitions('inbox')).toEqual(['plan']);
 });
 
+test('fills in default modeDefaults when config.json omits them', async () => {
+  await fs.writeFile(
+    path.join(KANBAN_ROOT, 'config.json'),
+    JSON.stringify({ version: '1.0.0' }, null, 2)
+  );
+
+  await configService.initialize(KANBAN_ROOT);
+
+  expect(configService.getModeDefaults()).toEqual(DEFAULT_CONFIG.modeDefaults);
+});
+
+test('partial modeDefaults overrides merge with defaults', async () => {
+  await fs.writeFile(
+    path.join(KANBAN_ROOT, 'config.json'),
+    JSON.stringify(
+      {
+        version: '1.0.0',
+        modeDefaults: { coder: 'codex' },
+      },
+      null,
+      2
+    )
+  );
+
+  await configService.initialize(KANBAN_ROOT);
+
+  // Overridden value takes effect
+  expect(configService.getModeDefault('coder')).toBe('codex');
+  // Non-overridden defaults are preserved
+  expect(configService.getModeDefault('auditor')).toBe('opus');
+  expect(configService.getModeDefault('planner')).toBe('sonnet');
+  expect(configService.getModeDefault('contextBuilder')).toBe('sonnet');
+  expect(configService.getModeDefault('splitter')).toBe('glm');
+});
+
 test('falls back to defaults when config.json is invalid JSON', async () => {
   const warningSpy = vi.spyOn(vscode.window, 'showWarningMessage');
   await fs.writeFile(path.join(KANBAN_ROOT, 'config.json'), '{ this is not json }');

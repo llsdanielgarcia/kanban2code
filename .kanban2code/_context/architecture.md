@@ -12,3 +12,26 @@ file_references:
 This context file links to the main architecture documentation. When the auditor accepts a task (rating 8+), they should update this file or the linked documentation to reflect any new files created.
 
 See: [docs/architecture.md](docs/architecture.md) for the full architecture documentation including directory structure.
+
+## Accepted Task Updates
+
+- date: 2026-02-11
+- task: `task1.1-add-mode-and-attempts-fields-to-task-interface`
+- files-updated:
+  - `src/types/task.ts` (`Task` now includes optional `mode?: string` and `attempts?: number`)
+  - `src/services/frontmatter.ts` (parse + stringify support for `mode` and `attempts`)
+- new-files-created: none
+
+- date: 2026-02-11
+  - task: `task1.2-define-agentcliconfig-and-modeconfig-types-with-zod-schemas`
+  - files-updated: none
+  - new-files-created:
+    - `src/types/agent.ts` - Defines `AgentCliConfig` interface and Zod schema for CLI configuration
+    - `src/types/mode.ts` - Defines `ModeConfig` interface and Zod schema for mode configuration
+    - `tests/agent-mode-schemas.test.ts` - Tests for the agent and mode schema validation
+
+- date: 2026-02-11
+  - task: `task1.3-add-modes-folder-and-logs-folder-constants`
+  - files-updated:
+    - `src/core/constants.ts` (added `MODES_FOLDER = '_modes'` and `LOGS_FOLDER = '_logs'`)
+  - new-files-created: none

@@ -1,12 +1,13 @@
 ---
-stage: plan
+stage: inbox
 tags:
   - feature
   - p0
   - mvp
 contexts:
   - architecture
-agent: 03-✂️splitter
+  - ai-guide
+agent: "04-\U0001F4CBplanner"
 skills: []
 ---
 
