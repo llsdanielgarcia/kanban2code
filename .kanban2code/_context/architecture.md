@@ -149,3 +149,28 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `tests/output-parser.test.ts` - Tests for output-parser
   - tests-added:
     - 8 tests: stage transitions, audit ratings, verdicts, file lists, and fallbacks
+
+- date: 2026-02-11
+  - task: `task4.5-git-operations-for-runner`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/git-ops.ts` - Git helper functions for runner (`isWorkingTreeClean`, `hasUncommittedChanges`, `commitRunnerChanges`)
+    - `tests/git-ops.test.ts` - Tests for git operations (3 tests)
+
+- date: 2026-02-11
+  - task: `task4.4-runner-execution-engine`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/runner-engine.ts` - Core runner execution engine with sequential pipeline logic
+    - `tests/runner-engine.test.ts` - Tests for RunnerEngine
+  - tests-added:
+    - 6 tests: pipeline execution, audit failure loops, CLI crash handling, dirty git check
+
+- date: 2026-02-11
+  - task: `task4.6-runner-log-report-generator`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/runner-log.ts` - `RunnerLog` class for generating markdown run reports
+    - `tests/runner-log.test.ts` - Tests for runner log generation and persistence
+  - tests-added:
+    - 4 tests: markdown headers, summary counts, per-task fields, zero-task handling

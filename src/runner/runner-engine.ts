@@ -8,6 +8,7 @@ import { parseTaskFile, stringifyTaskFile } from '../services/frontmatter';
 import { loadAllTasks, getOrderedTasksForStage } from '../services/scanner';
 import { buildRunnerPrompt } from '../services/prompt-builder';
 import { resolveAgentConfig } from '../services/agent-service';
+import { getDefaultModeForStage, getDefaultAgentForMode } from '../services/stage-manager';
 import { getAdapterForCli } from './adapter-factory';
 import {
   parseAuditRating,
@@ -15,7 +16,6 @@ import {
   parseFilesChanged,
   parseStageTransition,
 } from './output-parser';
-import { CONFIG_FILE, MODES_FOLDER } from '../core/constants';
 import { DEFAULT_CONFIG } from '../types/config';
 
 export type RunnerPipelineStage = Extract<Stage, 'plan' | 'code' | 'audit'>;
@@ -70,11 +70,6 @@ interface CommandExecutionResult {
   stdout: string;
   stderr: string;
   exitCode: number;
-}
-
-interface ModeInfo {
-  id: string;
-  stage?: string;
 }
 
 function getStagesFrom(start: Stage): RunnerPipelineStage[] {
@@ -284,8 +279,8 @@ export class RunnerEngine extends EventEmitter {
   }
 
   private async setTaskStageModeAgent(task: Task, stage: RunnerPipelineStage): Promise<void> {
-    const defaultMode = (await this.getDefaultModeForStage(stage)) ?? getFallbackModeForStage(stage);
-    const defaultAgent = await this.getDefaultAgentForMode(defaultMode);
+    const defaultMode = (await getDefaultModeForStage(this.kanbanRoot, stage)) ?? getFallbackModeForStage(stage);
+    const defaultAgent = getDefaultAgentForMode(defaultMode);
 
     await this.persistTask(task, {
       stage,
@@ -364,72 +359,4 @@ export class RunnerEngine extends EventEmitter {
       throw new Error('Refusing to run: git working tree is dirty. Commit or stash changes first.');
     }
   }
-
-  private async getDefaultModeForStage(stage: RunnerPipelineStage): Promise<string | undefined> {
-    const modes = await this.listModesWithStage();
-    const match = modes.find((mode) => mode.stage === stage);
-    return match?.id;
-  }
-
-  private async listModesWithStage(): Promise<ModeInfo[]> {
-    const modesDir = path.join(this.kanbanRoot, MODES_FOLDER);
-    const modes: ModeInfo[] = [];
-
-    try {
-      const entries = await fs.readdir(modesDir, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isFile() || !entry.name.endsWith('.md')) {
-          continue;
-        }
-
-        const filePath = path.join(modesDir, entry.name);
-        const id = path.basename(entry.name, '.md');
-        const parsed = await parseTaskLikeFrontmatter(filePath);
-
-        modes.push({
-          id,
-          stage: typeof parsed.stage === 'string' ? parsed.stage : undefined,
-        });
-      }
-    } catch {
-      return [];
-    }
-
-    return modes.sort((a, b) => a.id.localeCompare(b.id));
-  }
-
-  private async getDefaultAgentForMode(modeName: string): Promise<string | undefined> {
-    const configPath = path.join(this.kanbanRoot, CONFIG_FILE);
-
-    try {
-      const raw = await fs.readFile(configPath, 'utf-8');
-      const parsed = JSON.parse(raw) as {
-        modeDefaults?: Record<string, string>;
-      };
-
-      return parsed.modeDefaults?.[modeName] ?? DEFAULT_CONFIG.modeDefaults?.[modeName];
-    } catch {
-      return DEFAULT_CONFIG.modeDefaults?.[modeName];
-    }
-  }
-}
-
-async function parseTaskLikeFrontmatter(filePath: string): Promise<Record<string, unknown>> {
-  const raw = await fs.readFile(filePath, 'utf-8');
-  const match = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) {
-    return {};
-  }
-
-  const data: Record<string, unknown> = {};
-  for (const line of match[1].split('\n')) {
-    const idx = line.indexOf(':');
-    if (idx === -1) continue;
-
-    const key = line.slice(0, idx).trim();
-    const value = line.slice(idx + 1).trim().replace(/^['"]|['"]$/g, '');
-    data[key] = value;
-  }
-
-  return data;
 }

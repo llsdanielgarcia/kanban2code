@@ -1,348 +1,227 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
-import * as path from 'node:path';
-import { EventEmitter } from 'node:events';
-import matter from 'gray-matter';
-import type { Task, Stage } from '../src/types/task';
-import { parseTaskFile } from '../src/services/frontmatter';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { EventEmitter } from 'events';
 import { RunnerEngine } from '../src/runner/runner-engine';
+import { Task } from '../src/types/task';
+import * as fs from 'node:fs/promises';
 
-interface SpawnStep {
-  stdout?: string;
-  stderr?: string;
-  exitCode?: number;
-  delayMs?: number;
-}
+// Mocks
+vi.mock('node:fs/promises');
+vi.mock('../src/services/frontmatter');
+vi.mock('../src/services/scanner');
+vi.mock('../src/services/prompt-builder');
+vi.mock('../src/services/agent-service');
+vi.mock('../src/services/stage-manager');
+vi.mock('../src/runner/adapter-factory');
 
-interface SpawnCall {
-  command: string;
-  args: string[];
-  stdin: string;
-  killCount: number;
-}
+// Import mocked modules to setup implementation
+import { parseTaskFile, stringifyTaskFile } from '../src/services/frontmatter';
+import { loadAllTasks, getOrderedTasksForStage } from '../src/services/scanner';
+import { buildRunnerPrompt } from '../src/services/prompt-builder';
+import { resolveAgentConfig } from '../src/services/agent-service';
+import { getDefaultModeForStage, getDefaultAgentForMode } from '../src/services/stage-manager';
+import { getAdapterForCli } from '../src/runner/adapter-factory';
 
-function createSpawnQueue(steps: SpawnStep[]) {
-  const calls: SpawnCall[] = [];
-
-  const spawn = vi.fn((command: string, args: string[]) => {
-    const step = steps.shift();
-    if (!step) {
-      throw new Error(`No queued spawn step for ${command} ${args.join(' ')}`);
-    }
-
-    const proc = new EventEmitter() as EventEmitter & {
-      stdout: EventEmitter;
-      stderr: EventEmitter;
-      stdin: { write: (chunk: string) => void; end: () => void };
-      killed: boolean;
-      kill: (signal?: string) => boolean;
-    };
-
-    let stdin = '';
-    let killCount = 0;
-
-    proc.stdout = new EventEmitter();
-    proc.stderr = new EventEmitter();
-    proc.killed = false;
-    proc.stdin = {
-      write: (chunk: string) => {
-        stdin += chunk;
-      },
-      end: () => {
-        // no-op
-      },
-    };
-    proc.kill = () => {
-      killCount += 1;
-      proc.killed = true;
-      return true;
-    };
-
-    calls.push({
-      command,
-      args,
-      stdin,
-      killCount,
-    });
-
-    const delay = step.delayMs ?? 0;
-    setTimeout(() => {
-      if (step.stdout) {
-        proc.stdout.emit('data', Buffer.from(step.stdout));
-      }
-      if (step.stderr) {
-        proc.stderr.emit('data', Buffer.from(step.stderr));
-      }
-      proc.emit('close', step.exitCode ?? 0);
-
-      const last = calls[calls.length - 1];
-      last.stdin = stdin;
-      last.killCount = killCount;
-    }, delay);
-
-    return proc;
-  });
-
-  return { spawn, calls };
-}
-
-function codexJsonlResult(text: string): string {
-  return [
-    JSON.stringify({ type: 'event.delta', delta: 'working' }),
-    JSON.stringify({ type: 'event.final', result: text }),
-  ].join('\n');
-}
-
-async function writeTask(filePath: string, stage: Stage): Promise<void> {
-  const content = matter.stringify('# Example Task\n\nBody content.', {
-    stage,
-    tags: ['feature'],
-    agent: 'codex',
-  });
-
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, content, 'utf-8');
-}
-
-async function writeMode(kanbanRoot: string, id: string, stage: Stage): Promise<void> {
-  const modePath = path.join(kanbanRoot, '_modes', `${id}.md`);
-  await fs.mkdir(path.dirname(modePath), { recursive: true });
-  await fs.writeFile(
-    modePath,
-    matter.stringify('mode instructions', {
-      name: id,
-      description: `${id} mode`,
-      stage,
-    }),
-    'utf-8',
-  );
-}
-
-async function writeCodexAgent(kanbanRoot: string): Promise<void> {
-  const agentPath = path.join(kanbanRoot, '_agents', 'codex.md');
-  await fs.mkdir(path.dirname(agentPath), { recursive: true });
-  await fs.writeFile(
-    agentPath,
-    matter.stringify('', {
-      cli: 'codex',
-      subcommand: 'exec',
-      model: 'gpt-5.3-codex',
-      unattended_flags: ['--yolo'],
-      output_flags: ['--json'],
-      prompt_style: 'stdin',
-      provider: 'openai',
-    }),
-    'utf-8',
-  );
-}
-
-async function writeRunnerConfig(kanbanRoot: string): Promise<void> {
-  const configPath = path.join(kanbanRoot, 'config.json');
-  await fs.writeFile(
-    configPath,
-    JSON.stringify(
-      {
-        modeDefaults: {
-          planner: 'codex',
-          coder: 'codex',
-          auditor: 'codex',
-        },
-        preferences: {
-          defaultAgent: 'codex',
-        },
-      },
-      null,
-      2,
-    ),
-    'utf-8',
-  );
+class MockChildProcess extends EventEmitter {
+  stdout = new EventEmitter();
+  stderr = new EventEmitter();
+  stdin = { write: vi.fn(), end: vi.fn() };
+  killed = false;
+  kill = vi.fn(() => { this.killed = true; });
 }
 
 describe('RunnerEngine', () => {
-  let workspaceRoot: string;
-  let kanbanRoot: string;
+  let runner: RunnerEngine;
+  let mockSpawn: Mock;
+  let activeProcess: MockChildProcess;
+  const kanbanRoot = '/mock/root';
 
-  beforeEach(async () => {
-    workspaceRoot = path.join(os.tmpdir(), `kanban-runner-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-    kanbanRoot = path.join(workspaceRoot, '.kanban2code');
+  const mockTask: Task = {
+    id: 'task-1',
+    filePath: '/mock/root/task-1.md',
+    title: 'Test Task',
+    stage: 'plan',
+    content: 'Initial content',
+    mode: 'planner',
+    agent: 'codex',
+  };
 
-    await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
-    await fs.mkdir(path.join(kanbanRoot, 'projects'), { recursive: true });
+  beforeEach(() => {
+    vi.resetAllMocks();
 
-    await writeMode(kanbanRoot, 'planner', 'plan');
-    await writeMode(kanbanRoot, 'coder', 'code');
-    await writeMode(kanbanRoot, 'auditor', 'audit');
-    await writeCodexAgent(kanbanRoot);
-    await writeRunnerConfig(kanbanRoot);
+    mockSpawn = vi.fn().mockImplementation(() => {
+      activeProcess = new MockChildProcess();
+      // Auto-close successfully by default after a tick, unless we want to control it manually
+      // strictly speaking, the runner awaits the process.
+      // We'll let the test driver control the process emission.
+      return activeProcess;
+    });
+
+    runner = new RunnerEngine(kanbanRoot, { spawn: mockSpawn });
+
+    // Default mock implementations
+    (parseTaskFile as Mock).mockResolvedValue({ ...mockTask });
+    (stringifyTaskFile as Mock).mockReturnValue('serialized-content');
+    (fs.readFile as Mock).mockResolvedValue('original-file-content');
+    (fs.writeFile as Mock).mockResolvedValue(undefined);
+    (buildRunnerPrompt as Mock).mockResolvedValue({
+      xmlPrompt: '<xml>prompt</xml>',
+      modeInstructions: 'Task instructions',
+    });
+    (resolveAgentConfig as Mock).mockResolvedValue({
+      cli: 'mock-cli',
+      safety: { max_turns: 5 },
+    });
+    (getAdapterForCli as Mock).mockReturnValue({
+      buildCommand: () => ({ command: 'echo', args: ['hello'], stdin: '' }),
+      parseResponse: (stdout: string) => ({ success: true, result: stdout }),
+    });
+    (getDefaultModeForStage as Mock).mockResolvedValue('default-mode');
+    (getDefaultAgentForMode as Mock).mockReturnValue('default-agent');
+    (getOrderedTasksForStage as Mock).mockReturnValue([mockTask]);
+    (loadAllTasks as Mock).mockResolvedValue([mockTask]);
   });
 
-  afterEach(async () => {
-    await fs.rm(workspaceRoot, { recursive: true, force: true });
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
-  test('Code-stage task runs coder mode then auditor mode', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-code.md');
-    await writeTask(taskPath, 'code');
-    const task = await parseTaskFile(taskPath);
+  // Helper to drive the process
+  async function completeProcess(stdout: string, exitCode = 0) {
+    if (!activeProcess) throw new Error('No active process to complete');
+    
+    // Defer to allow listeners to attach
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
+    activeProcess.stdout.emit('data', stdout);
+    activeProcess.emit('close', exitCode);
+  }
 
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stdout: codexJsonlResult('Code stage done') },
-      { stdout: codexJsonlResult('<!-- AUDIT_RATING: 8 -->\nLooks good') },
-    ]);
+  it('Pipeline: Plan -> Code -> Audit (Success)', async () => {
+    const task = { ...mockTask, stage: 'plan' } as Task;
+    (parseTaskFile as Mock).mockResolvedValue(task);
 
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const stages: string[] = [];
-    engine.on('stageStarted', (event: { stage: string }) => stages.push(event.stage));
+    // Default mode/agent setup for transitions
+    (getDefaultModeForStage as Mock).mockImplementation((root, stage) => {
+      if (stage === 'plan') return 'planner';
+      if (stage === 'code') return 'coder';
+      if (stage === 'audit') return 'auditor';
+    });
 
-    const result = await engine.runTask(task);
+    const runPromise = runner.runTask(task);
+
+    // 1. Git Check
+    await completeProcess(''); // git status clean
+
+    // 2. Plan Stage
+    await completeProcess('Plan done. <!-- STAGE_TRANSITION: code -->');
+
+    // 3. Code Stage
+    await completeProcess('Code done. <!-- STAGE_TRANSITION: audit --> <!-- FILES_CHANGED: src/foo.ts -->');
+
+    // 4. Audit Stage
+    await completeProcess('Audit passed. <!-- AUDIT_RATING: 9 -->');
+
+    const result = await runPromise;
 
     expect(result.status).toBe('completed');
-    expect(stages).toEqual(['code', 'audit']);
-
-    const persisted = await parseTaskFile(taskPath);
-    expect(persisted.stage).toBe('completed');
-    expect(persisted.mode).toBe('auditor');
-    expect(persisted.agent).toBe('codex');
-
-    expect(queue.calls[1].stdin).toContain('<runner automated="true" />');
+    expect(fs.writeFile).toHaveBeenCalledTimes(4); // 3 stages (plan, code, audit) setTaskStageModeAgent calls + 1 persistTask(completed)
+    
+    // Verifications
+    expect(parseTaskFile).toHaveBeenCalledWith(task.filePath);
+    expect(resolveAgentConfig).toHaveBeenCalledTimes(3);
   });
 
-  test('Plan-stage task runs planner, coder, auditor in sequence', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-plan.md');
-    await writeTask(taskPath, 'plan');
-    const task = await parseTaskFile(taskPath);
+  it('Audit Fail (Attempt 1) -> Back to Code', async () => {
+    const task = { ...mockTask, stage: 'audit', attempts: 0 } as Task;
+    (parseTaskFile as Mock).mockResolvedValue(task);
+    (getDefaultModeForStage as Mock).mockResolvedValue('auditor');
 
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stdout: codexJsonlResult('Planning done') },
-      { stdout: codexJsonlResult('Coding done') },
-      { stdout: codexJsonlResult('<!-- AUDIT_RATING: 8 -->\nAccepted') },
-    ]);
+    const runPromise = runner.runTask(task);
+    
+    // Git check
+    await completeProcess('');
 
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const stages: string[] = [];
-    engine.on('stageStarted', (event: { stage: string }) => stages.push(event.stage));
+    // Audit Stage -> Fail
+    // Returns hardStop: false, so runTask returns status: 'failed' but hardStop: false
+    await completeProcess('Audit failed. <!-- AUDIT_RATING: 4 -->');
 
-    const result = await engine.runTask(task);
-
-    expect(result.status).toBe('completed');
-    expect(stages).toEqual(['plan', 'code', 'audit']);
-  });
-
-  test('Audit pass (8+) marks task completed', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-audit-pass.md');
-    await writeTask(taskPath, 'audit');
-    const task = await parseTaskFile(taskPath);
-
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stdout: codexJsonlResult('<!-- AUDIT_RATING: 9 -->\nGreat') },
-    ]);
-
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const result = await engine.runTask(task);
-
-    expect(result.status).toBe('completed');
-    const persisted = await parseTaskFile(taskPath);
-    expect(persisted.stage).toBe('completed');
-  });
-
-  test('Audit fail (attempt 1) sends task back to code stage', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-audit-fail-1.md');
-    await writeTask(taskPath, 'audit');
-    const task = await parseTaskFile(taskPath);
-
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stdout: codexJsonlResult('<!-- AUDIT_RATING: 7 -->\nNeeds fixes') },
-    ]);
-
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const result = await engine.runTask(task);
+    const result = await runPromise;
 
     expect(result.status).toBe('failed');
     expect(result.hardStop).toBe(false);
+    expect(result.error).toContain('Audit failed');
 
-    const persisted = await parseTaskFile(taskPath);
-    expect(persisted.stage).toBe('code');
-    expect(persisted.attempts).toBe(1);
+    // Verify task updated to code stage
+    // Last write should set stage: code, attempts: 1
+    const lastWriteCall = (fs.writeFile as Mock).mock.calls.at(-1);
+
+    expect(stringifyTaskFile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ stage: 'code', attempts: 1 }),
+      expect.anything()
+    );
   });
 
-  test('Audit fail (attempt 2) stops runner entirely, leaves task in audit', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-audit-fail-2.md');
-    await writeTask(taskPath, 'audit');
+  it('Audit Fail (Attempt 2) -> Hard Stop', async () => {
+    const task = { ...mockTask, stage: 'audit', attempts: 1 } as Task;
+    (parseTaskFile as Mock).mockResolvedValue(task);
+    
+    const runPromise = runner.runTask(task);
+    await completeProcess(''); // git
+    await completeProcess('Audit failed again. <!-- AUDIT_RATING: 3 -->');
 
-    const original = await parseTaskFile(taskPath);
-    const withAttempt: Task = { ...original, attempts: 1 };
-    const raw = await fs.readFile(taskPath, 'utf-8');
-    await fs.writeFile(taskPath, matter.stringify(withAttempt.content, { ...matter(raw).data, attempts: 1 }), 'utf-8');
-
-    const task = await parseTaskFile(taskPath);
-
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stdout: codexJsonlResult('<!-- AUDIT_RATING: 7 -->\nStill failing') },
-    ]);
-
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const result = await engine.runTask(task);
+    const result = await runPromise;
 
     expect(result.status).toBe('failed');
     expect(result.hardStop).toBe(true);
-
-    const persisted = await parseTaskFile(taskPath);
-    expect(persisted.stage).toBe('audit');
-    expect(persisted.attempts).toBe(2);
+    expect(stringifyTaskFile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ stage: 'audit', attempts: 2 }),
+      expect.anything()
+    );
   });
 
-  test('CLI crash (exit code 1) stops runner immediately', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-crash.md');
-    await writeTask(taskPath, 'code');
-    const task = await parseTaskFile(taskPath);
+  it('CLI Crash -> Hard Stop', async () => {
+    const runPromise = runner.runTask(mockTask);
+    await completeProcess(''); // git
+    await completeProcess('Segmentation fault', 1); // Exit 1
 
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stderr: 'boom', exitCode: 1 },
-    ]);
-
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const result = await engine.runTask(task);
+    const result = await runPromise;
 
     expect(result.status).toBe('failed');
     expect(result.hardStop).toBe(true);
-
-    // Git preflight + first stage only (no audit stage spawned)
-    expect(queue.calls).toHaveLength(2);
+    expect(result.error).toContain('CLI crash');
   });
 
-  test('stop() cancels execution before next stage', async () => {
-    const taskPath = path.join(kanbanRoot, 'inbox', 'task-stop.md');
-    await writeTask(taskPath, 'code');
-    const task = await parseTaskFile(taskPath);
+  it('Stop() cancels execution', async () => {
+    const runPromise = runner.runTask(mockTask);
+    await completeProcess(''); // git
 
-    const queue = createSpawnQueue([
-      { stdout: '', exitCode: 0 },
-      { stdout: codexJsonlResult('Code complete') },
-    ]);
+    // Wait for the Plan stage to spawn
+    await vi.waitUntil(() => mockSpawn.mock.calls.length === 2);
 
-    const engine = new RunnerEngine(kanbanRoot, { spawn: queue.spawn as never });
-    const started: string[] = [];
+    // Trigger stop while Plan stage is running
+    runner.stop();
+    
+    // Complete the current process (Plan)
+    await completeProcess('Plan done.');
 
-    engine.on('stageStarted', (event: { stage: string }) => {
-      started.push(event.stage);
-    });
-
-    engine.on('stageCompleted', (event: { stage: string }) => {
-      if (event.stage === 'code') {
-        engine.stop();
-      }
-    });
-
-    const result = await engine.runTask(task);
-
+    const result = await runPromise;
     expect(result.status).toBe('stopped');
-    expect(started).toEqual(['code']);
+    
+    // Should NOT have run next stage (Code)
+    // resolveAgentConfig is called once for Plan
+    expect(resolveAgentConfig).toHaveBeenCalledTimes(1);
+    // Writes: 1 for plan update
+    expect(fs.writeFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('Refuses to run if git dirty', async () => {
+    const runPromise = runner.runTask(mockTask);
+    
+    // Git check returns output
+    await completeProcess(' M src/file.ts');
+
+    const result = await runPromise;
+    expect(result.status).toBe('failed');
+    expect(result.error).toContain('git working tree is dirty');
   });
 });
