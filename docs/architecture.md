@@ -10,7 +10,7 @@ Key features include:
 - AI agent integration for context-aware task handling
 - A comprehensive sidebar interface for task navigation and management (Phase 3)
   - Hierarchical task tree with inbox/projects/phases organization
-  - Multi-dimensional filtering (stage, project, tags, quick views)
+  - Multi-dimensional filtering (stage, project, tags, quick views, project visibility)
   - Task creation modal with agent assignment
   - Context menus for task operations
   - Full keyboard navigation and accessibility support

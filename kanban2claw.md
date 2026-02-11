@@ -18,7 +18,7 @@ metadata:
 |-------|-------|-------|---------------|
 | inbox→plan | planner | PLAN_MODEL | `codex exec "..."` |
 | plan→code | coder | CODE_MODEL | `codex --config model_reasoning_effort="medium" exec "..."` |
-| code→audit | auditor | AUDIT_MODEL | `codex --config model_reasoning_effort="xhigh" exec "..."` |
+| code→audit | auditor | AUDIT_MODEL | `codex --config model_reasoning_effort="high" exec "..."` |
 
 **Golden Rules:**
 1. Always include ai-guide.md
@@ -33,9 +33,8 @@ metadata:
 | Alias | Model ID | Reasoning | Usage |
 |-------|----------|-----------|-------|
 | PLAN_MODEL | gpt-5.2 | default | Planner stage |
-| CODE_MODEL | gpt-5.2-codex | medium | Coder stage |
-| AUDIT_MODEL | gpt-5.2-codex | xhigh | Auditor stage (first try) |
-| AUDIT_FALLBACK | gpt-5.2-codex | high | Auditor stage (if xhigh fails) |
+| CODE_MODEL | gpt-5.3-codex | medium | Coder stage |
+| AUDIT_MODEL | gpt-5.3-codex | high | Auditor stage |
 
 ### Limits
 
@@ -145,8 +144,7 @@ If rating ≥ 8, also update $CONTEXT/architecture.md with new files.
 |-------|---------|
 | Plan | `codex exec "SPAWN_PLANNER content"` |
 | Code | `codex --config model_reasoning_effort="medium" exec "SPAWN_CODER content"` |
-| Audit | `codex --config model_reasoning_effort="xhigh" exec "SPAWN_AUDITOR content"` |
-| Audit (fallback) | `codex --config model_reasoning_effort="high" exec "SPAWN_AUDITOR content"` |
+| Audit | `codex --config model_reasoning_effort="high" exec "SPAWN_AUDITOR content"` |
 
 ## Expected Outputs
 
