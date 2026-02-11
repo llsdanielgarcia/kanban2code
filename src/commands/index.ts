@@ -7,12 +7,19 @@ import { buildCopyPayload, copyToClipboard } from '../services/copy';
 import { findTaskById, loadAllTasks } from '../services/scanner';
 import { CopyMode } from '../types/copy';
 import { SidebarProvider } from '../webview/SidebarProvider';
-import { restartFileWatcher } from '../extension';
+import {
+  restartFileWatcher,
+  runTaskWithRunner,
+  runColumnWithRunner,
+  runNightShiftWithRunner,
+  stopRunnerExecution,
+} from '../extension';
 import * as path from 'path';
 import type { Stage } from '../types/task';
 import { parseTaskFile } from '../services/frontmatter';
 import type { Task } from '../types/task';
 import { migrateAgentsToModes } from '../services/migration';
+import type { RunnerPipelineStage } from '../runner/runner-engine';
 
 export function registerCommands(context: vscode.ExtensionContext, sidebarProvider: SidebarProvider) {
   async function resolveTaskForCommand(kanbanRoot: string, taskInput?: string | { id: string }): Promise<Task | null> {
@@ -82,6 +89,23 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
 
     const label = mode === 'full_xml' ? 'Task context (full XML)' : mode === 'task_only' ? 'Task only' : 'Context only';
     vscode.window.showInformationMessage(`${label} copied to clipboard.`);
+  }
+
+  async function pickRunnerStage(input?: Stage): Promise<RunnerPipelineStage | null> {
+    if (input === 'plan' || input === 'code' || input === 'audit') {
+      return input;
+    }
+
+    const pick = await vscode.window.showQuickPick(
+      [
+        { label: 'Plan', stage: 'plan' as const },
+        { label: 'Code', stage: 'code' as const },
+        { label: 'Audit', stage: 'audit' as const },
+      ],
+      { placeHolder: 'Select a stage to run' },
+    );
+
+    return pick?.stage ?? null;
   }
 
   context.subscriptions.push(
@@ -494,6 +518,80 @@ Describe the agent's role and expertise.
           }
         },
       );
+    }),
+
+    vscode.commands.registerCommand('kanban2code.runTask', async (taskInput?: string | { id: string }) => {
+      const kanbanRoot = WorkspaceState.kanbanRoot;
+      if (!kanbanRoot) {
+        vscode.window.showErrorMessage('Kanban workspace not detected.');
+        return;
+      }
+
+      const task = await resolveTaskForCommand(kanbanRoot, taskInput);
+      if (!task) {
+        vscode.window.showErrorMessage('No task selected.');
+        return;
+      }
+
+      try {
+        const result = await runTaskWithRunner(task);
+        if (result.status === 'completed') {
+          vscode.window.showInformationMessage(`Runner completed task: ${task.title}`);
+        } else if (result.status === 'stopped') {
+          vscode.window.showWarningMessage(`Runner stopped: ${task.title}`);
+        } else {
+          vscode.window.showErrorMessage(`Runner failed: ${result.error ?? 'Unknown error'}`);
+        }
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to run task: ${message}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('kanban2code.runColumn', async (stageInput?: Stage) => {
+      const stage = await pickRunnerStage(stageInput);
+      if (!stage) {
+        return;
+      }
+
+      try {
+        const result = await runColumnWithRunner(stage);
+        if (result.status === 'completed') {
+          vscode.window.showInformationMessage(`Runner completed ${stage} column.`);
+        } else if (result.status === 'stopped') {
+          vscode.window.showWarningMessage(`Runner stopped while processing ${stage} column.`);
+        } else {
+          vscode.window.showErrorMessage(`Runner failed: ${result.error ?? 'Unknown error'}`);
+        }
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to run column: ${message}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('kanban2code.runNightShift', async () => {
+      try {
+        const result = await runNightShiftWithRunner();
+        if (result.status === 'completed') {
+          vscode.window.showInformationMessage('Night shift completed.');
+        } else if (result.status === 'stopped') {
+          vscode.window.showWarningMessage('Night shift stopped.');
+        } else {
+          vscode.window.showErrorMessage(`Night shift failed: ${result.error ?? 'Unknown error'}`);
+        }
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        vscode.window.showErrorMessage(`Failed to run night shift: ${message}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('kanban2code.stopRunner', async () => {
+      const stopped = stopRunnerExecution();
+      if (stopped) {
+        vscode.window.showInformationMessage('Runner stop requested.');
+      } else {
+        vscode.window.showWarningMessage('Runner is not active.');
+      }
     }),
   );
 }

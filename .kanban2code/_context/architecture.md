@@ -122,3 +122,30 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - new-files-created: none
   - tests-added:
     - 10 tests: order field sorting, undefined order handling, filename tiebreaker, stage filtering, immutability
+
+- date: 2026-02-11
+  - task: `task4.1-cli-adapter-interface-claude-adapter`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/cli-adapter.ts` - `CliAdapter` interface, `CliResponse`, `CliCommandResult`, `CliAdapterOptions` types
+    - `src/runner/adapters/claude-adapter.ts` - Claude CLI adapter implementation
+    - `tests/claude-adapter.test.ts` - Tests for Claude adapter
+
+- date: 2026-02-11
+  - task: `task4.2-codex-kimi-and-kilo-cli-adapters-adapter-factory`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/adapters/codex-adapter.ts` - Codex CLI adapter (stdin prompt, JSONL output)
+    - `src/runner/adapters/kimi-adapter.ts` - KIMI CLI adapter (-p flag, plain text output)
+    - `src/runner/adapters/kilo-adapter.ts` - Kilo CLI adapter (positional prompt, JSONL output)
+    - `src/runner/adapter-factory.ts` - Factory function `getAdapterForCli(cli) → CliAdapter`
+    - `tests/other-cli-adapters.test.ts` - Tests for Codex, KIMI, Kilo adapters and factory
+
+- date: 2026-02-11
+  - task: `task4.3-structured-output-parser`
+  - files-updated: none
+  - new-files-created:
+    - `src/runner/output-parser.ts` - Structured marker extraction for LLM output
+    - `tests/output-parser.test.ts` - Tests for output-parser
+  - tests-added:
+    - 8 tests: stage transitions, audit ratings, verdicts, file lists, and fallbacks
