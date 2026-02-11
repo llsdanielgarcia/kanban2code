@@ -11,9 +11,11 @@ interface ColumnProps {
   tasks: Task[];
   agents?: Agent[];
   isRunnerActive?: boolean;
+  runningTaskId?: string | null;
   onRunTopTask?: (stage: Stage) => void;
   onRunColumn?: (stage: Stage) => void;
   onStopRunner?: () => void;
+  onRunTask?: (task: Task) => void;
   onMoveTask: (taskId: string, toStage: Stage) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -28,9 +30,11 @@ export const Column: React.FC<ColumnProps> = ({
   tasks,
   agents,
   isRunnerActive = false,
+  runningTaskId,
   onRunTopTask,
   onRunColumn,
   onStopRunner,
+  onRunTask,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -116,12 +120,15 @@ export const Column: React.FC<ColumnProps> = ({
             key={task.id}
             task={task}
             agents={agents}
+            isRunnerActive={isRunnerActive}
+            runningTaskId={runningTaskId}
             onOpen={onOpenTask}
             onEdit={onOpenTask}
             onFocusTask={onFocusTask}
             onDelete={onDeleteTask}
             onCopyXml={onCopyXml}
             onShowMenu={onShowMenu}
+            onRunTask={onRunTask}
           />
         ))}
         {tasks.length === 0 && <div className="column-empty">No tasks</div>}

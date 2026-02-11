@@ -201,3 +201,12 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - new-files-created:
     - `src/webview/ui/components/ModePicker.tsx` - Mode dropdown component with mode description hint and "Create new mode" action
     - `tests/webview/components/ModePicker.test.tsx` - ModePicker component tests for rendering, selection, callbacks, and no-selection behavior
+
+- date: 2026-02-11
+  - task: `task5.3-runner-controls-on-column-headers`
+  - files-updated:
+    - `src/webview/ui/components/Column.tsx` (added runner control buttons: play, play-all, stop; visibility logic based on `isRunnerActive` and `stage`)
+    - `src/webview/ui/components/BoardHorizontal.tsx` (passed down runner control props to Column)
+    - `src/webview/ui/styles/main.css` (styles for runner controls and buttons)
+    - `tests/webview/column.test.tsx` (added 6 tests for runner control visibility, behavior, and callbacks)
+  - new-files-created: none

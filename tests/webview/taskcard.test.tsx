@@ -226,4 +226,130 @@ describe('TaskCard', () => {
     fireEvent.click(deleteBtn);
     expect(onDelete).toHaveBeenCalledWith(task);
   });
+
+  test('card shows mode name when set', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Task',
+      stage: 'code',
+      agent: 'opus',
+      mode: 'coder',
+      content: '',
+    } as any;
+
+    render(<TaskCard task={task} onOpen={vi.fn()} />);
+
+    expect(screen.getByText('coder | opus')).toBeInTheDocument();
+  });
+
+  test('card shows agent only when mode is unset', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Task',
+      stage: 'code',
+      agent: 'opus',
+      content: '',
+    } as any;
+
+    render(<TaskCard task={task} onOpen={vi.fn()} />);
+
+    expect(screen.getByText('opus')).toBeInTheDocument();
+  });
+
+  test('run button visible on plan/code/audit cards', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const onRunTask = vi.fn();
+
+    for (const stage of ['plan', 'code', 'audit']) {
+      cleanup();
+      const task = {
+        id: `t-${stage}`,
+        filePath: '/tmp/t1.md',
+        title: `${stage} task`,
+        stage,
+        content: '',
+      } as any;
+
+      render(<TaskCard task={task} onOpen={vi.fn()} onRunTask={onRunTask} />);
+
+      const runBtn = screen.getByRole('button', { name: /run task/i });
+      expect(runBtn).toBeInTheDocument();
+    }
+  });
+
+  test('run button not visible on inbox/completed cards', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const onRunTask = vi.fn();
+
+    for (const stage of ['inbox', 'completed']) {
+      cleanup();
+      const task = {
+        id: `t-${stage}`,
+        filePath: '/tmp/t1.md',
+        title: `${stage} task`,
+        stage,
+        content: '',
+      } as any;
+
+      render(<TaskCard task={task} onOpen={vi.fn()} onRunTask={onRunTask} />);
+
+      expect(screen.queryByRole('button', { name: /run task/i })).toBeNull();
+    }
+  });
+
+  test('progress indicator shown when runner active on this task', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Running Task',
+      stage: 'code',
+      content: '',
+    } as any;
+
+    render(
+      <TaskCard
+        task={task}
+        onOpen={vi.fn()}
+        isRunnerActive={true}
+        runningTaskId="t1"
+      />,
+    );
+
+    // Card should have the running class for pulsing border
+    const card = screen.getByRole('button', { name: /open task running task/i });
+    expect(card).toHaveClass('running');
+
+    // Spinner should be present
+    expect(screen.getByLabelText('Runner active')).toBeInTheDocument();
+  });
+
+  test('no progress indicator when runner active on different task', async () => {
+    const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
+    const task = {
+      id: 't1',
+      filePath: '/tmp/t1.md',
+      title: 'Not Running',
+      stage: 'code',
+      content: '',
+    } as any;
+
+    render(
+      <TaskCard
+        task={task}
+        onOpen={vi.fn()}
+        isRunnerActive={true}
+        runningTaskId="t2"
+      />,
+    );
+
+    const card = screen.getByRole('button', { name: /open task not running/i });
+    expect(card).not.toHaveClass('running');
+    expect(screen.queryByLabelText('Runner active')).toBeNull();
+  });
 });
+

@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags: [feature, p1]
 agent: auditor
 contexts: [skills/react-core-skills]
@@ -36,3 +36,31 @@ src/webview/ui/components/Column.tsx
 src/webview/ui/components/BoardHorizontal.tsx
 src/webview/ui/styles/main.css
 tests/webview/column.test.tsx
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+The Column component and BoardHorizontal have been successfully updated to include runner control buttons (Play, Play-all, Stop) for active stages (Plan, Code, Audit), following all DoD criteria.
+
+### Findings
+
+#### Low Priority / Nits
+- [ ] [Iconography]: Runner controls use text emoji characters (`▶`, `▶▶`, `⏹`) instead of SVG icons. This is consistent with current scope but could be improved for better aesthetics later. - `Column.tsx:85,95,105`
+
+### Test Assessment
+- Coverage: Adequate. 6 new tests in `column.test.tsx` cover all visibility, disabled state, and callback requirements.
+- Missing tests: None for this component level task.
+
+### What's Good
+- Clean implementation of visibility logic for runner controls.
+- Comprehensive tests for component behavior.
+
+### Recommendations
+- Consider adding runner icons to `Icons.tsx` in a future polish pass to move away from text-based buttons.
+- The wiring to `Board.tsx` and messaging protocol will be handled in Task 5.6.

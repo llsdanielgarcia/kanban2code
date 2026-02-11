@@ -1,33 +1,43 @@
 import React, { useState, useMemo } from 'react';
-import type { Task } from '../../../types/task';
-import { EditIcon, TrashIcon, MoreIcon, ClipboardIcon, AgentIcon } from './Icons';
+import type { Task, Stage } from '../../../types/task';
+import { EditIcon, TrashIcon, MoreIcon, ClipboardIcon, AgentIcon, PlayIcon } from './Icons';
 import { getDisplayTitle } from '../../../utils/text';
 import type { Agent } from '../hooks/useTaskData';
+
+const RUNNER_STAGES: Stage[] = ['plan', 'code', 'audit'];
 
 interface TaskCardProps {
   task: Task;
   agents?: Agent[];
+  isRunnerActive?: boolean;
+  runningTaskId?: string | null;
   onOpen: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
   onDelete?: (task: Task) => void;
   onCopyXml?: (task: Task) => void;
   onEdit?: (task: Task) => void;
   onShowMenu?: (task: Task, position: { x: number; y: number }) => void;
+  onRunTask?: (task: Task) => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   agents,
+  isRunnerActive = false,
+  runningTaskId,
   onOpen,
   onFocusTask,
   onDelete,
   onCopyXml,
   onEdit,
   onShowMenu,
+  onRunTask,
 }) => {
   const [dragging, setDragging] = useState(false);
   const isCompleted = task.stage === 'completed';
   const displayTitle = getDisplayTitle(task);
+  const isRunning = isRunnerActive && runningTaskId === task.id;
+  const showRunButton = RUNNER_STAGES.includes(task.stage) && !!onRunTask;
 
   const agentDisplayName = useMemo(() => {
     if (!task.agent) return 'unassigned';
@@ -36,6 +46,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     const found = agents.find((a) => a.id === task.agent) ?? agents.find((a) => a.name === task.agent);
     return found ? found.name : task.agent;
   }, [task.agent, agents]);
+
+  const footerLabel = useMemo(() => {
+    if (task.mode && task.agent) {
+      // Show mode | agent when both are set
+      return `${task.mode} | ${agentDisplayName}`;
+    }
+    // Fallback: show agent only
+    return agentDisplayName;
+  }, [task.mode, task.agent, agentDisplayName]);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -61,9 +80,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     onDelete?.(task);
   };
 
+  const handleRunClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRunTask?.(task);
+  };
+
   return (
     <div
-      className={`task-card ${dragging ? 'dragging' : ''} ${isCompleted ? 'completed' : ''}`}
+      className={`task-card ${dragging ? 'dragging' : ''} ${isCompleted ? 'completed' : ''} ${isRunning ? 'running' : ''}`}
       role="button"
       tabIndex={0}
       draggable
@@ -86,6 +110,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <div className="card-header">
         <span className={`card-title ${isCompleted ? 'completed' : ''}`}>{displayTitle}</span>
         <div className="card-actions">
+          {showRunButton && (
+            <button
+              className="card-action tooltip"
+              data-tooltip="Run task"
+              onClick={handleRunClick}
+              disabled={isRunnerActive}
+              aria-label="Run task"
+            >
+              <PlayIcon size={14} />
+            </button>
+          )}
           {onEdit && (
             <button
               className="card-action tooltip"
@@ -142,8 +177,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {/* Card Footer */}
       <div className="card-footer">
         <div className="card-agent">
+          {isRunning && <span className="runner-spinner" aria-label="Runner active" />}
           <AgentIcon className="agent-icon" />
-          <span>{agentDisplayName}</span>
+          <span>{footerLabel}</span>
         </div>
         {onCopyXml && (
           <button
