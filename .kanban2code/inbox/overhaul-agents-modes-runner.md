@@ -105,6 +105,27 @@ kimi --print --model kimi-k2-thinking-turbo -p "prompt"
 kilo run --auto --yolo --json --timeout 300 --provider openrouter --model "z-ai/glm-4.7" "prompt"
 ```
 
+### Default agent per mode
+
+Config file (e.g., `.kanban2code/_config/defaults.yaml` or within project settings) maps each mode to a default agent:
+
+```yaml
+# Default agent assignments per mode
+defaults:
+  coder: opus
+  auditor: opus
+  planner: sonnet
+  roadmapper: opus
+  architect: opus
+  splitter: sonnet
+  conversational: sonnet
+```
+
+- Runner uses these defaults when a task doesn't explicitly set `agent`
+- **Override at task level**: individual tasks can set `agent: codex` in frontmatter to override the default
+- **Override at board level**: kanban view should have a way to change the default agent for a mode without editing the config file (dropdown or settings panel)
+- Config is project-scoped (lives in `.kanban2code/`) so different projects can use different defaults
+
 ### Proposed agent file schema
 
 ```yaml
@@ -166,6 +187,43 @@ Runner assembles invocation per `prompt_style`:
 - `positional`: `{cli} {subcommand} {unattended_flags} {output_flags} --model {model} "prompt"`
 - `stdin`: `echo "prompt" | {cli} {subcommand?} {unattended_flags} {output_flags} --model {model}`
 
+### Migration: current `_agents/` → `_agents/` + `_modes/`
+
+Current agent files are **100% behavior/instructions** with zero CLI config. The frontmatter is just `name`, `description`, `type`, `stage`, `created`. They are already modes in disguise.
+
+**What moves where:**
+
+| Current file | Becomes | Action |
+|---|---|---|
+| `_agents/05-⚙️coder.md` | `_modes/coder.md` | Move + update frontmatter |
+| `_agents/06-✅auditor.md` | `_modes/auditor.md` | Move + update frontmatter |
+| `_agents/04-📋planner.md` | `_modes/planner.md` | Move + update frontmatter |
+| `_agents/01-🗺️roadmapper.md` | `_modes/roadmapper.md` | Move + update frontmatter |
+| `_agents/02-🏛️architect.md` | `_modes/architect.md` | Move + update frontmatter |
+| `_agents/03-✂️splitter.md` | `_modes/splitter.md` | Move + update frontmatter |
+| `_agents/07-💬conversational.md` | `_modes/conversational.md` | Move + update frontmatter |
+| *(new)* | `_agents/opus.md` | Create with CLI config schema |
+| *(new)* | `_agents/codex.md` | Create with CLI config schema |
+| *(new)* | `_agents/kimi.md` | Create with CLI config schema |
+| *(new)* | `_agents/glm.md` | Create with CLI config schema |
+
+**Mode frontmatter changes:**
+- Remove `type: robot` (no longer relevant)
+- Keep `name`, `description`, `stage`
+- Add `created` if missing
+
+**Task frontmatter changes:**
+- `agent: coder` → `agent: opus` + `mode: coder` (two fields instead of one)
+- All stage transition instructions in modes update accordingly (e.g., "set `agent: auditor`" becomes "set `mode: auditor`")
+
+**Code changes required:**
+- `TaskService` / frontmatter parser: recognize `agent` as LLM provider and `mode` as behavior role
+- Agent file reader: parse new CLI config schema (`cli`, `model`, `prompt_style`, etc.)
+- Mode file reader: load from `_modes/` instead of `_agents/`
+- UI: agent picker shows LLM providers, add separate mode picker for behavior
+- Prompt assembler: combine mode instructions + task content into CLI prompt
+- All existing references to `agent: coder/auditor/planner` in codebase must update
+
 ### Mode files = behavior/instructions
 
 `_modes/` folder replaces the role aspect of current `_agents/`:
@@ -173,6 +231,64 @@ Runner assembles invocation per `prompt_style`:
 - `_modes/auditor.md` — review criteria, rating threshold
 - `_modes/planner.md` — planning instructions
 - Orchestration modes: `roadmapper.md`, `architect.md`, `splitter.md`
+
+### Mode management UI (add/edit modes)
+
+Users need to create custom modes and edit existing ones from the UI — not just pick from a fixed list.
+
+**Add new mode:**
+- Button/action in the mode picker or a dedicated settings area to "Add Mode"
+- Opens an editor (could be a webview form or direct markdown editor) with the mode template:
+  ```yaml
+  ---
+  name: my-custom-mode
+  description: What this mode does
+  stage: code          # which stage this mode operates on (optional, for runner awareness)
+  ---
+  ```
+  Followed by the markdown body with instructions (purpose, rules, workflow, output format, stage transition)
+- On save → writes `_modes/{name}.md` to the filesystem
+- Mode immediately appears in the mode picker dropdown
+
+**Edit existing mode:**
+- Click/action on an existing mode in the picker opens it for editing
+- Same editor as "add" but pre-populated with current content
+- Saves back to the same `_modes/{name}.md` file
+
+**Delete mode:**
+- Remove the file from `_modes/`
+- Guard: warn if any tasks currently reference this mode
+
+**Similarly for agents (add/edit LLM providers):**
+- Same pattern: add/edit/delete `_agents/{name}.md` files
+- Form fields map to the agent schema: `cli`, `model`, `prompt_style`, `unattended_flags`, `output_flags`, `safety`
+- Could be a structured form (preferred for agents since the schema is rigid) vs. free-text editor (preferred for modes since they're mostly prose)
+
+**Code changes required:**
+- `ModeService`: CRUD operations for `_modes/` files (read, list, create, update, delete)
+- `AgentService`: CRUD operations for `_agents/` files (same pattern)
+- Webview UI: mode management panel (add/edit form or markdown editor)
+- Webview UI: agent management panel (structured form)
+- File watcher: detect external changes to `_modes/` and `_agents/` and refresh UI
+- Validation: ensure required frontmatter fields are present before saving
+
+### Prompt assembly for runner
+
+The existing `src/services/prompt-builder.ts` already builds XML prompts (used by "Copy XML" in the UI). The runner reuses this same service to assemble the prompt sent to CLIs.
+
+**Current flow (manual):** User clicks "Copy XML" → `prompt-builder.ts` builds XML → clipboard → user pastes into CLI
+
+**New flow (automated):** Runner calls `prompt-builder.ts` directly → gets XML string → passes it to CLI via the agent's `prompt_style` (flag, positional, or stdin)
+
+**Changes needed to `prompt-builder.ts`:**
+- Accept `mode` parameter (currently uses `agent` which will become the LLM provider)
+- Load mode instructions from `_modes/{mode}.md` instead of `_agents/{agent}.md`
+- The XML output structure stays the same — it already has `<agent>`, `<metadata>`, `<context>` sections
+- Rename `<agent>` section to `<mode>` in the XML output to match the new terminology
+
+**System prompt injection (separate from XML prompt):**
+- Mode instructions can also be injected via CLI's `--append-system-prompt` flag (Claude, Kilo) or equivalent
+- Decision: inject mode as system prompt AND include in XML, or just one? System prompt is cleaner for CLIs that support it, XML is the universal fallback
 
 ## 2. Batch Runner ("Night Shift")
 
@@ -201,11 +317,82 @@ Code column tasks → run sequentially → each gets audited
 
 Add `attempts: 0` to task frontmatter. Runner increments before each code pass.
 
+### Error handling
+
+**Hard stop on crash:** If a CLI process crashes (non-zero exit code that isn't an audit failure), the entire runner stops immediately. No further tasks are processed.
+- Rationale: a crash likely indicates an environment issue (CLI not installed, auth expired, disk full) that would affect all subsequent tasks
+- Runner log captures the error details for morning review
+- Tasks that haven't started yet remain in their current stage untouched
+
+### Runner log/report format
+
+Runner generates a log file (e.g., `.kanban2code/_logs/run-{timestamp}.md`) for morning review:
+
+```markdown
+# Night Shift Report — 2026-02-11 02:30
+
+## Summary
+- Tasks processed: 5
+- Completed: 3
+- Failed (sent to inbox): 1
+- Crashed (runner stopped): 1
+- Total time: 47m 23s
+
+## Tasks
+
+### task-name-1
+- Status: Completed
+- Mode: coder → auditor
+- Agent: opus
+- Tokens: 12,450 in / 3,200 out
+- Time: 8m 12s
+- Attempts: 1
+- Commit: abc1234
+
+### task-name-2
+- Status: Failed → moved to Inbox
+- Mode: coder → auditor → coder → auditor
+- Agent: opus
+- Tokens: 24,100 in / 8,400 out
+- Time: 15m 03s
+- Attempts: 2
+- Error: Audit rating 5/10 — "missing test coverage"
+
+### task-name-3
+- Status: CRASHED — runner stopped
+- Mode: coder
+- Agent: codex
+- Error: Exit code 1 — "ENOENT: codex command not found"
+- Time: 0m 02s
+```
+
+### Git commit strategy
+
+Runner commits after each **successful audit** (rating 8+). The auditor mode instructions should include a step to stage and commit the changes.
+
+**Flow:**
+1. Coder runs → makes code changes (uncommitted)
+2. Auditor runs → reviews the changes
+3. If audit passes (8+) → auditor commits with message: `feat(runner): {task-title} [auto]`
+4. If audit fails → changes remain uncommitted, coder re-runs on next attempt
+5. If max attempts reached → uncommitted changes are stashed or discarded, task moves to inbox
+
+**Auditor mode instruction addition:**
+```
+When rating >= 8 (ACCEPTED):
+1. Stage all changed files: git add -A
+2. Commit with message: "feat(runner): {task-title} [auto]"
+3. Set stage to completed
+```
+
+This keeps each task's changes in a discrete commit for easy review/revert in the morning.
+
 ### Implementation
 
 - New **runner service** using `child_process` to invoke CLIs
 - Per-CLI adapter to handle different invocation styles (piped stdin vs positional args)
 - Runner log/report for morning review
+- Runner UI: separate conversation needed (triggers, progress display, cancel)
 
 ## 3. Redesign Modes for Automation
 
@@ -235,11 +422,16 @@ With execution automated, mode instructions need to account for:
 
 - [ ] Redesign mode file content for automated execution
 - [ ] UI changes: agent picker → agent + mode pickers
-- [ ] Rename `_agents/` folder or split into `_agents/` + `_modes/`
+- [ ] Mode management UI: add/edit/delete modes from the UI
+- [ ] Agent management UI: add/edit/delete LLM providers from the UI
+- [x] Rename `_agents/` folder or split into `_agents/` + `_modes/` → migration plan documented above
 - [ ] Update ai-guide.md, architecture.md with new concepts
 - [ ] Design runner adapter interface (per-CLI invocation + response parsing)
-- [ ] Design runner log/report format for morning review
-- [ ] Determine git commit strategy (per task? per stage? per run?)
+- [x] Design runner log/report format for morning review → documented above (per-task: name, tokens, status, time, commit)
+- [x] Determine git commit strategy → commit after each successful audit, auditor mode handles the commit
+- [ ] Default agent-per-mode config file + board-level override UI
+- [ ] Prompt assembly: update `prompt-builder.ts` to use modes instead of agents
+- [ ] Runner UI: triggers, progress display, cancel (needs separate conversation)
 - [ ] Handle Codex prompt size limitation (temp file? truncation? fallback to stdin workaround?)
 
 ## What Stays the Same
