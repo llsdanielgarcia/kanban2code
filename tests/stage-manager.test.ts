@@ -2,11 +2,19 @@ import { expect, test, afterEach, beforeEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { updateTaskStage, changeStageAndReload, moveTaskToLocation, getDefaultAgentForStage } from '../src/services/stage-manager';
+import {
+  updateTaskStage,
+  changeStageAndReload,
+  moveTaskToLocation,
+  getDefaultAgentForStage,
+  getDefaultModeForStage,
+  getDefaultAgentForMode,
+} from '../src/services/stage-manager';
 import { parseTaskFile } from '../src/services/frontmatter';
 import { Task } from '../src/types/task';
 import { WorkspaceState } from '../src/workspace/state';
-import { KANBAN_FOLDER, AGENTS_FOLDER } from '../src/core/constants';
+import { KANBAN_FOLDER, AGENTS_FOLDER, MODES_FOLDER } from '../src/core/constants';
+import { configService } from '../src/services/config';
 
 let TEST_DIR: string;
 let TASK_PATH: string;
@@ -14,13 +22,16 @@ let TASK_PATH: string;
 beforeEach(async () => {
   TEST_DIR = path.join(os.tmpdir(), 'kanban-stage-test-' + Date.now());
   await fs.mkdir(TEST_DIR, { recursive: true });
-  
+
   TASK_PATH = path.join(TEST_DIR, 'task-1.md');
-  await fs.writeFile(TASK_PATH, `---
+  await fs.writeFile(
+    TASK_PATH,
+    `---
 stage: inbox
 ---
 # Task 1
-`);
+`,
+  );
 });
 
 afterEach(async () => {
@@ -31,21 +42,24 @@ afterEach(async () => {
 
 test('updateTaskStage moves forward one stage', async () => {
   const task = await parseTaskFile(TASK_PATH);
-  
+
   const updated = await updateTaskStage(task, 'plan');
-  
+
   expect(updated.stage).toBe('plan');
-  
+
   const fileContent = await fs.readFile(TASK_PATH, 'utf-8');
   expect(fileContent).toContain('stage: plan');
 });
 
 test('updateTaskStage allows moving backward one stage', async () => {
-  await fs.writeFile(TASK_PATH, `---
+  await fs.writeFile(
+    TASK_PATH,
+    `---
 stage: audit
 ---
 # Task 1
-`);
+`,
+  );
 
   const task = await parseTaskFile(TASK_PATH);
 
@@ -70,11 +84,14 @@ test('updateTaskStage throws on task ID mismatch', async () => {
 });
 
 test('completed tasks cannot move to other stages', async () => {
-  await fs.writeFile(TASK_PATH, `---
+  await fs.writeFile(
+    TASK_PATH,
+    `---
 stage: completed
 ---
 # Task 1
-`);
+`,
+  );
 
   const task = await parseTaskFile(TASK_PATH);
   await expect(updateTaskStage(task, 'plan')).rejects.toThrow('not allowed');
@@ -85,20 +102,23 @@ test('changeStageAndReload works with ID', async () => {
   // We need to setup a fake kanban structure for scanner to find it
   const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
-  
+
   const inboxTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
-  await fs.writeFile(inboxTaskPath, `---
+  await fs.writeFile(
+    inboxTaskPath,
+    `---
 stage: inbox
 ---
 # Task 1
-`);
+`,
+  );
 
   // Mock the static getter if possible, or just use the setter
   WorkspaceState.setKanbanRoot(kanbanRoot);
 
   const updated = await changeStageAndReload('t1', 'plan');
   expect(updated.stage).toBe('plan');
-  
+
   const content = await fs.readFile(inboxTaskPath, 'utf-8');
   expect(content).toContain('stage: plan');
 });
@@ -120,20 +140,31 @@ test('moveTaskToLocation moves tasks between inbox and projects', async () => {
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
 
   const taskPath = path.join(kanbanRoot, 'inbox', 't1.md');
-  await fs.writeFile(taskPath, `---
+  await fs.writeFile(
+    taskPath,
+    `---
 stage: inbox
 ---
 # Task 1
-`);
+`,
+  );
 
   WorkspaceState.setKanbanRoot(kanbanRoot);
 
-  const toProject = await moveTaskToLocation('t1', { type: 'project', project: 'alpha', phase: 'phase-1' });
+  const toProject = await moveTaskToLocation('t1', {
+    type: 'project',
+    project: 'alpha',
+    phase: 'phase-1',
+  });
   expect(toProject).toBe(path.join(kanbanRoot, 'projects', 'alpha', 'phase-1', 't1.md'));
   await expect(fs.readFile(toProject, 'utf-8')).resolves.toContain('# Task 1');
 
   // No-op move when already in target location
-  const again = await moveTaskToLocation('t1', { type: 'project', project: 'alpha', phase: 'phase-1' });
+  const again = await moveTaskToLocation('t1', {
+    type: 'project',
+    project: 'alpha',
+    phase: 'phase-1',
+  });
   expect(again).toBe(toProject);
 
   const backToInbox = await moveTaskToLocation('t1', { type: 'inbox' });
@@ -143,7 +174,9 @@ stage: inbox
 
 test('moveTaskToLocation throws when kanban root is missing', async () => {
   WorkspaceState.setKanbanRoot(null);
-  await expect(moveTaskToLocation('t1', { type: 'inbox' })).rejects.toThrow('Kanban root not found');
+  await expect(moveTaskToLocation('t1', { type: 'inbox' })).rejects.toThrow(
+    'Kanban root not found',
+  );
 });
 
 test('moveTaskToLocation throws when task is not found', async () => {
@@ -158,24 +191,33 @@ test('getDefaultAgentForStage returns agent matching stage', async () => {
   const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
   await fs.mkdir(agentsDir, { recursive: true });
 
-  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+  await fs.writeFile(
+    path.join(agentsDir, '04-planner.md'),
+    `---
 name: planner
 stage: plan
 ---
 # Planner
-`);
-  await fs.writeFile(path.join(agentsDir, '05-coder.md'), `---
+`,
+  );
+  await fs.writeFile(
+    path.join(agentsDir, '05-coder.md'),
+    `---
 name: coder
 stage: code
 ---
 # Coder
-`);
-  await fs.writeFile(path.join(agentsDir, '06-auditor.md'), `---
+`,
+  );
+  await fs.writeFile(
+    path.join(agentsDir, '06-auditor.md'),
+    `---
 name: auditor
 stage: audit
 ---
 # Auditor
-`);
+`,
+  );
 
   expect(await getDefaultAgentForStage(kanbanRoot, 'plan')).toBe('04-planner');
   expect(await getDefaultAgentForStage(kanbanRoot, 'code')).toBe('05-coder');
@@ -190,19 +232,25 @@ test('updateTaskStage auto-assigns agent when transitioning stages', async () =>
   await fs.mkdir(agentsDir, { recursive: true });
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
 
-  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+  await fs.writeFile(
+    path.join(agentsDir, '04-planner.md'),
+    `---
 name: planner
 stage: plan
 ---
 # Planner
-`);
+`,
+  );
 
   const inboxTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
-  await fs.writeFile(inboxTaskPath, `---
+  await fs.writeFile(
+    inboxTaskPath,
+    `---
 stage: inbox
 ---
 # Task 1
-`);
+`,
+  );
 
   const task = await parseTaskFile(inboxTaskPath);
   const updated = await updateTaskStage(task, 'plan', kanbanRoot);
@@ -221,26 +269,35 @@ test('updateTaskStage preserves custom agent when transitioning', async () => {
   await fs.mkdir(agentsDir, { recursive: true });
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
 
-  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+  await fs.writeFile(
+    path.join(agentsDir, '04-planner.md'),
+    `---
 name: planner
 stage: plan
 ---
 # Planner
-`);
-  await fs.writeFile(path.join(agentsDir, '05-coder.md'), `---
+`,
+  );
+  await fs.writeFile(
+    path.join(agentsDir, '05-coder.md'),
+    `---
 name: coder
 stage: code
 ---
 # Coder
-`);
+`,
+  );
 
   const planTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
-  await fs.writeFile(planTaskPath, `---
+  await fs.writeFile(
+    planTaskPath,
+    `---
 stage: plan
 agent: custom-agent
 ---
 # Task 1
-`);
+`,
+  );
 
   const task = await parseTaskFile(planTaskPath);
   const updated = await updateTaskStage(task, 'code', kanbanRoot);
@@ -255,26 +312,35 @@ test('updateTaskStage updates agent when current matches stage default', async (
   await fs.mkdir(agentsDir, { recursive: true });
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
 
-  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+  await fs.writeFile(
+    path.join(agentsDir, '04-planner.md'),
+    `---
 name: planner
 stage: plan
 ---
 # Planner
-`);
-  await fs.writeFile(path.join(agentsDir, '05-coder.md'), `---
+`,
+  );
+  await fs.writeFile(
+    path.join(agentsDir, '05-coder.md'),
+    `---
 name: coder
 stage: code
 ---
 # Coder
-`);
+`,
+  );
 
   const planTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
-  await fs.writeFile(planTaskPath, `---
+  await fs.writeFile(
+    planTaskPath,
+    `---
 stage: plan
 agent: 04-planner
 ---
 # Task 1
-`);
+`,
+  );
 
   const task = await parseTaskFile(planTaskPath);
   const updated = await updateTaskStage(task, 'code', kanbanRoot);
@@ -289,23 +355,215 @@ test('changeStageAndReload auto-assigns agent', async () => {
   await fs.mkdir(agentsDir, { recursive: true });
   await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
 
-  await fs.writeFile(path.join(agentsDir, '04-planner.md'), `---
+  await fs.writeFile(
+    path.join(agentsDir, '04-planner.md'),
+    `---
 name: planner
 stage: plan
 ---
 # Planner
-`);
+`,
+  );
 
   const inboxTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
-  await fs.writeFile(inboxTaskPath, `---
+  await fs.writeFile(
+    inboxTaskPath,
+    `---
 stage: inbox
 ---
 # Task 1
-`);
+`,
+  );
 
   WorkspaceState.setKanbanRoot(kanbanRoot);
 
   const updated = await changeStageAndReload('t1', 'plan');
   expect(updated.stage).toBe('plan');
   expect(updated.agent).toBe('04-planner');
+});
+
+test('getDefaultModeForStage returns mode matching stage', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const modesDir = path.join(kanbanRoot, MODES_FOLDER);
+  await fs.mkdir(modesDir, { recursive: true });
+
+  await fs.writeFile(
+    path.join(modesDir, 'coder.md'),
+    `---
+name: coder
+stage: code
+---
+# Coder
+`,
+  );
+  await fs.writeFile(
+    path.join(modesDir, 'auditor.md'),
+    `---
+name: auditor
+stage: audit
+---
+# Auditor
+`,
+  );
+  await fs.writeFile(
+    path.join(modesDir, 'planner.md'),
+    `---
+name: planner
+stage: plan
+---
+# Planner
+`,
+  );
+
+  expect(await getDefaultModeForStage(kanbanRoot, 'plan')).toBe('planner');
+  expect(await getDefaultModeForStage(kanbanRoot, 'code')).toBe('coder');
+  expect(await getDefaultModeForStage(kanbanRoot, 'audit')).toBe('auditor');
+  expect(await getDefaultModeForStage(kanbanRoot, 'inbox')).toBeUndefined();
+  expect(await getDefaultModeForStage(kanbanRoot, 'completed')).toBeUndefined();
+});
+
+test('getDefaultAgentForMode returns agent from config', () => {
+  expect(getDefaultAgentForMode('coder')).toBe('opus');
+  expect(getDefaultAgentForMode('auditor')).toBe('opus');
+  expect(getDefaultAgentForMode('planner')).toBe('sonnet');
+  expect(getDefaultAgentForMode('nonexistent')).toBeUndefined();
+});
+
+test('updateTaskStage auto-sets mode and agent from modeDefaults', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const modesDir = path.join(kanbanRoot, MODES_FOLDER);
+  await fs.mkdir(modesDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+  await configService.initialize(kanbanRoot);
+
+  await fs.writeFile(
+    path.join(modesDir, 'coder.md'),
+    `---
+name: coder
+stage: code
+---
+# Coder
+`,
+  );
+  await fs.writeFile(
+    path.join(modesDir, 'auditor.md'),
+    `---
+name: auditor
+stage: audit
+---
+# Auditor
+`,
+  );
+
+  const inboxTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(
+    inboxTaskPath,
+    `---
+stage: plan
+---
+# Task 1
+`,
+  );
+
+  const task = await parseTaskFile(inboxTaskPath);
+  const updated = await updateTaskStage(task, 'code', kanbanRoot);
+
+  expect(updated.stage).toBe('code');
+  expect(updated.mode).toBe('coder');
+  expect(updated.agent).toBe('opus');
+
+  const fileContent = await fs.readFile(inboxTaskPath, 'utf-8');
+  expect(fileContent).toContain('mode: coder');
+  expect(fileContent).toContain('agent: opus');
+});
+
+test('updateTaskStage auto-sets auditor mode and agent on audit stage', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const modesDir = path.join(kanbanRoot, MODES_FOLDER);
+  await fs.mkdir(modesDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+  await configService.initialize(kanbanRoot);
+
+  await fs.writeFile(
+    path.join(modesDir, 'coder.md'),
+    `---
+name: coder
+stage: code
+---
+# Coder
+`,
+  );
+  await fs.writeFile(
+    path.join(modesDir, 'auditor.md'),
+    `---
+name: auditor
+stage: audit
+---
+# Auditor
+`,
+  );
+
+  const codeTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(
+    codeTaskPath,
+    `---
+stage: code
+mode: coder
+---
+# Task 1
+`,
+  );
+
+  const task = await parseTaskFile(codeTaskPath);
+  const updated = await updateTaskStage(task, 'audit', kanbanRoot);
+
+  expect(updated.stage).toBe('audit');
+  expect(updated.mode).toBe('auditor');
+  expect(updated.agent).toBe('opus');
+});
+
+test('updateTaskStage preserves manually set mode on stage change', async () => {
+  const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+  const modesDir = path.join(kanbanRoot, MODES_FOLDER);
+  await fs.mkdir(modesDir, { recursive: true });
+  await fs.mkdir(path.join(kanbanRoot, 'inbox'), { recursive: true });
+  await configService.initialize(kanbanRoot);
+
+  await fs.writeFile(
+    path.join(modesDir, 'coder.md'),
+    `---
+name: coder
+stage: code
+---
+# Coder
+`,
+  );
+  await fs.writeFile(
+    path.join(modesDir, 'auditor.md'),
+    `---
+name: auditor
+stage: audit
+---
+# Auditor
+`,
+  );
+
+  const codeTaskPath = path.join(kanbanRoot, 'inbox', 't1.md');
+  await fs.writeFile(
+    codeTaskPath,
+    `---
+stage: code
+mode: custom-mode
+agent: custom-agent
+---
+# Task 1
+`,
+  );
+
+  const task = await parseTaskFile(codeTaskPath);
+  const updated = await updateTaskStage(task, 'audit', kanbanRoot);
+
+  expect(updated.stage).toBe('audit');
+  expect(updated.mode).toBe('custom-mode');
+  expect(updated.agent).toBe('custom-agent');
 });

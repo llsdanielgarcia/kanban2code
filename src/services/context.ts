@@ -157,10 +157,11 @@ export async function listAvailableSkills(kanbanRoot: string): Promise<SkillFile
           description: typeof parsed.data.description === 'string' ? parsed.data.description : '',
           path: relativeFromKanbanRoot,
           framework: typeof parsed.data.framework === 'string' ? parsed.data.framework : undefined,
-          priority: ['high', 'medium', 'low'].includes(parsed.data.priority as string) 
-            ? parsed.data.priority as 'high' | 'medium' | 'low' 
+          priority: ['high', 'medium', 'low'].includes(parsed.data.priority as string)
+            ? (parsed.data.priority as 'high' | 'medium' | 'low')
             : undefined,
-          alwaysAttach: typeof parsed.data.always_attach === 'boolean' ? parsed.data.always_attach : false,
+          alwaysAttach:
+            typeof parsed.data.always_attach === 'boolean' ? parsed.data.always_attach : false,
           triggers: Array.isArray(parsed.data.triggers) ? parsed.data.triggers : undefined,
         });
       } catch {
@@ -182,9 +183,9 @@ export async function listAvailableSkills(kanbanRoot: string): Promise<SkillFile
     const priorityOrder = { high: 0, medium: 1, low: 2, undefined: 3 };
     const pA = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 3;
     const pB = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 3;
-    
+
     if (pA !== pB) return pA - pB;
-    
+
     // Then by name
     return a.name.localeCompare(b.name);
   });
@@ -263,7 +264,7 @@ export async function createContextFile(
     description: string;
     fileReferences?: string[];
     content: string;
-  }
+  },
 ): Promise<string> {
   const fileName = `${data.name.toLowerCase().replace(/\s+/g, '-')}.md`;
   let targetPath: string;
@@ -306,7 +307,7 @@ export async function createAgentFile(
     name: string;
     description: string;
     instructions: string;
-  }
+  },
 ): Promise<string> {
   const fileName = `${data.name.toLowerCase().replace(/\s+/g, '-')}.md`;
   const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
@@ -334,11 +335,11 @@ export async function createAgentFile(
 function formatContextName(id: string): string {
   return id
     .split(/[-_]/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
-async function readFileIfExists(root: string, relativePath: string): Promise<string> {
+export async function readFileIfExists(root: string, relativePath: string): Promise<string> {
   const targetPath = path.join(root, relativePath);
   await ensureSafePath(root, targetPath);
 
@@ -353,7 +354,7 @@ async function readFileIfExists(root: string, relativePath: string): Promise<str
   }
 }
 
-async function fileExists(root: string, relativePath: string): Promise<boolean> {
+export async function fileExists(root: string, relativePath: string): Promise<boolean> {
   const targetPath = path.join(root, relativePath);
   await ensureSafePath(root, targetPath);
   try {
@@ -372,9 +373,7 @@ function ensureExtension(name: string): string {
 const FOLDER_CONTEXT_PREFIX = 'folder:' as const;
 
 async function readFolderRecursive(root: string, relativeFolderPath: string): Promise<string> {
-  const normalizedFolder = relativeFolderPath
-    .replace(/^[/\\]+/, '')
-    .replace(/[/\\]+$/, '');
+  const normalizedFolder = relativeFolderPath.replace(/^[/\\]+/, '').replace(/[/\\]+$/, '');
 
   const folderPath = path.join(root, normalizedFolder);
   await ensureSafePath(root, folderPath);
@@ -433,7 +432,10 @@ export async function loadGlobalContext(root: string): Promise<string> {
  * Resolve an agent identifier (either file ID or frontmatter name) to the actual file path.
  * Returns the relative path from kanban root, or undefined if not found.
  */
-export async function resolveAgentPath(root: string, agentIdentifier: string): Promise<string | undefined> {
+export async function resolveAgentPath(
+  root: string,
+  agentIdentifier: string,
+): Promise<string | undefined> {
   // First, try direct file path (agent ID is the filename without extension)
   const directPath = path.join(AGENTS_FOLDER, ensureExtension(agentIdentifier));
   if (await fileExists(root, directPath)) {
@@ -459,7 +461,10 @@ export async function loadAgentContext(root: string, agentName?: NullableString)
   return readFileIfExists(root, resolvedPath);
 }
 
-export async function loadProjectContext(root: string, projectName?: NullableString): Promise<string> {
+export async function loadProjectContext(
+  root: string,
+  projectName?: NullableString,
+): Promise<string> {
   if (!projectName) return '';
   const projectPath = path.join(PROJECTS_FOLDER, projectName, '_context.md');
   return readFileIfExists(root, projectPath);
@@ -475,7 +480,10 @@ export async function loadPhaseContext(
   return readFileIfExists(root, phasePath);
 }
 
-export async function loadCustomContexts(root: string, contextNames?: string[] | null): Promise<string> {
+export async function loadCustomContexts(
+  root: string,
+  contextNames?: string[] | null,
+): Promise<string> {
   if (!contextNames || contextNames.length === 0) return '';
 
   const contents = await Promise.all(

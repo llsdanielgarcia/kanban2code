@@ -50,3 +50,22 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - new-files-created:
     - `src/services/agent-service.ts` - CRUD service for agent CLI configuration files in `_agents/`
     - `tests/agent-service.test.ts` - Tests for agent CLI config CRUD operations (21 tests)
+
+- date: 2026-02-11
+  - task: `task2.3-update-frontmatter-parser-for-mode-and-attempts`
+  - files-updated:
+    - `src/services/frontmatter.ts` (parse/serialize `mode` and `attempts` fields)
+    - `src/services/task-content.ts` (`saveTaskWithMetadata` metadata interface now includes `mode`)
+    - `src/webview/KanbanPanel.ts` (threads `mode` through `FullTaskDataLoaded` and `SaveTaskWithMetadata`)
+    - `src/webview/SidebarProvider.ts` (threads `mode` through `FullTaskDataLoaded` and `SaveTaskWithMetadata`)
+    - `src/webview/ui/components/TaskEditorModal.tsx` (manages `mode` state, dirty checking, save)
+    - `tests/frontmatter.test.ts` (4 new tests for mode/attempts parsing, serialization, round-trip)
+  - new-files-created: none
+
+- date: 2026-02-11
+  - task: `task2.4-update-prompt-builder-for-mode-aware-context-loading`
+  - files-updated:
+    - `src/services/prompt-builder.ts` (added `loadModeInstructions` with 3-step fallback chain, `buildRunnerPrompt` export, runner `<runner automated="true" />` injection)
+  - new-files-created: none
+  - tests-added:
+    - `tests/prompt-builder.test.ts` (5 new tests: mode loading, agent-to-mode fallback, agent fallback, runner prompt shape, runner automated flag)

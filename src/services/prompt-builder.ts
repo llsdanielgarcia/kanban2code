@@ -1,5 +1,14 @@
 import { Task } from '../types/task';
-import { loadAgentContext, loadCustomContexts, loadGlobalContext, loadPhaseContext, loadProjectContext, loadSkills } from './context';
+import {
+  loadCustomContexts,
+  loadGlobalContext,
+  loadPhaseContext,
+  loadProjectContext,
+  loadSkills,
+  readFileIfExists,
+} from './context';
+import { AGENTS_FOLDER, MODES_FOLDER } from '../core/constants';
+import * as path from 'path';
 
 function xmlEscape(value: string): string {
   return value
@@ -35,37 +44,70 @@ function buildMetadata(task: Task): string {
   const tags = (task.tags ?? []).map((tag) => `<tag>${xmlEscape(tag)}</tag>`).join('');
   parts.push(`<tags>${tags}</tags>`);
 
-  const contexts = (task.contexts ?? []).map((ctx) => `<contextRef>${xmlEscape(ctx)}</contextRef>`).join('');
+  const contexts = (task.contexts ?? [])
+    .map((ctx) => `<contextRef>${xmlEscape(ctx)}</contextRef>`)
+    .join('');
   parts.push(`<contexts>${contexts}</contexts>`);
 
   return `<metadata>${parts.join('')}</metadata>`;
 }
 
-async function buildContextSection(task: Task, root: string): Promise<string> {
-  const [
-    globalContext,
-    agentContext,
-    projectContext,
-    phaseContext,
-    customContexts,
-    skills,
-  ] = await Promise.all([
-    loadGlobalContext(root),
-    loadAgentContext(root, task.agent),
-    loadProjectContext(root, task.project),
-    loadPhaseContext(root, task.project, task.phase),
-    loadCustomContexts(root, task.contexts),
-    loadSkills(root, task.skills),
-  ]);
+async function loadModeInstructions(
+  root: string,
+  task: Task,
+): Promise<{ content: string; sectionName: 'mode' | 'agent' }> {
+  if (task.mode) {
+    const modePath = path.join(MODES_FOLDER, `${task.mode}.md`);
+    const content = await readFileIfExists(root, modePath);
+    if (content) {
+      return { content, sectionName: 'mode' };
+    }
+  }
+
+  if (task.agent) {
+    const modePath = path.join(MODES_FOLDER, `${task.agent}.md`);
+    const modeContent = await readFileIfExists(root, modePath);
+    if (modeContent) {
+      return { content: modeContent, sectionName: 'mode' };
+    }
+
+    const agentPath = path.join(AGENTS_FOLDER, `${task.agent}.md`);
+    const agentContent = await readFileIfExists(root, agentPath);
+    if (agentContent) {
+      return { content: agentContent, sectionName: 'agent' };
+    }
+  }
+
+  return { content: '', sectionName: 'agent' };
+}
+
+async function buildContextSection(
+  task: Task,
+  root: string,
+  options?: { isRunner?: boolean },
+): Promise<string> {
+  const [globalContext, modeResult, projectContext, phaseContext, customContexts, skills] =
+    await Promise.all([
+      loadGlobalContext(root),
+      loadModeInstructions(root, task),
+      loadProjectContext(root, task.project),
+      loadPhaseContext(root, task.project, task.phase),
+      loadCustomContexts(root, task.contexts),
+      loadSkills(root, task.skills),
+    ]);
 
   const layers = [
     wrapSection('global', globalContext),
-    wrapSection('agent', agentContext),
+    wrapSection(modeResult.sectionName, modeResult.content),
     wrapSection('project', projectContext),
     wrapSection('phase', phaseContext),
     wrapSection('custom', customContexts),
     wrapSection('skills', skills),
   ];
+
+  if (options?.isRunner) {
+    layers.push('<runner automated="true" />');
+  }
 
   return `<context>${layers.filter(Boolean).join('')}</context>`;
 }
@@ -89,4 +131,18 @@ export async function buildContextOnlyPrompt(task: Task, root: string): Promise<
 
 export function buildTaskOnlyPrompt(task: Task): string {
   return `<system>${buildTaskSection(task)}</system>`;
+}
+
+export async function buildRunnerPrompt(
+  task: Task,
+  root: string,
+): Promise<{ xmlPrompt: string; modeInstructions: string }> {
+  const modeResult = await loadModeInstructions(root, task);
+  const contextSection = await buildContextSection(task, root, { isRunner: true });
+  const taskSection = buildTaskSection(task);
+
+  return {
+    xmlPrompt: `<system>${contextSection}${taskSection}</system>`,
+    modeInstructions: modeResult.content,
+  };
 }
