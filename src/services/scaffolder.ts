@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { Stats } from 'fs';
 import { BUNDLED_AGENTS } from '../assets/agents';
+import { BUNDLED_MODES } from '../assets/modes';
 import { BUNDLED_CONTEXTS } from '../assets/contexts';
 import {
   HOW_IT_WORKS,
@@ -37,6 +38,7 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
     'inbox',
     'projects',
     '_agents',
+    '_modes',
     '_context',
     '_archive',
   ];
@@ -53,6 +55,11 @@ export async function scaffoldWorkspace(rootPath: string): Promise<void> {
   // Write bundled agents (orchestration + execution pipeline agents)
   for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
     await fs.writeFile(path.join(kanbanRoot, '_agents', filename), content);
+  }
+
+  // Write bundled modes
+  for (const [filename, content] of Object.entries(BUNDLED_MODES)) {
+    await fs.writeFile(path.join(kanbanRoot, '_modes', filename), content);
   }
 
   // Write bundled context files
@@ -95,6 +102,7 @@ export async function syncWorkspace(rootPath: string): Promise<SyncReport> {
     'inbox',
     'projects',
     '_agents',
+    '_modes',
     '_context',
     '_archive',
   ];
@@ -112,6 +120,10 @@ export async function syncWorkspace(rootPath: string): Promise<SyncReport> {
 
   for (const [filename, content] of Object.entries(BUNDLED_AGENTS)) {
     templates[`_agents/${filename}`] = content;
+  }
+
+  for (const [filename, content] of Object.entries(BUNDLED_MODES)) {
+    templates[`_modes/${filename}`] = content;
   }
 
   for (const [relativePath, content] of Object.entries(BUNDLED_CONTEXTS)) {

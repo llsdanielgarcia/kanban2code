@@ -73,18 +73,18 @@ Canonical protocol and examples are documented in:
 │   └── .gitkeep
 ├── projects/                               # Project folders containing phase/task markdown
 │   └── .gitkeep
-├── _agents/                                # Agent definitions (markdown)
+├── _agents/                                # Agent CLI configuration files (markdown with YAML frontmatter)
 │   ├── .gitkeep
-│   ├── roadmapper.md
-│   ├── architect.md
-│   ├── splitter.md
-│   ├── planner.md
+│   ├── opus.md
+│   ├── codex.md
+│   ├── kimi.md
+│   └── glm.md
+├── _modes/                                 # Mode behavior files (markdown with YAML frontmatter)
+│   ├── .gitkeep
 │   ├── coder.md
 │   ├── auditor.md
-│   ├── code-reviewer.md
-│   ├── context-gatherer-agent.md
-│   ├── react-dev.md
-│   └── roadmap-splitter.md
+│   ├── planner.md
+│   └── ...
 ├── _context/                               # Global context files (markdown)
 │   └── ai-guide.md
 │   ├── context/
@@ -130,6 +130,8 @@ src/
 ├── extension.ts                            # Main extension entry point handling activation and command registration
 ├── assets/
 │   ├── agents.ts                          # Bundled agent templates for workspace scaffolding
+│   ├── contexts.ts                        # Bundled context files for workspace
+│   ├── modes.ts                          # Bundled mode files for workspace
 │   └── seed-content.ts                    # Seed file contents for workspace scaffolding
 ├── commands/
 │   └── index.ts                           # Command registration and implementation for VS Code commands
@@ -146,6 +148,7 @@ src/
 │   ├── frontmatter.ts                     # Service for parsing and serializing task frontmatter
 │   ├── logging.ts                         # Structured logging + Output Channel integration
 │   ├── mode-service.ts                    # Service for CRUD operations on mode files (_modes/)
+│   ├── migration.ts                       # Atomic migration service for agents → modes transition
 │   ├── prompt-builder.ts                  # Service for building XML prompts
 │   ├── projects.ts                        # Service for listing/creating projects and phases
 │   ├── scaffolder.ts                      # Service for scaffolding new Kanban2Code workspaces
@@ -234,6 +237,8 @@ tests/
 ├── errors.test.ts                         # Unit tests for typed errors
 ├── frontmatter.test.ts                    # Unit tests for frontmatter parsing and serialization
 ├── logging.test.ts                        # Unit tests for logging service
+├── migration.test.ts                      # Unit tests for migration service functionality
+├── mode-service.test.ts                   # Unit tests for mode files CRUD operations
 ├── prompt-builder.test.ts                 # Unit tests for XML prompt builder (Phase 2)
 ├── rules.test.ts                          # Unit tests for business rules
 ├── scaffolder.test.ts                     # Unit tests for workspace scaffolding

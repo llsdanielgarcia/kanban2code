@@ -1,16 +1,63 @@
 ---
-stage: audit
+stage: completed
 tags: [feature, p0]
 agent: auditor
 contexts: []
 ---
 
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+
+Excellent implementation of the migration service with atomic operations, rollback support, and comprehensive tests. The service correctly moves legacy behavior files to `_modes/`, updates tasks with mode information, and replaces agents with CLI config files.
+
+### Test Assessment
+
+- Coverage: Adequate
+- Missing tests: None identified
+
+### What's Good
+
+- Atomic migration with proper rollback mechanism
+- Comprehensive test coverage including edge cases
+- Correct handling of emoji prefixes and frontmatter updates
+- Idempotent design prevents duplicate operations
+- Gitignore entry management included
+
+### Recommendations
+
+- Consider adding more edge case tests for various file scenarios
+
+## Architecture Updates
+
+Updated `.kanban2code/_context/architecture.md` with new migration service file:
+
+```
+src/
+├── services/
+│   ├── migration.ts - Atomic migration service for agents → modes transition
+│   └── ...
+```
+
+**migration.ts** - Handles the three-step migration process:
+
+1. Moves behavior files to `_modes/` with clean names
+2. Updates tasks with mode field and default agent from modeDefaults
+3. Replaces agents with new CLI config files
+4. Provides atomic operations with rollback support
+
 # Create migration service (`_agents/` → `_modes/` + new `_agents/`)
 
 ## Goal
+
 Create an atomic migration service that moves behavior files to `_modes/` and creates new CLI config files in `_agents/`.
 
 ## Definition of Done
+
 - [x] `migrateAgentsToModes(root)` — idempotent, three-step atomic migration:
   1. **Copy** behavior files to `_modes/{clean-name}.md` (strip emoji prefix via `/^\d+-[^\w]*/`, remove `type: robot` from frontmatter)
   2. **Scan all task files** in workspace and update frontmatter: add `mode: {old-agent-name}`, set `agent` to default LLM provider via `modeDefaults` config. Also fix auditor mode instructions: `_context/architecture.md` → `architecture.md`
@@ -20,9 +67,11 @@ Create an atomic migration service that moves behavior files to `_modes/` and cr
 - [x] Update `.kanban2code/.gitignore` to add `_logs/` entry
 
 ## Files
+
 - `src/services/migration.ts` - create - migration functions
 
 ## Tests
+
 - [x] Migration creates `_modes/` directory with correct files
 - [x] Emoji prefixes stripped: `05-⚙️coder.md` → `coder.md`
 - [x] `type: robot` removed from mode frontmatter, `name`/`description`/`stage`/`created` preserved
@@ -33,11 +82,13 @@ Create an atomic migration service that moves behavior files to `_modes/` and cr
 - [x] Rollback: `_modes/` cleaned up if step 2 fails
 
 ## Context
+
 This is a critical atomic migration. The three-step process ensures that old tasks never load CLI config YAML as "agent instructions." If step 2 (task update) fails, the service must clean up `_modes/` and restore `_agents/` from backup to prevent partial migration state.
 
 The migration also fixes the auditor mode instructions to target `.kanban2code/architecture.md` (root-level, loaded by `loadGlobalContext`) instead of `_context/architecture.md`.
 
 ## Audit
+
 src/services/migration.ts
 tests/migration.test.ts
 .kanban2code/.gitignore

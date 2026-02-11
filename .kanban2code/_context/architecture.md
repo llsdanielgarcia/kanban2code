@@ -38,7 +38,7 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 
 - date: 2026-02-11
   - task: `task2.1-create-modeservice-crud-for-modes`
-  - files-updated: 
+  - files-updated:
     - `docs/architecture.md` (added `mode-service.ts` to service list)
   - new-files-created:
     - `src/services/mode-service.ts` - Service for CRUD operations on mode files
@@ -78,3 +78,28 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - tests-added:
     - `tests/stage-manager.test.ts` (5 new tests: mode-for-stage lookup, agent-for-mode config lookup, auto-set mode+agent on code/audit stages, manual mode preservation)
 
+- date: 2026-02-11
+  - task: `task3.1-create-migration-service-agents-to-modes-new-agents`
+  - files-updated:
+    - `.kanban2code/.gitignore` (added `_logs/` entry)
+  - new-files-created:
+    - `src/services/migration.ts` - Atomic migration service for agents → modes transition
+    - `tests/migration.test.ts` - Tests for migration service functionality
+  - tests-added:
+    - 4 tests: migration success, idempotence, rollback, gitignore update
+
+- date: 2026-02-11
+  - task: `task3.2-update-build-script-to-bundle-modes`
+  - files-updated:
+    - `build.ts` (added `_modes/` directory reading to `generateBundledContent()`)
+  - new-files-created:
+    - `src/assets/modes.ts` - Auto-generated file containing bundled mode files
+
+- date: 2026-02-11
+  - task: `task3.3-update-scaffolder-for-modes-directory`
+  - files-updated:
+    - `src/services/scaffolder.ts` (added `_modes/` to scaffold and sync functions)
+    - `tests/scaffolder.test.ts` (added tests for mode scaffolding)
+  - new-files-created: none
+  - tests-added:
+    - 2 tests: scaffold creates modes, sync preserves existing modes

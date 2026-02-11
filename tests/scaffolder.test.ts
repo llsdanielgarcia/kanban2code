@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { BUNDLED_AGENTS } from '../src/assets/agents';
+import { BUNDLED_MODES } from '../src/assets/modes';
 import { HOW_IT_WORKS } from '../src/assets/seed-content';
 
 let scaffoldWorkspace: typeof import('../src/services/scaffolder').scaffoldWorkspace;
@@ -60,6 +61,13 @@ test('scaffoldWorkspace creates expected structure', async () => {
 
   const aiGuide = await fs.readFile(path.join(kanbanRoot, '_context/ai-guide.md'), 'utf-8');
   expect(aiGuide).toContain('# Kanban2Code AI Guide');
+
+  // Verify _modes directory and bundled modes
+  const statsModes = await fs.stat(path.join(kanbanRoot, '_modes'));
+  expect(statsModes.isDirectory()).toBe(true);
+
+  const coderMode = await fs.readFile(path.join(kanbanRoot, '_modes/coder.md'), 'utf-8');
+  expect(coderMode).toContain('name: coder');
 });
 
 test('scaffoldWorkspace fails if already initialized', async () => {
@@ -155,6 +163,58 @@ describe('bundled agents scaffolding', () => {
     await fs.mkdir(path.join(agentsDir, '01-🗺️roadmapper.md'), { recursive: true });
 
     await expect(syncBundledAgents(TEST_DIR)).rejects.toThrow('Agent path exists but is not a file');
+  });
+});
+
+describe('bundled modes scaffolding', () => {
+  test('scaffoldWorkspace creates all bundled mode files', async () => {
+    await scaffoldWorkspace(TEST_DIR);
+
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    const modesDir = path.join(kanbanRoot, '_modes');
+
+    // Check all bundled modes are created
+    for (const filename of Object.keys(BUNDLED_MODES)) {
+      const modePath = path.join(modesDir, filename);
+      const stat = await fs.stat(modePath);
+      expect(stat.isFile()).toBe(true);
+    }
+
+    // Verify content of modes
+    const coder = await fs.readFile(path.join(modesDir, 'coder.md'), 'utf-8');
+    expect(coder).toContain('name: coder');
+
+    const auditor = await fs.readFile(path.join(modesDir, 'auditor.md'), 'utf-8');
+    expect(auditor).toContain('name: auditor');
+  });
+
+  test('sync writes missing mode files without overwriting existing ones', async () => {
+    const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
+    await fs.mkdir(kanbanRoot, { recursive: true });
+
+    // Pre-create a custom mode file
+    const modesDir = path.join(kanbanRoot, '_modes');
+    await fs.mkdir(modesDir, { recursive: true });
+    const customContent = '---\nname: coder\ncustom: true\n---\nCustom coder mode';
+    await fs.writeFile(path.join(modesDir, 'coder.md'), customContent);
+
+    // Sync workspace
+    const report = await syncWorkspace(TEST_DIR);
+
+    // coder.md should be skipped (already exists)
+    expect(report.skipped).toContain('_modes/coder.md');
+
+    // Other modes should be created
+    expect(report.created).toContain('_modes/auditor.md');
+    expect(report.created).toContain('_modes/planner.md');
+
+    // Verify custom mode is preserved
+    const coder = await fs.readFile(path.join(modesDir, 'coder.md'), 'utf-8');
+    expect(coder).toContain('custom: true');
+
+    // Verify new modes are created correctly
+    const auditor = await fs.readFile(path.join(modesDir, 'auditor.md'), 'utf-8');
+    expect(auditor).toContain('name: auditor');
   });
 });
 
