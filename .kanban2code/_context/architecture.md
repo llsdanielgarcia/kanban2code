@@ -103,3 +103,22 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - new-files-created: none
   - tests-added:
     - 2 tests: scaffold creates modes, sync preserves existing modes
+
+- date: 2026-02-11
+  - task: `task3.4-register-migration-command-verify-file-watcher-coverage`
+  - files-updated:
+    - `src/commands/index.ts` (registered `kanban2code.migrateAgentsModes` command with VS Code progress notification)
+    - `src/services/task-watcher.ts` (added `_modes/` and `_agents/` exclusion in `isTaskFile()`)
+    - `package.json` (added command declaration and activation event)
+  - new-files-created: none
+  - tests-added:
+    - 2 tests in `tests/task-watcher.test.ts`: `_modes/` and `_agents/` exclusion from task events
+
+- date: 2026-02-11
+  - task: `task4.0-deterministic-task-ordering-in-scanner`
+  - files-updated:
+    - `src/services/scanner.ts` (added `sortTasks` and `getOrderedTasksForStage` exports; `loadAllTasks` now returns sorted results)
+    - `tests/scanner.test.ts` (added 10 tests for deterministic ordering)
+  - new-files-created: none
+  - tests-added:
+    - 10 tests: order field sorting, undefined order handling, filename tiebreaker, stage filtering, immutability

@@ -1,7 +1,7 @@
 import fg from 'fast-glob';
 import * as path from 'path';
 import { parseTaskFile } from './frontmatter';
-import { Task } from '../types/task';
+import { Task, Stage } from '../types/task';
 import { INBOX_FOLDER, PROJECTS_FOLDER } from '../core/constants';
 
 export async function findAllTaskFiles(kanbanRoot: string): Promise<string[]> {
@@ -46,7 +46,33 @@ export async function loadAllTasks(kanbanRoot: string): Promise<Task[]> {
     })
   );
 
-  return tasks;
+  return sortTasks(tasks);
+}
+
+/**
+ * Sort tasks deterministically: by `order` ascending (undefined last),
+ * then by filename (task id) as tiebreaker.
+ */
+export function sortTasks(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    // Primary: order field ascending, undefined last
+    const aOrder = a.order ?? Infinity;
+    const bOrder = b.order ?? Infinity;
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+    // Tiebreaker: filename (id) lexicographic
+    return a.id.localeCompare(b.id);
+  });
+}
+
+/**
+ * Filter tasks by stage and return in deterministic order.
+ * Useful for runner consumption where "topmost task" must be stable.
+ */
+export function getOrderedTasksForStage(tasks: Task[], stage: Stage): Task[] {
+  const filtered = tasks.filter(t => t.stage === stage);
+  return sortTasks(filtered);
 }
 
 export async function findTaskById(kanbanRoot: string, taskId: string): Promise<Task | undefined> {
