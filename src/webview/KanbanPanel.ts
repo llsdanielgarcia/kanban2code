@@ -1,13 +1,31 @@
 import * as vscode from 'vscode';
-import { createEnvelope, parseDeleteTaskPayload, validateEnvelope, type MessageEnvelope } from './messaging';
+import {
+  createEnvelope,
+  parseDeleteTaskPayload,
+  validateEnvelope,
+  type MessageEnvelope,
+} from './messaging';
 import { WorkspaceState } from '../workspace/state';
 import { findTaskById, loadAllTasks } from '../services/scanner';
 import { changeStageAndReload } from '../services/stage-manager';
 import { archiveTask } from '../services/archive';
-import { listAvailableContexts, listAvailableAgents, listAvailableSkills, createContextFile, createAgentFile, type ContextFile, type Agent, type SkillFile } from '../services/context';
+import {
+  listAvailableContexts,
+  listAvailableAgents,
+  listAvailableSkills,
+  createContextFile,
+  createAgentFile,
+  type ContextFile,
+  type Agent,
+  type SkillFile,
+} from '../services/context';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
-import { loadTaskContentById, saveTaskContentById, saveTaskWithMetadata } from '../services/task-content';
+import {
+  loadTaskContentById,
+  saveTaskContentById,
+  saveTaskWithMetadata,
+} from '../services/task-content';
 import type { Task, Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 import { getSidebarProvider } from './viewRegistry';
@@ -162,7 +180,11 @@ export class KanbanPanel {
           break;
 
         case 'MoveTask': {
-          const { taskId, toStage, newStage } = payload as { taskId: string; toStage?: Stage; newStage?: Stage };
+          const { taskId, toStage, newStage } = payload as {
+            taskId: string;
+            toStage?: Stage;
+            newStage?: Stage;
+          };
           const stage = toStage ?? newStage;
           if (stage) {
             await changeStageAndReload(taskId, stage);
@@ -252,25 +274,28 @@ export class KanbanPanel {
             const agents = await listAvailableAgents(root);
             const listing = await listProjectsAndPhases(root);
 
-            this._postMessage(createEnvelope('FullTaskDataLoaded', {
-              taskId,
-              content,
-              metadata: {
-                title: task.title,
-                location: task.project
-                  ? { type: 'project', project: task.project, phase: task.phase }
-                  : { type: 'inbox' },
-                agent: task.agent || null,
-                contexts: task.contexts || [],
-                skills: task.skills || [],
-                tags: task.tags || [],
-              },
-              contexts,
-              skills,
-              agents,
-              projects: listing.projects,
-              phasesByProject: listing.phasesByProject,
-            }));
+            this._postMessage(
+              createEnvelope('FullTaskDataLoaded', {
+                taskId,
+                content,
+                metadata: {
+                  title: task.title,
+                  location: task.project
+                    ? { type: 'project', project: task.project, phase: task.phase }
+                    : { type: 'inbox' },
+                  agent: task.agent || null,
+                  mode: task.mode || null,
+                  contexts: task.contexts || [],
+                  skills: task.skills || [],
+                  tags: task.tags || [],
+                },
+                contexts,
+                skills,
+                agents,
+                projects: listing.projects,
+                phasesByProject: listing.phasesByProject,
+              }),
+            );
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
             this._postMessage(createEnvelope('FullTaskDataLoadFailed', { taskId, error: message }));
@@ -286,6 +311,7 @@ export class KanbanPanel {
               title: string;
               location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
               agent: string | null;
+              mode: string | null;
               contexts: string[];
               skills: string[];
               tags: string[];
@@ -325,7 +351,9 @@ export class KanbanPanel {
                 });
                 await this._sendInitialState();
               } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                vscode.window.showErrorMessage(
+                  `Failed to create project: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                );
               }
             }
           }
@@ -355,7 +383,9 @@ export class KanbanPanel {
                 });
                 await this._sendInitialState();
               } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create context: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                vscode.window.showErrorMessage(
+                  `Failed to create context: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                );
               }
             }
           }
@@ -368,7 +398,11 @@ export class KanbanPanel {
             description?: string;
             instructions?: string;
           };
-          if (agentPayload.name && agentPayload.description !== undefined && agentPayload.instructions !== undefined) {
+          if (
+            agentPayload.name &&
+            agentPayload.description !== undefined &&
+            agentPayload.instructions !== undefined
+          ) {
             const root = WorkspaceState.kanbanRoot;
             if (root) {
               try {
@@ -379,7 +413,9 @@ export class KanbanPanel {
                 });
                 await this._sendInitialState();
               } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create agent: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                vscode.window.showErrorMessage(
+                  `Failed to create agent: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                );
               }
             }
           }
@@ -442,7 +478,10 @@ export class KanbanPanel {
           const folderUri = await vscode.window.showOpenDialog(options);
           if (folderUri && folderUri[0]) {
             const relativePath = root
-              ? folderUri[0].fsPath.replace(root, '').replace(/^[/\\]/, '').replace(/[/\\]$/, '')
+              ? folderUri[0].fsPath
+                  .replace(root, '')
+                  .replace(/^[/\\]/, '')
+                  .replace(/[/\\]$/, '')
               : folderUri[0].fsPath.replace(/[/\\]$/, '');
             this._postMessage(createEnvelope('FolderPicked', { path: relativePath, requestId }));
           }
@@ -488,17 +527,19 @@ export class KanbanPanel {
       phasesByProject = {};
     }
 
-    this._postMessage(createEnvelope('InitState', {
-      context: 'board',
-      hasKanban,
-      tasks: this._tasks,
-      contexts: this._contexts,
-      agents: this._agents,
-      projects,
-      phasesByProject,
-      workspaceRoot: kanbanRoot,
-      filterState: WorkspaceState.filterState as FilterState | null ?? undefined,
-    }));
+    this._postMessage(
+      createEnvelope('InitState', {
+        context: 'board',
+        hasKanban,
+        tasks: this._tasks,
+        contexts: this._contexts,
+        agents: this._agents,
+        projects,
+        phasesByProject,
+        workspaceRoot: kanbanRoot,
+        filterState: (WorkspaceState.filterState as FilterState | null) ?? undefined,
+      }),
+    );
   }
 }
 

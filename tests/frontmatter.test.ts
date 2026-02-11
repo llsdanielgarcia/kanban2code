@@ -28,7 +28,7 @@ test('parseTaskContent extracts frontmatter and content', () => {
   expect(task.stage).toBe('plan');
   expect(task.tags).toEqual(['feature', 'ui']);
   expect(task.content.trim()).toBe('# My Task Title\n\nThis is the body.');
-  
+
   // Inferred fields
   expect(task.project).toBe('kanban');
   expect(task.phase).toBe('phase-1');
@@ -56,12 +56,12 @@ body without frontmatter
 test('stringifyTaskFile preserves unknown fields', () => {
   const filePath = '/workspace/projects/kanban/phase-1/task-1.md';
   const originalTask = parseTaskContent(SAMPLE_CONTENT, filePath);
-  
+
   // Modify a known field
   originalTask.stage = 'code';
-  
+
   const serialized = stringifyTaskFile(originalTask, SAMPLE_CONTENT);
-  
+
   expect(serialized).toContain('stage: code');
   expect(serialized).toContain('extra_field: preserved');
   expect(serialized).toContain('# My Task Title');
@@ -76,7 +76,7 @@ test('stringifyTaskFile does not write project/phase to frontmatter', () => {
     project: 'p1', // Should not appear in output
     content: 'Body',
   };
-  
+
   const serialized = stringifyTaskFile(task);
   expect(serialized).not.toContain('project:');
   expect(serialized).toContain('stage: inbox');
@@ -103,7 +103,7 @@ test('stringifyTaskFile handles special characters', () => {
     title: 'Special: "Quotes" & symbols',
     stage: 'inbox',
     content: '# Special: "Quotes" & symbols\n\nBody with emoji 🚀 and "quotes".',
-    tags: ['c++', 'c#']
+    tags: ['c++', 'c#'],
   };
 
   const serialized = stringifyTaskFile(task);
@@ -111,4 +111,53 @@ test('stringifyTaskFile handles special characters', () => {
   const parsed = parseTaskContent(serialized, 's.md');
   expect(parsed.title).toBe('Special: "Quotes" & symbols');
   expect(parsed.tags).toEqual(['c++', 'c#']);
+});
+
+test('parseTaskContent extracts mode field', () => {
+  const content = `---
+stage: code
+mode: coder
+---
+# Task`;
+  const task = parseTaskContent(content, 'task.md');
+  expect(task.mode).toBe('coder');
+});
+
+test('parseTaskContent returns undefined mode when not present', () => {
+  const content = `---
+stage: code
+---
+# Task`;
+  const task = parseTaskContent(content, 'task.md');
+  expect(task.mode).toBeUndefined();
+});
+
+test('parseTaskContent extracts attempts field', () => {
+  const content = `---
+stage: code
+attempts: 2
+---
+# Task`;
+  const task = parseTaskContent(content, 'task.md');
+  expect(task.attempts).toBe(2);
+});
+
+test('round-trip mode and attempts through parse and stringify', () => {
+  const content = `---
+stage: code
+mode: auditor
+attempts: 1
+---
+# Task`;
+
+  const parsed = parseTaskContent(content, 'task.md');
+  expect(parsed.mode).toBe('auditor');
+  expect(parsed.attempts).toBe(1);
+
+  const modified = { ...parsed, mode: 'coder', attempts: 2 };
+  const serialized = stringifyTaskFile(modified, content);
+
+  const reparsed = parseTaskContent(serialized, 'task.md');
+  expect(reparsed.mode).toBe('coder');
+  expect(reparsed.attempts).toBe(2);
 });

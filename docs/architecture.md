@@ -145,6 +145,7 @@ src/
 │   ├── error-recovery.ts                  # Error handling + retry/recovery helpers
 │   ├── frontmatter.ts                     # Service for parsing and serializing task frontmatter
 │   ├── logging.ts                         # Structured logging + Output Channel integration
+│   ├── mode-service.ts                    # Service for CRUD operations on mode files (_modes/)
 │   ├── prompt-builder.ts                  # Service for building XML prompts
 │   ├── projects.ts                        # Service for listing/creating projects and phases
 │   ├── scaffolder.ts                      # Service for scaffolding new Kanban2Code workspaces

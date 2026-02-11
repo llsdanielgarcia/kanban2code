@@ -39,6 +39,7 @@ interface TaskMetadata {
   title: string;
   location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   agent: string | null;
+  mode: string | null;
   contexts: string[];
   skills: string[];
   tags: string[];
@@ -51,7 +52,12 @@ interface TaskEditorModalProps {
   onSave?: (content: string) => void;
 }
 
-export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, onClose, onSave }) => {
+export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
+  isOpen,
+  task,
+  onClose,
+  onSave,
+}) => {
   const [original, setOriginal] = useState<string>('');
   const [value, setValue] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -63,8 +69,11 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
   // Metadata state
   const [title, setTitle] = useState<string>('');
-  const [location, setLocation] = useState<{ type: 'inbox' } | { type: 'project'; project: string; phase?: string }>({ type: 'inbox' });
+  const [location, setLocation] = useState<
+    { type: 'inbox' } | { type: 'project'; project: string; phase?: string }
+  >({ type: 'inbox' });
   const [agent, setAgent] = useState<string | null>(null);
+  const [mode, setMode] = useState<string | null>(null);
   const [contexts, setContexts] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -87,13 +96,18 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
       title !== originalMetadata.title ||
       JSON.stringify(location) !== JSON.stringify(originalMetadata.location) ||
       agent !== originalMetadata.agent ||
-      JSON.stringify([...contexts].sort()) !== JSON.stringify([...originalMetadata.contexts].sort()) ||
+      mode !== originalMetadata.mode ||
+      JSON.stringify([...contexts].sort()) !==
+        JSON.stringify([...originalMetadata.contexts].sort()) ||
       JSON.stringify([...skills].sort()) !== JSON.stringify([...originalMetadata.skills].sort()) ||
       JSON.stringify([...tags].sort()) !== JSON.stringify([...originalMetadata.tags].sort())
     );
-  }, [title, location, agent, contexts, skills, tags, originalMetadata]);
+  }, [title, location, agent, mode, contexts, skills, tags, originalMetadata]);
 
-  const isDirty = useMemo(() => value !== original || isMetadataDirty, [value, original, isMetadataDirty]);
+  const isDirty = useMemo(
+    () => value !== original || isMetadataDirty,
+    [value, original, isMetadataDirty],
+  );
 
   const requestClose = () => {
     if (isSaving) return;
@@ -111,7 +125,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     postMessage('SaveTaskWithMetadata', {
       taskId: task.id,
       content: value,
-      metadata: { title, location, agent, contexts, skills, tags }
+      metadata: { title, location, agent, mode, contexts, skills, tags },
     });
   };
 
@@ -124,13 +138,13 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
   const handleAddTag = () => {
     const tag = tagInput.trim();
     if (tag && !tags.includes(tag)) {
-      setTags(prev => [...prev, tag]);
+      setTags((prev) => [...prev, tag]);
       setTagInput('');
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(prev => prev.filter(t => t !== tagToRemove));
+    setTags((prev) => prev.filter((t) => t !== tagToRemove));
   };
 
   useEffect(() => {
@@ -146,6 +160,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
     setTitle('');
     setLocation({ type: 'inbox' });
     setAgent(null);
+    setMode(null);
     setContexts([]);
     setSkills([]);
     setTags([]);
@@ -195,6 +210,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         setTitle(payload.metadata.title);
         setLocation(payload.metadata.location);
         setAgent(payload.metadata.agent);
+        setMode(payload.metadata.mode);
         setContexts(payload.metadata.contexts);
         setSkills(payload.metadata.skills);
         setTags(payload.metadata.tags);
@@ -220,7 +236,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
         if (payload.taskId !== currentTaskId) return;
         setIsSaving(false);
         setOriginal(value);
-        setOriginalMetadata({ title, location, agent, contexts, skills, tags });
+        setOriginalMetadata({ title, location, agent, mode, contexts, skills, tags });
         onSave?.(value);
         onClose();
       }
@@ -275,10 +291,24 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
 
   return (
     <div className="glass-overlay" onClick={handleOverlayClick}>
-      <div className="glass-modal task-editor-modal" role="dialog" aria-labelledby="task-editor-title">
+      <div
+        className="glass-modal task-editor-modal"
+        role="dialog"
+        aria-labelledby="task-editor-title"
+      >
         <div className="modal-header">
           <h2 id="task-editor-title">Edit Task: {title || task.title}</h2>
-          <button type="button" className="modal-close-btn" onClick={(e) => { e.stopPropagation(); requestClose(); }} aria-label="Close">×</button>
+          <button
+            type="button"
+            className="modal-close-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              requestClose();
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
         </div>
 
         <div className="modal-body task-editor-body-split">
@@ -288,7 +318,9 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
             <div className="board-error">
               {error}
               <div style={{ marginTop: 12 }}>
-                <button className="btn btn-secondary" onClick={retryLoad}>Retry</button>
+                <button className="btn btn-secondary" onClick={retryLoad}>
+                  Retry
+                </button>
               </div>
             </div>
           )}
@@ -301,7 +333,9 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                 <div className="task-editor-section">
                   <div className="task-editor-section-title">Basic Info</div>
                   <div className="form-group">
-                    <label className="form-label">Title <span className="required">*</span></label>
+                    <label className="form-label">
+                      Title <span className="required">*</span>
+                    </label>
                     <input
                       type="text"
                       className="form-input"
@@ -360,11 +394,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                 {/* Skills */}
                 <div className="task-editor-section">
                   <div className="task-editor-section-title">Skills</div>
-                  <SkillPicker
-                    skills={availableSkills}
-                    selected={skills}
-                    onChange={setSkills}
-                  />
+                  <SkillPicker skills={availableSkills} selected={skills} onChange={setSkills} />
                 </div>
 
                 <div className="task-editor-divider" />
@@ -390,21 +420,21 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
                     </div>
                     {tags.length > 0 && (
                       <div className="tag-chips">
-                    {tags.map((tag) => (
-                      <span key={tag} className="tag-chip active">
-                        {tag}
-                        <button
-                          type="button"
-                          className="tag-remove"
-                          aria-label={`Remove tag ${tag}`}
-                          onClick={() => handleRemoveTag(tag)}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                        {tags.map((tag) => (
+                          <span key={tag} className="tag-chip active">
+                            {tag}
+                            <button
+                              type="button"
+                              className="tag-remove"
+                              aria-label={`Remove tag ${tag}`}
+                              onClick={() => handleRemoveTag(tag)}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -447,8 +477,24 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({ isOpen, task, 
             {isSaving && <span className="task-editor-saving">Saving...</span>}
           </div>
           <div className="task-editor-actions">
-            <button type="button" className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); requestClose(); }} disabled={isSaving}>Cancel</button>
-            <button className="btn btn-primary" onClick={requestSave} disabled={isSaving || isLoading || !title.trim()}>Save</button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                requestClose();
+              }}
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={requestSave}
+              disabled={isSaving || isLoading || !title.trim()}
+            >
+              Save
+            </button>
           </div>
         </div>
       </div>

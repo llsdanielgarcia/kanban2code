@@ -55,7 +55,7 @@ export function parseTaskContent(
   const { project, phase } = inferProjectAndPhase(filePath);
 
   let contexts = Array.isArray(data.contexts) ? data.contexts.map(String) : [];
-  let skills = Array.isArray(data.skills) ? data.skills.map(String) : [];
+  const skills = Array.isArray(data.skills) ? data.skills.map(String) : [];
 
   // Migration: Move skills from contexts to skills
   const migratedContexts: string[] = [];

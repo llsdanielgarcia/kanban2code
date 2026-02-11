@@ -30,7 +30,9 @@ export function validateTaskFileContent(content: string): void {
   }
 }
 
-export async function loadTaskContentById(taskId: string): Promise<{ task: Task; content: string }> {
+export async function loadTaskContentById(
+  taskId: string,
+): Promise<{ task: Task; content: string }> {
   const root = WorkspaceState.kanbanRoot;
   if (!root) {
     throw new Error('Kanban workspace not detected.');
@@ -80,10 +82,11 @@ export async function saveTaskWithMetadata(
     title: string;
     location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
     agent: string | null;
+    mode: string | null;
     contexts: string[];
     skills: string[];
     tags: string[];
-  }
+  },
 ): Promise<Task[]> {
   const root = WorkspaceState.kanbanRoot;
   if (!root) throw new Error('Kanban workspace not detected.');
@@ -125,6 +128,7 @@ export async function saveTaskWithMetadata(
     ...task,
     title: metadata.title,
     agent: metadata.agent || undefined,
+    mode: metadata.mode || undefined,
     contexts: metadata.contexts.length > 0 ? metadata.contexts : undefined,
     skills: metadata.skills.length > 0 ? metadata.skills : undefined,
     tags: metadata.tags.length > 0 ? metadata.tags : undefined,
@@ -137,7 +141,10 @@ export async function saveTaskWithMetadata(
   const serialized = stringifyTaskFile(updatedTask, originalContent);
 
   // Write to target path
-  await vscode.workspace.fs.writeFile(vscode.Uri.file(targetPath), new TextEncoder().encode(serialized));
+  await vscode.workspace.fs.writeFile(
+    vscode.Uri.file(targetPath),
+    new TextEncoder().encode(serialized),
+  );
 
   // If location changed, delete the old file
   if (locationChanged && targetPath !== task.filePath) {
