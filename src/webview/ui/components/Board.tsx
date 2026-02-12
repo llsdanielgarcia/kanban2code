@@ -79,6 +79,7 @@ export const Board: React.FC<BoardProps> = ({
     isLoading,
     error,
     filterState,
+    isRunnerActive,
   } = useTaskData();
   const { layout, setLayout } = useBoardLayout('columns');
   const [search, setSearch] = useState('');
@@ -360,6 +361,9 @@ export const Board: React.FC<BoardProps> = ({
       {contextMenu && (
         <TaskContextMenu
           task={contextMenu.task}
+          modes={modes}
+          agents={agents}
+          isRunnerActive={isRunnerActive}
           position={contextMenu.position}
           onClose={handleCloseContextMenu}
           onEditTask={(task) => {

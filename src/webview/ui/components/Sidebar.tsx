@@ -35,7 +35,16 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcutsNonce = 0, openTaskModalNonce = 0 }) => {
-  const { tasks, contexts, agents, modes, projects, phasesByProject, isLoading } = useTaskData();
+  const {
+    tasks,
+    contexts,
+    agents,
+    modes,
+    projects,
+    phasesByProject,
+    isLoading,
+    isRunnerActive,
+  } = useTaskData();
   const {
     filterState,
     toggleStage,
@@ -351,6 +360,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
       {contextMenuState && (
         <TaskContextMenu
           task={contextMenuState.task}
+          modes={modes}
+          agents={agents}
+          isRunnerActive={isRunnerActive}
           position={contextMenuState.position}
           onClose={handleCloseContextMenu}
           onOpenMoveModal={handleOpenMoveModal}

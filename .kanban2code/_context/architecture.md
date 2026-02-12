@@ -236,3 +236,23 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `tests/webview/task-modal-create-project.test.tsx` (added tests for mode+agent picker rendering and CreateTask payload)
     - `tests/webview/task-editor-modal.test.tsx` (added tests for mode+agent picker rendering, SaveTaskWithMetadata payload with mode, null mode backward compat)
   - new-files-created: none
+
+- date: 2026-02-12
+  - task: `task5.6-wire-runner-messages-through-webview-hosts`
+  - files-updated:
+    - `src/webview/KanbanPanel.ts` (added `RunTask`, `RunColumn`, `StopRunner` message handlers; subscribes to `onRunnerStateChanged` and posts `RunnerStateChanged` to webview; includes runner state in `InitState`)
+    - `src/webview/SidebarProvider.ts` (added `RequestModes`, `CreateMode`, `RunTask`, `RunColumn`, `StopRunner` message handlers; subscribes to `onRunnerStateChanged` and posts `RunnerStateChanged` to webview; includes runner state in `InitState`)
+    - `src/webview/ui/hooks/useTaskData.ts` (exposes `modes`, `isRunnerActive`, `activeRunnerTaskId` in return value; handles `RunnerStateChanged` and `ModesLoaded` messages)
+  - new-files-created:
+    - `src/runner/runner-state.ts` - Simple event emitter module for runner state (get/set/subscribe)
+    - `tests/webview-host-runner.test.ts` - Tests for webview host runner message handling
+    - `tests/webview/useTaskData.runner.test.tsx` - Tests for useTaskData runner state tracking
+
+- date: 2026-02-12
+  - task: `task5.7-modemodal-component-create-edit-mode`
+  - files-updated:
+    - `src/webview/ui/components/index.ts` (added `ModeModal` barrel export)
+    - `src/webview/ui/styles/main.css` (added `.mode-modal` size class alongside `.agent-modal`)
+  - new-files-created:
+    - `src/webview/ui/components/ModeModal.tsx` - Modal for creating and editing mode files (glassmorphic pattern)
+    - `tests/webview/components/ModeModal.test.tsx` - Tests for ModeModal (field rendering, validation, edit mode pre-population)

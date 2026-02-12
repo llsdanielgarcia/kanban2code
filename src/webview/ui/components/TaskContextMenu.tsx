@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { Task, Stage } from '../../../types/task';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
 import { createMessage } from '../../messaging';
 import { vscode } from '../vscodeApi';
+import type { Agent, Mode } from '../hooks/useTaskData';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
@@ -12,6 +13,9 @@ function postMessage(type: string, payload: unknown) {
 
 interface TaskContextMenuProps {
   task: Task;
+  modes?: Mode[];
+  agents?: Agent[];
+  isRunnerActive?: boolean;
   position: { x: number; y: number };
   onClose: () => void;
   onOpenMoveModal?: (task: Task) => void;
@@ -31,13 +35,40 @@ const STAGE_LABELS: Record<Stage, string> = {
 
 export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   task,
+  modes = [],
+  agents = [],
+  isRunnerActive = false,
   position,
   onClose,
   onOpenMoveModal,
   onEditTask,
   onOpenInVSCode,
 }) => {
+  const updateTaskMetadata = useCallback((overrides: { mode?: string | null; agent?: string | null }) => {
+    postMessage('SaveTaskWithMetadata', {
+      taskId: task.id,
+      content: task.content,
+      metadata: {
+        title: task.title,
+        location: task.project
+          ? { type: 'project', project: task.project, phase: task.phase }
+          : { type: 'inbox' },
+        agent: overrides.agent !== undefined ? overrides.agent : task.agent || null,
+        mode: overrides.mode !== undefined ? overrides.mode : task.mode || null,
+        contexts: task.contexts || [],
+        skills: task.skills || [],
+        tags: task.tags || [],
+      },
+    });
+  }, [task]);
+
   const menuItems: ContextMenuItem[] = useMemo(() => {
+    const canRunTask = task.stage === 'plan' || task.stage === 'code' || task.stage === 'audit';
+    const availableModes = modes.filter((mode) => mode.id !== task.mode && mode.name !== task.mode);
+    const availableAgents = agents.filter(
+      (agent) => agent.id !== task.agent && agent.name !== task.agent,
+    );
+
     const items: ContextMenuItem[] = [
       {
         id: 'edit',
@@ -74,6 +105,37 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
         action: () => postMessage('CopyContext', { taskId: task.id, mode: 'context_only' }),
       },
       { id: 'div1', label: '', divider: true },
+      {
+        id: 'run-task',
+        label: 'Run Task',
+        disabled: isRunnerActive || !canRunTask,
+        action: () => postMessage('RunTask', { taskId: task.id }),
+      },
+      {
+        id: 'change-mode',
+        label: 'Change Mode',
+        submenu:
+          availableModes.length > 0
+            ? availableModes.map((mode) => ({
+                id: `mode-${mode.id}`,
+                label: mode.name,
+                action: () => updateTaskMetadata({ mode: mode.id }),
+              }))
+            : [{ id: 'mode-none', label: 'No modes available', disabled: true }],
+      },
+      {
+        id: 'change-agent',
+        label: 'Change Agent',
+        submenu:
+          availableAgents.length > 0
+            ? availableAgents.map((agent) => ({
+                id: `agent-${agent.id}`,
+                label: agent.name,
+                action: () => updateTaskMetadata({ agent: agent.id }),
+              }))
+            : [{ id: 'agent-none', label: 'No providers available', disabled: true }],
+      },
+      { id: 'div15', label: '', divider: true },
       
       // Stage change submenu
       {
@@ -143,7 +205,16 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     });
 
     return items;
-  }, [task, onOpenMoveModal, onEditTask, onOpenInVSCode]);
+  }, [
+    task,
+    modes,
+    agents,
+    isRunnerActive,
+    onOpenMoveModal,
+    onEditTask,
+    onOpenInVSCode,
+    updateTaskMetadata,
+  ]);
 
   return (
     <ContextMenu

@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags: [feature, p1]
 agent: auditor
 contexts: [skills/react-core-skills]
@@ -39,3 +39,42 @@ src/webview/SidebarProvider.ts
 src/webview/ui/hooks/useTaskData.ts
 tests/webview-host-runner.test.ts
 tests/webview/useTaskData.runner.test.tsx
+
+---
+
+## Review
+
+**Rating: 8/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+All four Definition of Done items are fully met. Runner messages (`RunTask`, `RunColumn`, `StopRunner`) are handled in both webview hosts, mode CRUD (`RequestModes`, `CreateMode`) is handled in SidebarProvider, `RunnerStateChanged` events propagate from the runner engine to both webviews, and `useTaskData` exposes `modes`, `isRunnerActive`, and `activeRunnerTaskId`.
+
+### Findings
+
+#### High Priority
+- (none)
+
+#### Medium Priority
+- [ ] `RunTask` test uses bare `{}` as `this` context when calling `_handleWebviewMessage` directly — this works but is fragile and doesn't validate the actual class wiring - `tests/webview-host-runner.test.ts:17`
+- [ ] No tests for `RunColumn` or `StopRunner` message handling in either host - `tests/webview-host-runner.test.ts`
+
+#### Low Priority / Nits
+- [ ] Redundant runner state posting: both hosts include `isRunnerActive`/`activeRunnerTaskId` in `InitState` payload AND immediately call `postRunnerState(getRunnerState())` after `_sendInitialState()` — harmless but redundant - `KanbanPanel.ts:583-587`, `SidebarProvider.ts:576-582`
+- [ ] No test for KanbanPanel's `onRunnerStateChanged` subscription (only SidebarProvider's forwarding is tested)
+
+### Test Assessment
+- Coverage: Adequate — core flows (RunTask dispatch, state forwarding, hook state tracking) are tested
+- Missing tests: `RunColumn` handler, `StopRunner` handler, KanbanPanel runner state subscription
+
+### What's Good
+- `runner-state.ts` is a clean, minimal event emitter with proper copy semantics (spreads state on get/set)
+- Both hosts properly subscribe on init and unsubscribe on dispose, preventing memory leaks
+- `useTaskData` uses `parseRunnerState` from the messaging module for defensive validation with graceful error handling
+- Stage validation in `RunColumn` handlers correctly restricts to `plan`/`code`/`audit`
+- `useTaskData.runner.test.tsx` verifies the full lifecycle: InitState → RunnerStateChanged → hook state update
+
+### Recommendations
+- Consider consolidating runner state delivery to avoid the dual `InitState` + `RunnerStateChanged` pattern on initial load
+- Add a `RunColumn` test case to complete runner message coverage
