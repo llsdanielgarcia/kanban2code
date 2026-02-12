@@ -256,3 +256,18 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - new-files-created:
     - `src/webview/ui/components/ModeModal.tsx` - Modal for creating and editing mode files (glassmorphic pattern)
     - `tests/webview/components/ModeModal.test.tsx` - Tests for ModeModal (field rendering, validation, edit mode pre-population)
+
+- date: 2026-02-12
+  - task: `task5.8-update-context-menu-for-mode-and-runner-actions`
+  - files-updated:
+    - `src/webview/ui/components/TaskContextMenu.tsx` (added "Run Task" action with runner-active/stage guard, "Change Mode" submenu, "Change Agent" submenu, and `updateTaskMetadata` helper for `SaveTaskWithMetadata`)
+    - `src/webview/ui/components/Sidebar.tsx` (passes `modes`, `agents`, `isRunnerActive` to TaskContextMenu)
+    - `src/webview/ui/components/Board.tsx` (passes `modes`, `agents`, `isRunnerActive` to TaskContextMenu)
+    - `tests/webview/components/TaskContextMenu.test.tsx` (4 tests: Run Task visibility, disabled state, mode submenu, agent submenu)
+  - new-files-created: none
+
+- date: 2026-02-12
+  - task: `task6.2-redesign-coder-mode-for-structured-output`
+  - files-updated:
+    - `.kanban2code/_modes/coder.md` (added dual-mode instructions: Mode Detection, Manual/Automated output and workflow sections; explicit no-commit rule in automated mode)
+  - new-files-created: none
