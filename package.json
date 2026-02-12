@@ -3,7 +3,7 @@
   "publisher": "cynic",
   "displayName": "Kanban2Code",
   "description": "Kanban board for coding tasks",
-  "version": "0.0.6",
+  "version": "1.0.0",
   "license": "MIT",
   "engines": {
     "vscode": "^1.107.0"
