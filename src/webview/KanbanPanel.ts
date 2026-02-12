@@ -30,6 +30,7 @@ import {
 import type { Task, Stage } from '../types/task';
 import type { FilterState } from '../types/filters';
 import { getSidebarProvider } from './viewRegistry';
+import { getRunnerState, onRunnerStateChanged, type RunnerStateSnapshot } from '../runner/runner-state';
 
 export class KanbanPanel {
   public static currentPanel: KanbanPanel | undefined;
@@ -42,6 +43,7 @@ export class KanbanPanel {
   private _agents: Agent[] = [];
   private _webviewReady = false;
   private _pendingMessages: MessageEnvelope[] = [];
+  private _runnerStateUnsubscribe: (() => void) | null = null;
 
   private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
@@ -63,6 +65,10 @@ export class KanbanPanel {
       null,
       this._disposables,
     );
+
+    this._runnerStateUnsubscribe = onRunnerStateChanged((state) => {
+      this.postRunnerState(state);
+    });
   }
 
   public static createOrShow(extensionUri: vscode.Uri) {
@@ -111,8 +117,14 @@ export class KanbanPanel {
     this._postMessage(createEnvelope('ShowKeyboardShortcuts', {}));
   }
 
+  public postRunnerState(state: RunnerStateSnapshot) {
+    this._postMessage(createEnvelope('RunnerStateChanged', state));
+  }
+
   public dispose() {
     KanbanPanel.currentPanel = undefined;
+    this._runnerStateUnsubscribe?.();
+    this._runnerStateUnsubscribe = null;
     this._panel.dispose();
     while (this._disposables.length) {
       const x = this._disposables.pop();
@@ -333,6 +345,26 @@ export class KanbanPanel {
           break;
         }
 
+        case 'RunTask': {
+          const { taskId } = payload as { taskId?: string };
+          if (taskId) {
+            await vscode.commands.executeCommand('kanban2code.runTask', taskId);
+          }
+          break;
+        }
+
+        case 'RunColumn': {
+          const { stage } = payload as { stage?: Stage };
+          if (stage === 'plan' || stage === 'code' || stage === 'audit') {
+            await vscode.commands.executeCommand('kanban2code.runColumn', stage);
+          }
+          break;
+        }
+
+        case 'StopRunner':
+          await vscode.commands.executeCommand('kanban2code.stopRunner');
+          break;
+
         case 'ALERT': {
           const text = (payload as { text?: string })?.text ?? 'Alert from Kanban2Code';
           vscode.window.showInformationMessage(text);
@@ -499,6 +531,7 @@ export class KanbanPanel {
   private async _sendInitialState() {
     const kanbanRoot = WorkspaceState.kanbanRoot;
     const hasKanban = !!kanbanRoot;
+    const runnerState = getRunnerState();
     let projects: string[] = [];
     let phasesByProject: Record<string, string[]> = {};
     let modes: Array<{ id: string; name: string; description: string; path: string; stage?: string }> = [];
@@ -547,8 +580,11 @@ export class KanbanPanel {
         phasesByProject,
         workspaceRoot: kanbanRoot,
         filterState: (WorkspaceState.filterState as FilterState | null) ?? undefined,
+        isRunnerActive: runnerState.isRunning,
+        activeRunnerTaskId: runnerState.activeTaskId,
       }),
     );
+    this.postRunnerState(getRunnerState());
   }
 }
 

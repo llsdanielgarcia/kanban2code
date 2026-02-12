@@ -10,6 +10,7 @@ import { setSidebarProvider } from './webview/viewRegistry';
 import { configService } from './services/config';
 import { RunnerEngine, type RunnerPipelineStage, type RunnerRunResult } from './runner/runner-engine';
 import type { Task } from './types/task';
+import { setRunnerState } from './runner/runner-state';
 
 let taskWatcher: TaskWatcher | null = null;
 let sidebarProvider: SidebarProvider | null = null;
@@ -120,9 +121,19 @@ function attachRunnerProgress(
 ): () => void {
   const onTaskStarted = (event: { task: Task }) => {
     progress.report({ message: `Task started: ${event.task.title}` });
+    setRunnerState({
+      isRunning: true,
+      activeTaskId: event.task.id,
+      activeStage: event.task.stage,
+    });
   };
-  const onStageStarted = (event: { stage: string; task: Task }) => {
+  const onStageStarted = (event: { stage: RunnerPipelineStage; task: Task }) => {
     progress.report({ message: `${event.stage.toUpperCase()}: ${event.task.title}` });
+    setRunnerState({
+      isRunning: true,
+      activeTaskId: event.task.id,
+      activeStage: event.stage,
+    });
   };
   const onTaskCompleted = (event: { task: Task }) => {
     progress.report({ message: `Completed: ${event.task.title}` });
@@ -130,17 +141,22 @@ function attachRunnerProgress(
   const onTaskFailed = (event: { task: Task; error: string }) => {
     progress.report({ message: `Failed: ${event.task.title} (${event.error})` });
   };
+  const onRunnerStopped = () => {
+    setRunnerState({ isRunning: false });
+  };
 
   runner.on('taskStarted', onTaskStarted);
   runner.on('stageStarted', onStageStarted);
   runner.on('taskCompleted', onTaskCompleted);
   runner.on('taskFailed', onTaskFailed);
+  runner.on('runnerStopped', onRunnerStopped);
 
   return () => {
     runner.off('taskStarted', onTaskStarted);
     runner.off('stageStarted', onStageStarted);
     runner.off('taskCompleted', onTaskCompleted);
     runner.off('taskFailed', onTaskFailed);
+    runner.off('runnerStopped', onRunnerStopped);
   };
 }
 
@@ -159,6 +175,7 @@ async function executeRunner(
 
   const runner = new RunnerEngine(kanbanRoot);
   activeRunner = runner;
+  setRunnerState({ isRunning: true });
 
   const runPromise = vscode.window.withProgress(
     {
@@ -184,6 +201,7 @@ async function executeRunner(
   } finally {
     activeRunnerRun = null;
     activeRunner = null;
+    setRunnerState({ isRunning: false });
   }
 }
 

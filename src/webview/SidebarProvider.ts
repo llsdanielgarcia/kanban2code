@@ -34,7 +34,8 @@ import {
   saveTaskContentById,
   saveTaskWithMetadata,
 } from '../services/task-content';
-import { listAvailableModes } from '../services/mode-service';
+import { listAvailableModes, createModeFile } from '../services/mode-service';
+import { getRunnerState, onRunnerStateChanged, type RunnerStateSnapshot } from '../runner/runner-state';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
@@ -43,6 +44,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private _contexts: ContextFile[] = [];
   private _agents: Agent[] = [];
   private _filterState: FilterState | null = null;
+  private _runnerStateUnsubscribe: (() => void) | null = null;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -68,6 +70,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     // Handle messages from webview
     webviewView.webview.onDidReceiveMessage(async (data) => {
       await this._handleWebviewMessage(data);
+    });
+
+    this._runnerStateUnsubscribe?.();
+    this._runnerStateUnsubscribe = onRunnerStateChanged((state) => {
+      this.postRunnerState(state);
+    });
+
+    webviewView.onDidDispose(() => {
+      this._runnerStateUnsubscribe?.();
+      this._runnerStateUnsubscribe = null;
     });
 
     // Send initial state when view becomes visible
@@ -318,6 +330,44 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
+        case 'RequestModes': {
+          const root = WorkspaceState.kanbanRoot;
+          if (root) {
+            const modes = await listAvailableModes(root);
+            this._postMessage(createEnvelope('ModesLoaded', { modes }));
+          }
+          break;
+        }
+
+        case 'CreateMode': {
+          const modePayload = payload as {
+            name?: string;
+            description?: string;
+            stage?: string;
+            content?: string;
+          };
+          const root = WorkspaceState.kanbanRoot;
+          if (root && modePayload.name && modePayload.description !== undefined) {
+            try {
+              await createModeFile(root, {
+                name: modePayload.name,
+                description: modePayload.description,
+                stage: modePayload.stage,
+                content: modePayload.content || '',
+              });
+              const modes = await listAvailableModes(root);
+              this._postMessage(createEnvelope('ModesLoaded', { modes }));
+              await this._sendInitialState();
+              await KanbanPanel.currentPanel?.refresh();
+            } catch (error) {
+              vscode.window.showErrorMessage(
+                `Failed to create mode: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              );
+            }
+          }
+          break;
+        }
+
         case 'RequestContexts': {
           const root = WorkspaceState.kanbanRoot;
           if (root) {
@@ -440,6 +490,26 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
+        case 'RunTask': {
+          const { taskId } = payload as { taskId?: string };
+          if (taskId) {
+            await vscode.commands.executeCommand('kanban2code.runTask', taskId);
+          }
+          break;
+        }
+
+        case 'RunColumn': {
+          const { stage } = payload as { stage?: Stage };
+          if (stage === 'plan' || stage === 'code' || stage === 'audit') {
+            await vscode.commands.executeCommand('kanban2code.runColumn', stage);
+          }
+          break;
+        }
+
+        case 'StopRunner':
+          await vscode.commands.executeCommand('kanban2code.stopRunner');
+          break;
+
         case 'RequestState': {
           // Webview is ready and requesting initial state
           await this._sendInitialState();
@@ -454,6 +524,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private async _sendInitialState() {
     const kanbanRoot = WorkspaceState.kanbanRoot;
     const hasKanban = !!kanbanRoot;
+    const runnerState = getRunnerState();
     let projects: string[] = [];
     let phasesByProject: Record<string, string[]> = {};
     let modes: Array<{ id: string; name: string; description: string; path: string; stage?: string }> = [];
@@ -504,8 +575,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         workspaceRoot: kanbanRoot,
         filterState:
           this._filterState ?? (WorkspaceState.filterState as FilterState | null) ?? undefined,
+        isRunnerActive: runnerState.isRunning,
+        activeRunnerTaskId: runnerState.activeTaskId,
       }),
     );
+    this.postRunnerState(getRunnerState());
   }
 
   public async refresh() {
@@ -523,6 +597,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   public openTaskModal() {
     this._postMessage(createEnvelope('OpenTaskModal', {}));
+  }
+
+  public postRunnerState(state: RunnerStateSnapshot) {
+    this._postMessage(createEnvelope('RunnerStateChanged', state));
   }
 
   private _getWebviewContent(webview: vscode.Webview) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Task } from '../../../types/task';
 import type { FilterState } from '../../../types/filters';
-import { createMessage, type MessageEnvelope } from '../../messaging';
+import { createMessage, parseRunnerState, type MessageEnvelope } from '../../messaging';
 import { vscode } from '../vscodeApi';
 
 export interface ContextFile {
@@ -37,6 +37,8 @@ interface InitStatePayload {
   workspaceRoot: string;
   context?: 'sidebar' | 'board';
   filterState?: FilterState;
+  isRunnerActive?: boolean;
+  activeRunnerTaskId?: string;
 }
 
 interface TaskUpdatedPayload {
@@ -45,6 +47,10 @@ interface TaskUpdatedPayload {
 
 interface FilterChangedPayload {
   filters: FilterState;
+}
+
+interface ModesLoadedPayload {
+  modes: Mode[];
 }
 
 interface UseTaskDataResult {
@@ -59,6 +65,8 @@ interface UseTaskDataResult {
   error: string | null;
   context: 'sidebar' | 'board' | null;
   filterState: FilterState | null;
+  isRunnerActive: boolean;
+  activeRunnerTaskId: string | null;
 }
 
 export function useTaskData(): UseTaskDataResult {
@@ -73,6 +81,8 @@ export function useTaskData(): UseTaskDataResult {
   const [error, setError] = useState<string | null>(null);
   const [context, setContext] = useState<'sidebar' | 'board' | null>(null);
   const [filterState, setFilterState] = useState<FilterState | null>(null);
+  const [isRunnerActive, setIsRunnerActive] = useState(false);
+  const [activeRunnerTaskId, setActiveRunnerTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | null = null;
@@ -94,6 +104,8 @@ export function useTaskData(): UseTaskDataResult {
           setWorkspaceRoot(payload.workspaceRoot || null);
           if (payload.context) setContext(payload.context);
           if (payload.filterState) setFilterState(payload.filterState);
+          setIsRunnerActive(payload.isRunnerActive ?? false);
+          setActiveRunnerTaskId(payload.activeRunnerTaskId ?? null);
           setIsLoading(false);
           setError(null);
           receivedInitState = true;
@@ -113,6 +125,21 @@ export function useTaskData(): UseTaskDataResult {
         case 'FilterChanged': {
           const payload = message.payload as FilterChangedPayload;
           if (payload.filters) setFilterState(payload.filters);
+          break;
+        }
+        case 'ModesLoaded': {
+          const payload = message.payload as ModesLoadedPayload;
+          setModes(payload.modes || []);
+          break;
+        }
+        case 'RunnerStateChanged': {
+          try {
+            const payload = parseRunnerState(message.payload);
+            setIsRunnerActive(payload.isRunning);
+            setActiveRunnerTaskId(payload.activeTaskId ?? null);
+          } catch {
+            // Ignore malformed runner state messages from stale webviews/extensions.
+          }
           break;
         }
       }
@@ -150,5 +177,7 @@ export function useTaskData(): UseTaskDataResult {
     error,
     context,
     filterState,
+    isRunnerActive,
+    activeRunnerTaskId,
   };
 }

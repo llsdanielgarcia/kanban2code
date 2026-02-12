@@ -1864,7 +1864,8 @@ body {
 }
 
 .context-modal,
-.agent-modal {
+.agent-modal,
+.mode-modal {
   max-width: 600px;
   max-height: 85vh;
 }
