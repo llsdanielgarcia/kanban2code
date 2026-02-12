@@ -15,6 +15,10 @@ describe('output-parser', () => {
     expect(parseStageTransition('<!-- STAGE_TRANSITION: audit -->')).toBe('audit');
   });
 
+  test("Parse <!-- STAGE_TRANSITION: code --> returns 'code'", () => {
+    expect(parseStageTransition('<!-- STAGE_TRANSITION: code -->')).toBe('code');
+  });
+
   test('Fallback parses "Rating: 9/10" returns 9', () => {
     const output = 'Looks good overall. **Rating: 9/10** with minor nits.';
     expect(parseAuditRating(output)).toBe(9);

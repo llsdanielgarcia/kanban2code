@@ -1,8 +1,11 @@
 ---
-stage: audit
-tags: [docs, p2]
+stage: completed
+tags:
+  - docs
+  - p2
 agent: auditor
 contexts: []
+skills: []
 ---
 
 # Update documentation

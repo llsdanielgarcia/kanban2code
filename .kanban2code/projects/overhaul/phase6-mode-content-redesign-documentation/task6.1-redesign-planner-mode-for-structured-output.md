@@ -1,7 +1,12 @@
 ---
-stage: audit
-tags: [feature, p1]
+title: Redesign planner mode for structured output
+stage: completed
+project: overhaul
+phase: phase6-mode-content-redesign-documentation
 agent: auditor
+tags:
+  - feature
+  - p1
 contexts: []
 ---
 
@@ -30,3 +35,22 @@ The runner parses these markers and handles all state transitions itself.
 
 ## Audit
 .kanban2code/_modes/planner.md
+
+---
+
+## Review
+
+**Rating: 10/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+Updated `planner.md` to support dual-mode (manual vs automated) execution, ensuring compatibility with the automated runner while maintaining manual workflow support. Added specific instructions for structured output markers.
+
+### Findings
+- Correctly implements dual-mode detection and behavior rules.
+- Adds explicit `STAGE_TRANSITION: code` marker instruction for automated mode.
+- Verified parsing logic with new test case in `output-parser.test.ts`.
+
+### Test Assessment
+- Coverage: Adequate. Added explicit test case for `code` transition to `output-parser.test.ts`.

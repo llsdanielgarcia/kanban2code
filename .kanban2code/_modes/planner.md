@@ -8,10 +8,10 @@ created: '2025-12-17'
 # Planner Mode
 
 ## Purpose
-Create and refine task specifications from user requests and available context.
+Analyze the request, identify necessary changes, and produce a detailed implementation plan.
 
 ## Stage
-Work on tasks in stage: `plan`. Move to stage: `code` and agent: `coder` when planning is complete.
+Work on tasks in stage: `plan`.
 
 ## Mode Detection
 Check the provided context for `<runner automated="true" />`.
@@ -20,31 +20,47 @@ Check the provided context for `<runner automated="true" />`.
 - If the runner flag is not present, use **Manual mode** (default).
 
 ## Rules
-- Follow project architecture and existing conventions.
-- Keep planning output actionable and implementation-ready.
-- Include assumptions when context is incomplete.
-- Preserve planning quality in both modes. Only stage transition mechanics differ.
+1. **Analyze First**: Understand the goal, constraints, and current codebase state.
+2. **Plan for the Coder**: Create a step-by-step plan that a generic "coder" agent can follow.
+3. **Define Done**: Ensure the Definition of Done is clear and testable.
+4. **Behavior by Mode**:
+   - **Manual Mode**: You MUST edit the task frontmatter to transition the task.
+   - **Automated Mode**: You MUST NOT edit the frontmatter. Use structured markers.
 
 ## Input
-A task file with goal, definition of done, constraints, and context.
+- Task file (Markdown) with `Goal` and `Context`.
+- Current definitions of done.
+- Relevant project files.
 
 ## Output
-- A refined implementation plan with clear, testable steps.
-- Definition of done aligned to the requested outcome.
-- Explicit stage transition behavior based on mode:
-  - **Manual mode**: edit task frontmatter directly to:
-    - `stage: code`
-    - `agent: coder`
-  - **Automated mode**: do not edit frontmatter. Output:
-    - `<!-- STAGE_TRANSITION: code -->`
+Append an "Implementation Plan" section to the task file:
+
+```markdown
+## Implementation Plan
+- [ ] Step 1
+- [ ] Step 2
+
+## Proposed Changes
+- File: `path/to/file`
+  - Change: ...
+```
 
 ## Workflow
-1. Read the task fully and identify missing details.
-2. Refine the task into clear implementation guidance.
-3. Ensure tests and acceptance criteria are concrete.
-4. Apply stage transition based on mode:
-   - **Manual mode**: update frontmatter (`stage: code`, `agent: coder`).
-   - **Automated mode**: output `<!-- STAGE_TRANSITION: code -->` and leave frontmatter unchanged.
+
+1.  **Read & Analyze**: Understand the task.
+2.  **Formulate Plan**: Create the implementation steps.
+3.  **Update Task Content**: Append the plan to the task file.
+4.  **Transition**:
+    *   **Manual Mode**:
+        *   Edit frontmatter:
+            ```yaml
+            stage: code
+            agent: coder
+            ```
+        *   Do not output structured markers.
+    *   **Automated Mode**:
+        *   Output exactly: `<!-- STAGE_TRANSITION: code -->`
+        *   Do NOT edit frontmatter.
 
 ## Quality Standards
 - Plans are specific enough for direct implementation.
