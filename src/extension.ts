@@ -177,7 +177,7 @@ async function executeRunner(
   activeRunner = runner;
   setRunnerState({ isRunning: true });
 
-  const runPromise = vscode.window.withProgress(
+  const runPromise = Promise.resolve(vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       title,
@@ -192,7 +192,7 @@ async function executeRunner(
         detach();
       }
     },
-  );
+  ));
 
   activeRunnerRun = runPromise;
 

@@ -23,7 +23,7 @@ export const HostToWebviewMessageTypes = [
   'FullTaskDataLoadFailed',
   'TaskMetadataSaved',
   'TaskMetadataSaveFailed',
-  'ModesLoaded',
+  'ProvidersLoaded',
   'RunnerStateChanged',
 ] as const;
 
@@ -56,11 +56,11 @@ export const WebviewToHostMessageTypes = [
   'RequestState',
   // Basic demo/ping path used by the placeholder UI
   'ALERT',
-  // Mode management
-  'RequestModes',
-  'CreateMode',
-  'UpdateMode',
-  'DeleteMode',
+  // Provider management
+  'RequestProviders',
+  'CreateProvider',
+  'UpdateProvider',
+  'DeleteProvider',
   // Runner control
   'RunTask',
   'RunColumn',

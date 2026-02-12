@@ -12,7 +12,6 @@ import {
   PROJECTS_FOLDER,
   AGENTS_FOLDER,
   CONTEXT_FOLDER,
-  MODES_FOLDER,
 } from '../src/core/constants';
 import { Task } from '../src/types/task';
 
@@ -146,85 +145,60 @@ test('skills section is skipped when no skills specified', async () => {
   expect(xml).not.toContain('name="skills"');
 });
 
-test('task with mode loads instructions from _modes/{mode}.md', async () => {
+test('task with agent loads instructions from _agents/{agent}.md', async () => {
   await seedContextFiles();
 
-  const modesDir = path.join(KANBAN_ROOT, MODES_FOLDER);
-  await fs.mkdir(modesDir, { recursive: true });
-  await fs.writeFile(path.join(modesDir, 'coder.md'), 'MODE_CODER_INSTRUCTIONS');
+  const agentsDir = path.join(KANBAN_ROOT, AGENTS_FOLDER);
+  await fs.writeFile(path.join(agentsDir, 'coder.md'), 'AGENT_CODER_INSTRUCTIONS');
 
   const task: Task = {
     id: 'task-6',
     filePath: path.join(KANBAN_ROOT, 'inbox', 'task-6.md'),
     title: 'Task 6',
     stage: 'plan',
-    mode: 'coder',
+    agent: 'coder',
     content: 'BODY',
   };
 
   const xml = await buildXMLPrompt(task, KANBAN_ROOT);
-  expect(xml).toContain('MODE_CODER_INSTRUCTIONS');
-  expect(xml).toContain('name="mode"');
+  expect(xml).toContain('AGENT_CODER_INSTRUCTIONS');
+  expect(xml).toContain('name="agent"');
 });
 
-test('task without mode but with agent falls through to _modes/{agent}.md if it exists', async () => {
+test('task without agent skips agent section', async () => {
   await seedContextFiles();
-
-  const modesDir = path.join(KANBAN_ROOT, MODES_FOLDER);
-  await fs.mkdir(modesDir, { recursive: true });
-  await fs.writeFile(path.join(modesDir, 'coder.md'), 'MODE_CODER_FALLBACK');
 
   const task: Task = {
     id: 'task-7',
     filePath: path.join(KANBAN_ROOT, 'inbox', 'task-7.md'),
     title: 'Task 7',
     stage: 'plan',
-    agent: 'coder',
     content: 'BODY',
   };
 
   const xml = await buildXMLPrompt(task, KANBAN_ROOT);
-  expect(xml).toContain('MODE_CODER_FALLBACK');
-  expect(xml).toContain('name="mode"');
+  expect(xml).not.toContain('name="agent"');
 });
 
-test('task without mode and no matching _modes/ file falls back to _agents/{agent}.md', async () => {
+test('buildRunnerPrompt returns both xmlPrompt and agentInstructions', async () => {
   await seedContextFiles();
 
-  const task: Task = {
-    id: 'task-8',
-    filePath: path.join(KANBAN_ROOT, 'inbox', 'task-8.md'),
-    title: 'Task 8',
-    stage: 'plan',
-    agent: 'opus',
-    content: 'BODY',
-  };
-
-  const xml = await buildXMLPrompt(task, KANBAN_ROOT);
-  expect(xml).toContain('AGENT');
-  expect(xml).toContain('name="agent"');
-});
-
-test('buildRunnerPrompt returns both xmlPrompt and modeInstructions', async () => {
-  await seedContextFiles();
-
-  const modesDir = path.join(KANBAN_ROOT, MODES_FOLDER);
-  await fs.mkdir(modesDir, { recursive: true });
-  await fs.writeFile(path.join(modesDir, 'coder.md'), 'MODE_INSTRUCTIONS_RAW');
+  const agentsDir = path.join(KANBAN_ROOT, AGENTS_FOLDER);
+  await fs.writeFile(path.join(agentsDir, 'coder.md'), 'AGENT_INSTRUCTIONS_RAW');
 
   const task: Task = {
     id: 'task-9',
     filePath: path.join(KANBAN_ROOT, 'inbox', 'task-9.md'),
     title: 'Task 9',
     stage: 'plan',
-    mode: 'coder',
+    agent: 'coder',
     content: 'BODY',
   };
 
   const result = await buildRunnerPrompt(task, KANBAN_ROOT);
   expect(result.xmlPrompt).toContain('<system>');
-  expect(result.xmlPrompt).toContain('MODE_INSTRUCTIONS_RAW');
-  expect(result.modeInstructions).toBe('MODE_INSTRUCTIONS_RAW');
+  expect(result.xmlPrompt).toContain('AGENT_INSTRUCTIONS_RAW');
+  expect(result.agentInstructions).toBe('AGENT_INSTRUCTIONS_RAW');
 });
 
 test('runner prompt includes automated flag', async () => {

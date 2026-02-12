@@ -1,4 +1,4 @@
-import type { AgentCliConfig } from '../../types/agent';
+import type { ProviderConfig } from '../../types/provider';
 import type {
   CliAdapter,
   CliAdapterOptions,
@@ -64,7 +64,7 @@ function extractText(value: unknown): string | undefined {
  */
 export class KiloAdapter implements CliAdapter {
   buildCommand(
-    config: AgentCliConfig,
+    config: ProviderConfig,
     prompt: string,
     options?: CliAdapterOptions,
   ): CliCommandResult {

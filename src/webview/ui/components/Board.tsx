@@ -73,7 +73,7 @@ export const Board: React.FC<BoardProps> = ({
     tasks,
     contexts,
     agents,
-    modes,
+    providers,
     projects,
     phasesByProject,
     isLoading,
@@ -317,7 +317,7 @@ export const Board: React.FC<BoardProps> = ({
           tasks={tasks}
           contexts={contexts}
           agents={agents}
-          modes={modes}
+          providers={providers}
           projects={projects}
           phasesByProject={phasesByProject}
           onClose={() => setShowTaskModal(false)}
@@ -361,7 +361,7 @@ export const Board: React.FC<BoardProps> = ({
       {contextMenu && (
         <TaskContextMenu
           task={contextMenu.task}
-          modes={modes}
+          providers={providers}
           agents={agents}
           isRunnerActive={isRunnerActive}
           position={contextMenu.position}

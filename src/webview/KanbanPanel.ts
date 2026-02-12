@@ -19,7 +19,7 @@ import {
   type Agent,
   type SkillFile,
 } from '../services/context';
-import { listAvailableModes } from '../services/mode-service';
+import { listAvailableProviders } from '../services/provider-service';
 import { listProjectsAndPhases, createProject } from '../services/projects';
 import { deleteTaskById } from '../services/delete-task';
 import {
@@ -285,7 +285,7 @@ export class KanbanPanel {
             const contexts = await listAvailableContexts(root);
             const skills = await listAvailableSkills(root);
             const agents = await listAvailableAgents(root);
-            const modes = await listAvailableModes(root);
+            const providers = await listAvailableProviders(root);
             const listing = await listProjectsAndPhases(root);
 
             this._postMessage(
@@ -298,7 +298,7 @@ export class KanbanPanel {
                     ? { type: 'project', project: task.project, phase: task.phase }
                     : { type: 'inbox' },
                   agent: task.agent || null,
-                  mode: task.mode || null,
+                  provider: task.provider || null,
                   contexts: task.contexts || [],
                   skills: task.skills || [],
                   tags: task.tags || [],
@@ -306,7 +306,7 @@ export class KanbanPanel {
                 contexts,
                 skills,
                 agents,
-                modes,
+                providers,
                 projects: listing.projects,
                 phasesByProject: listing.phasesByProject,
               }),
@@ -326,7 +326,7 @@ export class KanbanPanel {
               title: string;
               location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
               agent: string | null;
-              mode: string | null;
+              provider: string | null;
               contexts: string[];
               skills: string[];
               tags: string[];
@@ -534,20 +534,20 @@ export class KanbanPanel {
     const runnerState = getRunnerState();
     let projects: string[] = [];
     let phasesByProject: Record<string, string[]> = {};
-    let modes: Array<{ id: string; name: string; description: string; path: string; stage?: string }> = [];
+    let providers: Array<{ id: string; name: string; path: string }> = [];
     if (hasKanban && kanbanRoot) {
       try {
-        const [tasks, contexts, agents, loadedModes, listing] = await Promise.all([
+        const [tasks, contexts, agents, loadedProviders, listing] = await Promise.all([
           loadAllTasks(kanbanRoot),
           listAvailableContexts(kanbanRoot),
           listAvailableAgents(kanbanRoot),
-          listAvailableModes(kanbanRoot),
+          listAvailableProviders(kanbanRoot),
           listProjectsAndPhases(kanbanRoot),
         ]);
         this._tasks = tasks;
         this._contexts = contexts;
         this._agents = agents;
-        modes = loadedModes;
+        providers = loadedProviders;
         projects = listing.projects;
         phasesByProject = listing.phasesByProject;
       } catch (error) {
@@ -555,7 +555,7 @@ export class KanbanPanel {
         this._tasks = [];
         this._contexts = [];
         this._agents = [];
-        modes = [];
+        providers = [];
         projects = [];
         phasesByProject = {};
       }
@@ -563,7 +563,7 @@ export class KanbanPanel {
       this._tasks = [];
       this._contexts = [];
       this._agents = [];
-      modes = [];
+      providers = [];
       projects = [];
       phasesByProject = {};
     }
@@ -575,7 +575,7 @@ export class KanbanPanel {
         tasks: this._tasks,
         contexts: this._contexts,
         agents: this._agents,
-        modes,
+        providers,
         projects,
         phasesByProject,
         workspaceRoot: kanbanRoot,

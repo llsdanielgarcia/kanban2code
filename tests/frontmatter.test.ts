@@ -113,23 +113,26 @@ test('stringifyTaskFile handles special characters', () => {
   expect(parsed.tags).toEqual(['c++', 'c#']);
 });
 
-test('parseTaskContent extracts mode field', () => {
-  const content = `---
+test('parseTaskContent extracts provider field', () => {
+  const raw = `---
+title: Test
 stage: code
-mode: coder
+provider: coder
 ---
 # Task`;
-  const task = parseTaskContent(content, 'task.md');
-  expect(task.mode).toBe('coder');
+  const task = parseTaskContent(raw, 'task.md');
+  expect(task.provider).toBe('coder');
 });
 
-test('parseTaskContent returns undefined mode when not present', () => {
-  const content = `---
-stage: code
+test('parseTaskContent returns undefined provider when not present', () => {
+  const raw = `---
+title: Test
+stage: inbox
 ---
-# Task`;
-  const task = parseTaskContent(content, 'task.md');
-  expect(task.mode).toBeUndefined();
+Some content`;
+
+  const task = parseTaskContent(raw, 'test.md');
+  expect(task.provider).toBeUndefined();
 });
 
 test('parseTaskContent extracts attempts field', () => {
@@ -142,22 +145,23 @@ attempts: 2
   expect(task.attempts).toBe(2);
 });
 
-test('round-trip mode and attempts through parse and stringify', () => {
-  const content = `---
-stage: code
-mode: auditor
+test('round-trip provider and attempts through parse and stringify', () => {
+  const raw = `---
+title: RT
+stage: audit
+provider: auditor
 attempts: 1
 ---
-# Task`;
+Body`;
 
-  const parsed = parseTaskContent(content, 'task.md');
-  expect(parsed.mode).toBe('auditor');
+  const parsed = parseTaskContent(raw, 'rt.md');
+  expect(parsed.provider).toBe('auditor');
   expect(parsed.attempts).toBe(1);
 
-  const modified = { ...parsed, mode: 'coder', attempts: 2 };
-  const serialized = stringifyTaskFile(modified, content);
+  const modified = { ...parsed, provider: 'coder', attempts: 2 };
+  const reserialized = stringifyTaskFile(modified, parsed.content);
+  const reparsed = parseTaskContent(reserialized, 'rt.md');
 
-  const reparsed = parseTaskContent(serialized, 'task.md');
-  expect(reparsed.mode).toBe('coder');
+  expect(reparsed.provider).toBe('coder');
   expect(reparsed.attempts).toBe(2);
 });

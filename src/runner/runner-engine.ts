@@ -7,8 +7,8 @@ import type { Task, Stage } from '../types/task';
 import { parseTaskFile, stringifyTaskFile } from '../services/frontmatter';
 import { loadAllTasks, getOrderedTasksForStage } from '../services/scanner';
 import { buildRunnerPrompt } from '../services/prompt-builder';
-import { resolveAgentConfig } from '../services/agent-service';
-import { getDefaultModeForStage, getDefaultAgentForMode } from '../services/stage-manager';
+import { resolveProviderConfig } from '../services/provider-service';
+import { getDefaultAgentForStage, getDefaultProviderForAgent } from '../services/stage-manager';
 import { getAdapterForCli } from './adapter-factory';
 import {
   parseAuditRating,
@@ -85,7 +85,7 @@ function getStagesFrom(start: Stage): RunnerPipelineStage[] {
   }
 }
 
-function getFallbackModeForStage(stage: RunnerPipelineStage): string {
+function getFallbackAgentForStage(stage: RunnerPipelineStage): string {
   if (stage === 'plan') return 'planner';
   if (stage === 'code') return 'coder';
   return 'auditor';
@@ -195,43 +195,43 @@ export class RunnerEngine extends EventEmitter {
         return { status: 'stopped' };
       }
 
-      await this.setTaskStageModeAgent(task, stage);
+      await this.setTaskStageProviderAgent(task, stage);
       this.emit('stageStarted', { task: { ...task }, stage } satisfies RunnerStageStartedEvent);
 
-      const { xmlPrompt, modeInstructions } = await buildRunnerPrompt(task, this.kanbanRoot);
+      const { xmlPrompt, agentInstructions } = await buildRunnerPrompt(task, this.kanbanRoot);
 
-      const agentName = task.agent;
-      if (!agentName) {
-        const error = `No agent configured for mode '${task.mode ?? 'unknown'}'`;
+      const providerName = task.provider;
+      if (!providerName) {
+        const error = `No provider configured for stage '${stage}'`;
         this.emit('taskFailed', { task, error, hardStop: true } satisfies RunnerTaskFailedEvent);
         return { status: 'failed', error, hardStop: true };
       }
 
-      const agentConfig = await resolveAgentConfig(this.kanbanRoot, agentName);
-      if (!agentConfig) {
-        const error = `Agent config not found for '${agentName}'`;
+      const providerConfig = await resolveProviderConfig(this.kanbanRoot, providerName);
+      if (!providerConfig) {
+        const error = `Provider config not found for '${providerName}'`;
         this.emit('taskFailed', { task, error, hardStop: true } satisfies RunnerTaskFailedEvent);
         return { status: 'failed', error, hardStop: true };
       }
 
-      const adapter = getAdapterForCli(agentConfig.cli);
-      const command = adapter.buildCommand(agentConfig, xmlPrompt, {
-        systemPrompt: modeInstructions,
-        maxTurns: agentConfig.safety?.max_turns,
+      const adapter = getAdapterForCli(providerConfig.cli);
+      const command = adapter.buildCommand(providerConfig, xmlPrompt, {
+        systemPrompt: agentInstructions,
+        maxTurns: providerConfig.safety?.max_turns,
       });
 
       const execution = await this.executeCommand(command.command, command.args, command.stdin);
 
       // Non-zero exit codes are treated as hard crashes.
       if (execution.exitCode !== 0) {
-        const error = `CLI crash for ${agentConfig.cli} (exit ${execution.exitCode}): ${execution.stderr || execution.stdout || 'no output'}`;
+        const error = `CLI crash for ${providerConfig.cli} (exit ${execution.exitCode}): ${execution.stderr || execution.stdout || 'no output'}`;
         this.emit('taskFailed', { task, error, hardStop: true } satisfies RunnerTaskFailedEvent);
         return { status: 'failed', error, hardStop: true };
       }
 
       const parsed = adapter.parseResponse(execution.stdout, execution.exitCode);
       if (!parsed.success) {
-        const error = parsed.error ?? `CLI execution failed for ${agentConfig.cli}`;
+        const error = parsed.error ?? `CLI execution failed for ${providerConfig.cli}`;
         this.emit('taskFailed', { task, error, hardStop: true } satisfies RunnerTaskFailedEvent);
         return { status: 'failed', error, hardStop: true };
       }
@@ -278,18 +278,18 @@ export class RunnerEngine extends EventEmitter {
     return { status: 'completed' };
   }
 
-  private async setTaskStageModeAgent(task: Task, stage: RunnerPipelineStage): Promise<void> {
-    const defaultMode = (await getDefaultModeForStage(this.kanbanRoot, stage)) ?? getFallbackModeForStage(stage);
-    const defaultAgent = getDefaultAgentForMode(defaultMode);
+  private async setTaskStageProviderAgent(task: Task, stage: RunnerPipelineStage): Promise<void> {
+    const defaultAgent = (await getDefaultAgentForStage(this.kanbanRoot, stage)) ?? getFallbackAgentForStage(stage);
+    const defaultProvider = getDefaultProviderForAgent(defaultAgent);
 
     await this.persistTask(task, {
       stage,
-      mode: defaultMode,
-      agent: defaultAgent ?? task.agent ?? DEFAULT_CONFIG.preferences.defaultAgent ?? 'codex',
+      provider: defaultProvider ?? task.provider ?? DEFAULT_CONFIG.preferences.defaultAgent ?? 'codex',
+      agent: defaultAgent,
     });
   }
 
-  private async persistTask(task: Task, updates: Partial<Pick<Task, 'stage' | 'mode' | 'agent' | 'attempts'>>): Promise<void> {
+  private async persistTask(task: Task, updates: Partial<Pick<Task, 'stage' | 'provider' | 'agent' | 'attempts'>>): Promise<void> {
     const freshTask = await parseTaskFile(task.filePath);
     const originalContent = await fs.readFile(task.filePath, 'utf-8');
 
@@ -302,7 +302,7 @@ export class RunnerEngine extends EventEmitter {
     await fs.writeFile(task.filePath, serialized, 'utf-8');
 
     task.stage = merged.stage;
-    task.mode = merged.mode;
+    task.provider = merged.provider;
     task.agent = merged.agent;
     task.attempts = merged.attempts;
     task.content = merged.content;

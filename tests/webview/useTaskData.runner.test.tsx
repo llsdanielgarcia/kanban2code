@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 describe('useTaskData runner state', () => {
-  test('exposes modes array and runner state', async () => {
+  test('exposes providers array and runner state', async () => {
     const { useTaskData } = await import('../../src/webview/ui/hooks/useTaskData');
     const { result } = renderHook(() => useTaskData());
 
@@ -30,7 +30,7 @@ describe('useTaskData runner state', () => {
             tasks: [],
             contexts: [],
             agents: [],
-            modes: [{ id: 'coder', name: 'coder', description: 'Code mode', path: '_modes/coder.md' }],
+            providers: [{ id: 'coder', name: 'coder', description: 'Code provider', path: '_providers/coder.md' }],
             projects: [],
             phasesByProject: {},
             workspaceRoot: '/tmp/.kanban2code',
@@ -55,8 +55,8 @@ describe('useTaskData runner state', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.modes).toEqual([
-        { id: 'coder', name: 'coder', description: 'Code mode', path: '_modes/coder.md' },
+      expect(result.current.providers).toEqual([
+        { id: 'coder', name: 'coder', description: 'Code provider', path: '_providers/coder.md' },
       ]);
       expect(result.current.isRunnerActive).toBe(true);
       expect(result.current.activeRunnerTaskId).toBe('task-9');

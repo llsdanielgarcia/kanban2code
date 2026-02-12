@@ -35,7 +35,7 @@ export const AgentPicker: React.FC<AgentPickerProps> = ({
   return (
     <div className="agent-picker">
       <div className="form-group">
-        <label className="form-label">Agent (LLM Provider)</label>
+        <label className="form-label">Agent</label>
         <select
           className="form-select"
           value={selectValue}

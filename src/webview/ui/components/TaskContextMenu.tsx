@@ -3,7 +3,7 @@ import type { Task, Stage } from '../../../types/task';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
 import { createMessage } from '../../messaging';
 import { vscode } from '../vscodeApi';
-import type { Agent, Mode } from '../hooks/useTaskData';
+import type { Agent, Provider } from '../hooks/useTaskData';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
@@ -13,7 +13,7 @@ function postMessage(type: string, payload: unknown) {
 
 interface TaskContextMenuProps {
   task: Task;
-  modes?: Mode[];
+  providers?: Provider[];
   agents?: Agent[];
   isRunnerActive?: boolean;
   position: { x: number; y: number };
@@ -35,7 +35,7 @@ const STAGE_LABELS: Record<Stage, string> = {
 
 export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   task,
-  modes = [],
+  providers = [],
   agents = [],
   isRunnerActive = false,
   position,
@@ -44,7 +44,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   onEditTask,
   onOpenInVSCode,
 }) => {
-  const updateTaskMetadata = useCallback((overrides: { mode?: string | null; agent?: string | null }) => {
+  const updateTaskMetadata = useCallback((overrides: { provider?: string | null; agent?: string | null }) => {
     postMessage('SaveTaskWithMetadata', {
       taskId: task.id,
       content: task.content,
@@ -54,7 +54,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
           ? { type: 'project', project: task.project, phase: task.phase }
           : { type: 'inbox' },
         agent: overrides.agent !== undefined ? overrides.agent : task.agent || null,
-        mode: overrides.mode !== undefined ? overrides.mode : task.mode || null,
+        provider: overrides.provider !== undefined ? overrides.provider : task.provider || null,
         contexts: task.contexts || [],
         skills: task.skills || [],
         tags: task.tags || [],
@@ -64,7 +64,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
 
   const menuItems: ContextMenuItem[] = useMemo(() => {
     const canRunTask = task.stage === 'plan' || task.stage === 'code' || task.stage === 'audit';
-    const availableModes = modes.filter((mode) => mode.id !== task.mode && mode.name !== task.mode);
+    const availableProviders = providers.filter((p) => p.id !== task.provider && p.name !== task.provider);
     const availableAgents = agents.filter(
       (agent) => agent.id !== task.agent && agent.name !== task.agent,
     );
@@ -112,16 +112,16 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
         action: () => postMessage('RunTask', { taskId: task.id }),
       },
       {
-        id: 'change-mode',
-        label: 'Change Mode',
+        id: 'change-provider',
+        label: 'Change Provider',
         submenu:
-          availableModes.length > 0
-            ? availableModes.map((mode) => ({
-                id: `mode-${mode.id}`,
-                label: mode.name,
-                action: () => updateTaskMetadata({ mode: mode.id }),
+          availableProviders.length > 0
+            ? availableProviders.map((provider) => ({
+                id: `provider-${provider.id}`,
+                label: provider.name,
+                action: () => updateTaskMetadata({ provider: provider.id }),
               }))
-            : [{ id: 'mode-none', label: 'No modes available', disabled: true }],
+            : [{ id: 'provider-none', label: 'No providers available', disabled: true }],
       },
       {
         id: 'change-agent',
@@ -133,7 +133,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
                 label: agent.name,
                 action: () => updateTaskMetadata({ agent: agent.id }),
               }))
-            : [{ id: 'agent-none', label: 'No providers available', disabled: true }],
+            : [{ id: 'agent-none', label: 'No agents available', disabled: true }],
       },
       { id: 'div15', label: '', divider: true },
       
@@ -207,7 +207,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     return items;
   }, [
     task,
-    modes,
+    providers,
     agents,
     isRunnerActive,
     onOpenMoveModal,

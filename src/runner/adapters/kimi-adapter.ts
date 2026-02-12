@@ -1,4 +1,4 @@
-import type { AgentCliConfig } from '../../types/agent';
+import type { ProviderConfig } from '../../types/provider';
 import type {
   CliAdapter,
   CliAdapterOptions,
@@ -14,7 +14,7 @@ import type {
  */
 export class KimiAdapter implements CliAdapter {
   buildCommand(
-    config: AgentCliConfig,
+    config: ProviderConfig,
     prompt: string,
     options?: CliAdapterOptions,
   ): CliCommandResult {

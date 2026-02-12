@@ -8,7 +8,7 @@ export interface Task {
   project?: string;
   phase?: string;
   agent?: string;
-  mode?: string;
+  provider?: string;
   parent?: string; // ID of parent task
   tags?: string[];
   contexts?: string[];

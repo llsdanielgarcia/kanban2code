@@ -1,5 +1,5 @@
 ---
-stage: inbox
+stage: completed
 tags:
   - feature
   - p0
@@ -7,8 +7,9 @@ tags:
 contexts:
   - architecture
   - ai-guide
-agent: "04-\U0001F4CBplanner"
+agent: opus
 skills: []
+mode: auditor
 ---
 
 # Overhaul: Agent/Mode Split + Automated Batch Runner

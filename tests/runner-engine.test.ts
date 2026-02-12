@@ -9,7 +9,7 @@ vi.mock('node:fs/promises');
 vi.mock('../src/services/frontmatter');
 vi.mock('../src/services/scanner');
 vi.mock('../src/services/prompt-builder');
-vi.mock('../src/services/agent-service');
+vi.mock('../src/services/provider-service');
 vi.mock('../src/services/stage-manager');
 vi.mock('../src/runner/adapter-factory');
 
@@ -17,8 +17,8 @@ vi.mock('../src/runner/adapter-factory');
 import { parseTaskFile, stringifyTaskFile } from '../src/services/frontmatter';
 import { loadAllTasks, getOrderedTasksForStage } from '../src/services/scanner';
 import { buildRunnerPrompt } from '../src/services/prompt-builder';
-import { resolveAgentConfig } from '../src/services/agent-service';
-import { getDefaultModeForStage, getDefaultAgentForMode } from '../src/services/stage-manager';
+import { resolveProviderConfig } from '../src/services/provider-service';
+import { getDefaultAgentForStage, getDefaultProviderForAgent } from '../src/services/stage-manager';
 import { getAdapterForCli } from '../src/runner/adapter-factory';
 
 class MockChildProcess extends EventEmitter {
@@ -41,7 +41,7 @@ describe('RunnerEngine', () => {
     title: 'Test Task',
     stage: 'plan',
     content: 'Initial content',
-    mode: 'planner',
+    provider: 'opus',
     agent: 'codex',
   };
 
@@ -65,9 +65,9 @@ describe('RunnerEngine', () => {
     (fs.writeFile as Mock).mockResolvedValue(undefined);
     (buildRunnerPrompt as Mock).mockResolvedValue({
       xmlPrompt: '<xml>prompt</xml>',
-      modeInstructions: 'Task instructions',
+      agentInstructions: 'Task instructions',
     });
-    (resolveAgentConfig as Mock).mockResolvedValue({
+    (resolveProviderConfig as Mock).mockResolvedValue({
       cli: 'mock-cli',
       safety: { max_turns: 5 },
     });
@@ -75,8 +75,8 @@ describe('RunnerEngine', () => {
       buildCommand: () => ({ command: 'echo', args: ['hello'], stdin: '' }),
       parseResponse: (stdout: string) => ({ success: true, result: stdout }),
     });
-    (getDefaultModeForStage as Mock).mockResolvedValue('default-mode');
-    (getDefaultAgentForMode as Mock).mockReturnValue('default-agent');
+    (getDefaultAgentForStage as Mock).mockResolvedValue('default-agent');
+    (getDefaultProviderForAgent as Mock).mockReturnValue('default-provider');
     (getOrderedTasksForStage as Mock).mockReturnValue([mockTask]);
     (loadAllTasks as Mock).mockResolvedValue([mockTask]);
   });
@@ -100,8 +100,8 @@ describe('RunnerEngine', () => {
     const task = { ...mockTask, stage: 'plan' } as Task;
     (parseTaskFile as Mock).mockResolvedValue(task);
 
-    // Default mode/agent setup for transitions
-    (getDefaultModeForStage as Mock).mockImplementation((root, stage) => {
+    // Default agent/provider setup for transitions
+    (getDefaultAgentForStage as Mock).mockImplementation((root, stage) => {
       if (stage === 'plan') return 'planner';
       if (stage === 'code') return 'coder';
       if (stage === 'audit') return 'auditor';
@@ -124,17 +124,22 @@ describe('RunnerEngine', () => {
     const result = await runPromise;
 
     expect(result.status).toBe('completed');
-    expect(fs.writeFile).toHaveBeenCalledTimes(4); // 3 stages (plan, code, audit) setTaskStageModeAgent calls + 1 persistTask(completed)
+    expect(fs.writeFile).toHaveBeenCalledTimes(4); // 3 stages (plan, code, audit) setTaskStageProviderAgent calls + 1 persistTask(completed)
     
     // Verifications
     expect(parseTaskFile).toHaveBeenCalledWith(task.filePath);
-    expect(resolveAgentConfig).toHaveBeenCalledTimes(3);
+    expect(resolveProviderConfig).toHaveBeenCalledTimes(3);
+    expect(
+      (resolveProviderConfig as Mock).mock.calls.every(
+        ([rootArg, providerArg]) => rootArg === kanbanRoot && providerArg === 'default-provider',
+      ),
+    ).toBe(true);
   });
 
   it('Audit Fail (Attempt 1) -> Back to Code', async () => {
     const task = { ...mockTask, stage: 'audit', attempts: 0 } as Task;
     (parseTaskFile as Mock).mockResolvedValue(task);
-    (getDefaultModeForStage as Mock).mockResolvedValue('auditor');
+    (getDefaultAgentForStage as Mock).mockResolvedValue('auditor');
 
     const runPromise = runner.runTask(task);
     
@@ -208,8 +213,8 @@ describe('RunnerEngine', () => {
     expect(result.status).toBe('stopped');
     
     // Should NOT have run next stage (Code)
-    // resolveAgentConfig is called once for Plan
-    expect(resolveAgentConfig).toHaveBeenCalledTimes(1);
+    // resolveProviderConfig is called once for Plan
+    expect(resolveProviderConfig).toHaveBeenCalledTimes(1);
     // Writes: 1 for plan update
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
   });
@@ -223,5 +228,19 @@ describe('RunnerEngine', () => {
     const result = await runPromise;
     expect(result.status).toBe('failed');
     expect(result.error).toContain('git working tree is dirty');
+  });
+
+  it('falls back to global default provider when stage mapping is missing', async () => {
+    const task = { ...mockTask, stage: 'audit', provider: undefined } as Task;
+    (parseTaskFile as Mock).mockResolvedValue(task);
+    (getDefaultProviderForAgent as Mock).mockReturnValue(undefined);
+
+    const runPromise = runner.runTask(task);
+    await completeProcess(''); // git
+    await completeProcess('Audit passed. <!-- AUDIT_RATING: 9 -->');
+
+    const result = await runPromise;
+    expect(result.status).toBe('completed');
+    expect(resolveProviderConfig).toHaveBeenCalledWith(kanbanRoot, 'codex');
   });
 });

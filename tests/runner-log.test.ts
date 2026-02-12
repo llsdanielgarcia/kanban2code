@@ -62,7 +62,7 @@ test('Per-task section includes all required fields', () => {
     taskId: 'task-a',
     title: 'Implement parser',
     status: 'completed',
-    mode: 'coder -> auditor',
+    provider: 'coder -> auditor',
     agent: 'codex',
     tokensIn: 12450,
     tokensOut: 3200,
@@ -78,7 +78,7 @@ test('Per-task section includes all required fields', () => {
   expect(markdown).toContain('### Implement parser');
   expect(markdown).toContain('- Task: task-a');
   expect(markdown).toContain('- Status: completed');
-  expect(markdown).toContain('- Mode: coder -> auditor');
+  expect(markdown).toContain('- Provider: coder -> auditor');
   expect(markdown).toContain('- Agent: codex');
   expect(markdown).toContain('- Tokens: 12,450 in / 3,200 out');
   expect(markdown).toContain('- Time: 8m 12s');

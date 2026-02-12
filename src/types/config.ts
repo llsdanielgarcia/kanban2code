@@ -58,7 +58,7 @@ export interface Kanban2CodeConfig {
   stages: Record<string, StageConfig>;
   preferences: PreferencesConfig;
   personalities?: Record<string, PersonalityConfig>;
-  modeDefaults?: Record<string, string>;
+  providerDefaults?: Record<string, string>;
 }
 
 /**
@@ -152,7 +152,7 @@ export const DEFAULT_CONFIG: Kanban2CodeConfig = {
     archiveCompleted: true,
     archiveAfterDays: 7,
   },
-  modeDefaults: {
+  providerDefaults: {
     coder: 'opus',
     auditor: 'opus',
     planner: 'sonnet',

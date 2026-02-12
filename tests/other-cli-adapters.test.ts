@@ -3,9 +3,9 @@ import { CodexAdapter } from '../src/runner/adapters/codex-adapter';
 import { KimiAdapter } from '../src/runner/adapters/kimi-adapter';
 import { KiloAdapter } from '../src/runner/adapters/kilo-adapter';
 import { getAdapterForCli } from '../src/runner/adapter-factory';
-import type { AgentCliConfig } from '../src/types/agent';
+import type { ProviderConfig } from '../src/types/provider';
 
-function makeCodexConfig(overrides?: Partial<AgentCliConfig>): AgentCliConfig {
+function makeCodexConfig(overrides?: Partial<ProviderConfig>): ProviderConfig {
   return {
     cli: 'codex',
     subcommand: 'exec',
@@ -18,7 +18,7 @@ function makeCodexConfig(overrides?: Partial<AgentCliConfig>): AgentCliConfig {
   };
 }
 
-function makeKimiConfig(overrides?: Partial<AgentCliConfig>): AgentCliConfig {
+function makeKimiConfig(overrides?: Partial<ProviderConfig>): ProviderConfig {
   return {
     cli: 'kimi',
     model: 'kimi-k2-thinking-turbo',
@@ -30,7 +30,7 @@ function makeKimiConfig(overrides?: Partial<AgentCliConfig>): AgentCliConfig {
   };
 }
 
-function makeKiloConfig(overrides?: Partial<AgentCliConfig>): AgentCliConfig {
+function makeKiloConfig(overrides?: Partial<ProviderConfig>): ProviderConfig {
   return {
     cli: 'kilo',
     subcommand: 'run',

@@ -16,103 +16,103 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
 ## Accepted Task Updates
 
 - date: 2026-02-11
-- task: `task1.1-add-mode-and-attempts-fields-to-task-interface`
-- files-updated:
-  - `src/types/task.ts` (`Task` now includes optional `mode?: string` and `attempts?: number`)
-  - `src/services/frontmatter.ts` (parse + stringify support for `mode` and `attempts`)
-- new-files-created: none
+  - task: `task1.1-add-agent-and-attempts-fields-to-task-interface`
+  - files-updated:
+    - `src/types/task.ts` (`Task` now includes optional `agent?: string` and `attempts?: number`)
+    - `src/services/frontmatter.ts` (parse + stringify support for `agent` and `attempts`)
+  - new-files-created: none
 
 - date: 2026-02-11
-  - task: `task1.2-define-agentcliconfig-and-modeconfig-types-with-zod-schemas`
+  - task: `task1.2-define-providerconfig-and-agentconfig-types-with-zod-schemas`
   - files-updated: none
   - new-files-created:
-    - `src/types/agent.ts` - Defines `AgentCliConfig` interface and Zod schema for CLI configuration
-    - `src/types/mode.ts` - Defines `ModeConfig` interface and Zod schema for mode configuration
-    - `tests/agent-mode-schemas.test.ts` - Tests for the agent and mode schema validation
+    - `src/types/provider.ts` - Defines `ProviderConfig` interface and Zod schema for CLI configuration
+    - `src/types/agent.ts` - Defines `AgentConfig` interface and Zod schema for agent configuration
+    - `tests/provider-agent-schemas.test.ts` - Tests for the provider and agent schema validation
 
 - date: 2026-02-11
-  - task: `task1.3-add-modes-folder-and-logs-folder-constants`
+  - task: `task1.3-add-agents-folder-and-logs-folder-constants`
   - files-updated:
-    - `src/core/constants.ts` (added `MODES_FOLDER = '_modes'` and `LOGS_FOLDER = '_logs'`)
+    - `src/core/constants.ts` (added `AGENTS_FOLDER = '_agents'` and `LOGS_FOLDER = '_logs'`)
   - new-files-created: none
 
 - date: 2026-02-11
-  - task: `task2.1-create-modeservice-crud-for-modes`
+  - task: `task2.1-create-agentservice-crud-for-agents`
   - files-updated:
-    - `docs/architecture.md` (added `mode-service.ts` to service list)
+    - `docs/architecture.md` (added `agent-service.ts` to service list)
   - new-files-created:
-    - `src/services/mode-service.ts` - Service for CRUD operations on mode files
-    - `tests/mode-service.test.ts` - Tests for mode files CRUD operations
+    - `src/services/agent-service.ts` - Service for CRUD operations on agent files
+    - `tests/agent-service.test.ts` - Tests for agent files CRUD operations
 
 - date: 2026-02-11
-  - task: `task2.2-create-agentservice-crud-for-new-agents-cli-config-files`
+  - task: `task2.2-create-providerservice-crud-for-new-providers-cli-config-files`
   - files-updated: none
   - new-files-created:
-    - `src/services/agent-service.ts` - CRUD service for agent CLI configuration files in `_agents/`
-    - `tests/agent-service.test.ts` - Tests for agent CLI config CRUD operations (21 tests)
+    - `src/services/provider-service.ts` - CRUD service for provider CLI configuration files in `_providers/`
+    - `tests/provider-service.test.ts` - Tests for provider CLI config CRUD operations
 
 - date: 2026-02-11
-  - task: `task2.3-update-frontmatter-parser-for-mode-and-attempts`
+  - task: `task2.3-update-frontmatter-parser-for-agent-and-attempts`
   - files-updated:
-    - `src/services/frontmatter.ts` (parse/serialize `mode` and `attempts` fields)
-    - `src/services/task-content.ts` (`saveTaskWithMetadata` metadata interface now includes `mode`)
-    - `src/webview/KanbanPanel.ts` (threads `mode` through `FullTaskDataLoaded` and `SaveTaskWithMetadata`)
-    - `src/webview/SidebarProvider.ts` (threads `mode` through `FullTaskDataLoaded` and `SaveTaskWithMetadata`)
-    - `src/webview/ui/components/TaskEditorModal.tsx` (manages `mode` state, dirty checking, save)
-    - `tests/frontmatter.test.ts` (4 new tests for mode/attempts parsing, serialization, round-trip)
+    - `src/services/frontmatter.ts` (parse/serialize `agent` and `attempts` fields)
+    - `src/services/task-content.ts` (`saveTaskWithMetadata` metadata interface now includes `agent`)
+    - `src/webview/KanbanPanel.ts` (threads `agent` through `FullTaskDataLoaded` and `SaveTaskWithMetadata`)
+    - `src/webview/SidebarProvider.ts` (threads `agent` through `FullTaskDataLoaded` and `SaveTaskWithMetadata`)
+    - `src/webview/ui/components/TaskEditorModal.tsx` (manages `agent` state, dirty checking, save)
+    - `tests/frontmatter.test.ts` (4 new tests for agent/attempts parsing, serialization, round-trip)
   - new-files-created: none
 
 - date: 2026-02-11
-  - task: `task2.4-update-prompt-builder-for-mode-aware-context-loading`
+  - task: `task2.4-update-prompt-builder-for-agent-aware-context-loading`
   - files-updated:
-    - `src/services/prompt-builder.ts` (added `loadModeInstructions` with 3-step fallback chain, `buildRunnerPrompt` export, runner `<runner automated="true" />` injection)
-  - new-files-created: none
-  - tests-added:
-    - `tests/prompt-builder.test.ts` (5 new tests: mode loading, agent-to-mode fallback, agent fallback, runner prompt shape, runner automated flag)
-
-- date: 2026-02-11
-  - task: `task2.5-update-stage-manager-for-mode-aware-auto-assignment`
-  - files-updated:
-    - `src/services/stage-manager.ts` (added `ModeInfo`, `listModesWithStage`, `getDefaultModeForStage`, `getDefaultAgentForMode`, `shouldAutoUpdateMode`; updated `updateTaskStage` to auto-set `mode` and `agent` from mode defaults with fallback to stage-based agent assignment)
+    - `src/services/prompt-builder.ts` (added `loadAgentInstructions` with 3-step fallback chain, `buildRunnerPrompt` export, runner `<runner automated="true" />` injection)
   - new-files-created: none
   - tests-added:
-    - `tests/stage-manager.test.ts` (5 new tests: mode-for-stage lookup, agent-for-mode config lookup, auto-set mode+agent on code/audit stages, manual mode preservation)
+    - `tests/prompt-builder.test.ts` (5 new tests: agent loading, provider-to-agent fallback, provider fallback, runner prompt shape, runner automated flag)
 
 - date: 2026-02-11
-  - task: `task3.1-create-migration-service-agents-to-modes-new-agents`
+  - task: `task2.5-update-stage-manager-for-agent-aware-auto-assignment`
+  - files-updated:
+    - `src/services/stage-manager.ts` (added `AgentInfo`, `listAgentsWithStage`, `getDefaultAgentForStage`, `getDefaultProviderForAgent`, `shouldAutoUpdateAgent`; updated `updateTaskStage` to auto-set `agent` and `provider` from agent defaults with fallback to stage-based provider assignment)
+  - new-files-created: none
+  - tests-added:
+    - `tests/stage-manager.test.ts` (5 new tests: agent-for-stage lookup, provider-for-agent config lookup, auto-set agent+provider on code/audit stages, manual agent preservation)
+
+- date: 2026-02-11
+  - task: `task3.1-create-migration-service-providers-to-agents-new-providers`
   - files-updated:
     - `.kanban2code/.gitignore` (added `_logs/` entry)
   - new-files-created:
-    - `src/services/migration.ts` - Atomic migration service for agents → modes transition
+    - `src/services/migration.ts` - Atomic migration service for providers → agents transition
     - `tests/migration.test.ts` - Tests for migration service functionality
   - tests-added:
     - 4 tests: migration success, idempotence, rollback, gitignore update
 
 - date: 2026-02-11
-  - task: `task3.2-update-build-script-to-bundle-modes`
+  - task: `task3.2-update-build-script-to-bundle-agents`
   - files-updated:
-    - `build.ts` (added `_modes/` directory reading to `generateBundledContent()`)
+    - `build.ts` (added `_agents/` directory reading to `generateBundledContent()`)
   - new-files-created:
-    - `src/assets/modes.ts` - Auto-generated file containing bundled mode files
+    - `src/assets/agents.ts` - Auto-generated file containing bundled agent files
 
 - date: 2026-02-11
-  - task: `task3.3-update-scaffolder-for-modes-directory`
+  - task: `task3.3-update-scaffolder-for-agents-directory`
   - files-updated:
-    - `src/services/scaffolder.ts` (added `_modes/` to scaffold and sync functions)
-    - `tests/scaffolder.test.ts` (added tests for mode scaffolding)
+    - `src/services/scaffolder.ts` (added `_agents/` to scaffold and sync functions)
+    - `tests/scaffolder.test.ts` (added tests for agent scaffolding)
   - new-files-created: none
   - tests-added:
-    - 2 tests: scaffold creates modes, sync preserves existing modes
+    - 2 tests: scaffold creates agents, sync preserves existing agents
 
 - date: 2026-02-11
   - task: `task3.4-register-migration-command-verify-file-watcher-coverage`
   - files-updated:
-    - `src/commands/index.ts` (registered `kanban2code.migrateAgentsModes` command with VS Code progress notification)
-    - `src/services/task-watcher.ts` (added `_modes/` and `_agents/` exclusion in `isTaskFile()`)
+    - `src/commands/index.ts` (registered `kanban2code.migrateProvidersAgents` command with VS Code progress notification)
+    - `src/services/task-watcher.ts` (added `_agents/` and `_providers/` exclusion in `isTaskFile()`)
     - `package.json` (added command declaration and activation event)
   - new-files-created: none
   - tests-added:
-    - 2 tests in `tests/task-watcher.test.ts`: `_modes/` and `_agents/` exclusion from task events
+    - 2 tests in `tests/task-watcher.test.ts`: `_agents/` and `_providers/` exclusion from task events
 
 - date: 2026-02-11
   - task: `task4.0-deterministic-task-ordering-in-scanner`
@@ -271,3 +271,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - files-updated:
     - `.kanban2code/_modes/coder.md` (added dual-mode instructions: Mode Detection, Manual/Automated output and workflow sections; explicit no-commit rule in automated mode)
   - new-files-created: none
+
+- date: 2026-02-12
+  - task: `refactor-mode-to-agent-and-agent-to-provider`
+  - description: Comprehensive refactoring to align terminology with industry standards.
+  - files-updated:
+    - `src/types/*.ts`, `src/services/*.ts`, `src/runner/*.ts`, `src/webview/*.tsx`, `tests/*.ts`
+    - `package.json`, `build.ts`, `scaffolder.ts`
+  - new-files-created:
+    - `.kanban2code/_providers/` (moved from defunct modes)
+    - `src/assets/providers.ts` (replaced `modes.ts`)
+  - status: completed

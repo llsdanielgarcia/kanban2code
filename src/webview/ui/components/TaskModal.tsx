@@ -5,7 +5,7 @@ import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { SkillPicker, type SkillFile } from './SkillPicker';
 import { AgentPicker, type LlmProvider } from './AgentPicker';
-import { ModePicker, type Mode } from './ModePicker';
+import type { Provider } from '../hooks/useTaskData';
 import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
 
@@ -21,7 +21,7 @@ interface TaskModalProps {
   contexts?: ContextFile[];
   skills?: SkillFile[];
   agents?: LlmProvider[];
-  modes?: Mode[];
+  providers?: Provider[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
   onClose: () => void;
@@ -36,7 +36,7 @@ interface TaskFormData {
   location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   stage: Stage;
   agent: string | null;
-  mode: string | null;
+  provider: string | null;
   tags: string[];
   contexts: string[];
   skills: string[];
@@ -56,7 +56,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   contexts = [],
   skills = [],
   agents = [],
-  modes = [],
+  providers = [],
   projects = [],
   phasesByProject = {},
   onClose,
@@ -75,7 +75,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
     stage: 'inbox',
     agent: null,
-    mode: null,
+    provider: null,
     tags: [],
     contexts: [],
     skills: [],
@@ -95,7 +95,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
         stage: 'inbox',
         agent: null,
-        mode: null,
+        provider: null,
         tags: [],
         contexts: [],
         skills: [],
@@ -166,7 +166,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       location: formData.location,
       stage: formData.stage,
       agent: formData.agent || undefined,
-      mode: formData.mode || undefined,
+      provider: formData.provider || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
       contexts: formData.contexts.length > 0 ? formData.contexts : undefined,
       skills: formData.skills.length > 0 ? formData.skills : undefined,
@@ -288,13 +288,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             onChange={(agent) => setFormData((prev) => ({ ...prev, agent }))}
           />
 
-          {/* Mode */}
-          <ModePicker
-            modes={modes}
-            value={formData.mode}
-            onChange={(mode) => setFormData((prev) => ({ ...prev, mode }))}
-            onCreateNew={() => {}}
-          />
+          {/* Provider */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="task-provider">Provider</label>
+            <select
+              id="task-provider"
+              className="form-select"
+              value={formData.provider || ''}
+              onChange={(e) => setFormData((prev) => ({ ...prev, provider: e.target.value || null }))}
+            >
+              <option value="">No selection</option>
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Context Files */}
           <ContextPicker

@@ -7,7 +7,7 @@ import {
   loadSkills,
   readFileIfExists,
 } from './context';
-import { AGENTS_FOLDER, MODES_FOLDER } from '../core/constants';
+import { AGENTS_FOLDER } from '../core/constants';
 import * as path from 'path';
 
 function xmlEscape(value: string): string {
@@ -52,29 +52,15 @@ function buildMetadata(task: Task): string {
   return `<metadata>${parts.join('')}</metadata>`;
 }
 
-async function loadModeInstructions(
+async function loadAgentInstructions(
   root: string,
   task: Task,
-): Promise<{ content: string; sectionName: 'mode' | 'agent' }> {
-  if (task.mode) {
-    const modePath = path.join(MODES_FOLDER, `${task.mode}.md`);
-    const content = await readFileIfExists(root, modePath);
-    if (content) {
-      return { content, sectionName: 'mode' };
-    }
-  }
-
+): Promise<{ content: string; sectionName: 'agent' }> {
   if (task.agent) {
-    const modePath = path.join(MODES_FOLDER, `${task.agent}.md`);
-    const modeContent = await readFileIfExists(root, modePath);
-    if (modeContent) {
-      return { content: modeContent, sectionName: 'mode' };
-    }
-
     const agentPath = path.join(AGENTS_FOLDER, `${task.agent}.md`);
-    const agentContent = await readFileIfExists(root, agentPath);
-    if (agentContent) {
-      return { content: agentContent, sectionName: 'agent' };
+    const content = await readFileIfExists(root, agentPath);
+    if (content) {
+      return { content, sectionName: 'agent' };
     }
   }
 
@@ -86,10 +72,10 @@ async function buildContextSection(
   root: string,
   options?: { isRunner?: boolean },
 ): Promise<string> {
-  const [globalContext, modeResult, projectContext, phaseContext, customContexts, skills] =
+  const [globalContext, agentResult, projectContext, phaseContext, customContexts, skills] =
     await Promise.all([
       loadGlobalContext(root),
-      loadModeInstructions(root, task),
+      loadAgentInstructions(root, task),
       loadProjectContext(root, task.project),
       loadPhaseContext(root, task.project, task.phase),
       loadCustomContexts(root, task.contexts),
@@ -98,7 +84,7 @@ async function buildContextSection(
 
   const layers = [
     wrapSection('global', globalContext),
-    wrapSection(modeResult.sectionName, modeResult.content),
+    wrapSection(agentResult.sectionName, agentResult.content),
     wrapSection('project', projectContext),
     wrapSection('phase', phaseContext),
     wrapSection('custom', customContexts),
@@ -136,13 +122,13 @@ export function buildTaskOnlyPrompt(task: Task): string {
 export async function buildRunnerPrompt(
   task: Task,
   root: string,
-): Promise<{ xmlPrompt: string; modeInstructions: string }> {
-  const modeResult = await loadModeInstructions(root, task);
+): Promise<{ xmlPrompt: string; agentInstructions: string }> {
+  const agentResult = await loadAgentInstructions(root, task);
   const contextSection = await buildContextSection(task, root, { isRunner: true });
   const taskSection = buildTaskSection(task);
 
   return {
     xmlPrompt: `<system>${contextSection}${taskSection}</system>`,
-    modeInstructions: modeResult.content,
+    agentInstructions: agentResult.content,
   };
 }

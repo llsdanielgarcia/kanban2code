@@ -88,14 +88,14 @@ describe('TaskWatcher', () => {
     watcher.dispose();
   });
 
-  test('ignores _modes/ files', async () => {
+  test('ignores _providers/ files', async () => {
     const watcher = createWatcher();
     const handler = vi.fn();
     watcher.on('event', handler);
 
-    fake.changeListeners.forEach((fn) => fn('/tmp/.kanban2code/_modes/coder.md'));
-    fake.createListeners.forEach((fn) => fn('/tmp/.kanban2code/_modes/auditor.md'));
-    fake.deleteListeners.forEach((fn) => fn('/tmp/.kanban2code/_modes/planner.md'));
+    fake.changeListeners.forEach((fn) => fn('/tmp/.kanban2code/_providers/coder.md'));
+    fake.createListeners.forEach((fn) => fn('/tmp/.kanban2code/_providers/auditor.md'));
+    fake.deleteListeners.forEach((fn) => fn('/tmp/.kanban2code/_providers/planner.md'));
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(handler).not.toHaveBeenCalled();

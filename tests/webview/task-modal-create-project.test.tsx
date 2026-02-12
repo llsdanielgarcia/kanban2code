@@ -27,7 +27,7 @@ function getLocationTypeButton(name: RegExp) {
 }
 
 describe('TaskModal', () => {
-  it('renders both agent and mode pickers', async () => {
+  it('renders both agent and provider pickers', async () => {
     const { TaskModal } = await import('../../src/webview/ui/components/TaskModal');
 
     render(
@@ -38,13 +38,13 @@ describe('TaskModal', () => {
         phasesByProject={{}}
         contexts={[]}
         agents={[{ id: 'codex', name: 'Codex', description: 'Code model' }]}
-        modes={[{ id: 'coder', name: 'Coder', description: 'Code mode', path: '_modes/coder.md' }]}
+        providers={[{ id: 'coder', name: 'Coder', description: 'Code provider', path: '_providers/coder.md' }]}
         onClose={vi.fn()}
       />,
     );
 
-    expect(screen.getByText('Agent (LLM Provider)')).toBeInTheDocument();
-    expect(screen.getByText('Mode (optional)')).toBeInTheDocument();
+    expect(screen.getByText('Agent')).toBeInTheDocument();
+    expect(screen.getByText('Provider')).toBeInTheDocument();
   });
 
   it('creates a project from LocationPicker and selects it', async () => {
@@ -58,7 +58,7 @@ describe('TaskModal', () => {
         phasesByProject={{}}
         contexts={[]}
         agents={[]}
-        modes={[]}
+        providers={[]}
         onClose={vi.fn()}
       />,
     );
@@ -83,7 +83,7 @@ describe('TaskModal', () => {
     });
   });
 
-  it('posts CreateTask payload with selected mode and agent', async () => {
+  it('posts CreateTask payload with selected provider and agent', async () => {
     const { TaskModal } = await import('../../src/webview/ui/components/TaskModal');
 
     render(
@@ -94,24 +94,24 @@ describe('TaskModal', () => {
         phasesByProject={{}}
         contexts={[]}
         agents={[{ id: 'codex', name: 'Codex', description: 'Code model' }]}
-        modes={[{ id: 'coder', name: 'Coder', description: 'Code mode', path: '_modes/coder.md' }]}
+        providers={[{ id: 'coder', name: 'Coder', description: 'Code provider', path: '_providers/coder.md' }]}
         onClose={vi.fn()}
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'New mode task' } });
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'New provider task' } });
     const agentSelect = screen.getByRole('option', { name: 'Codex' }).closest('select');
-    const modeSelect = screen.getByRole('option', { name: 'Coder' }).closest('select');
-    if (!agentSelect || !modeSelect) throw new Error('Expected mode and agent selects to be rendered');
+    const providerSelect = screen.getByRole('option', { name: 'Coder' }).closest('select');
+    if (!agentSelect || !providerSelect) throw new Error('Expected provider and agent selects to be rendered');
     fireEvent.change(agentSelect, { target: { value: 'codex' } });
-    fireEvent.change(modeSelect, { target: { value: 'coder' } });
+    fireEvent.change(providerSelect, { target: { value: 'coder' } });
     fireEvent.click(screen.getByRole('button', { name: /create task/i }));
 
     await waitFor(() => {
       const createTask = postMessageSpy.mock.calls.find((call) => (call[0] as any).type === 'CreateTask')?.[0] as any;
       expect(createTask).toBeTruthy();
       expect(createTask.payload.agent).toBe('codex');
-      expect(createTask.payload.mode).toBe('coder');
+      expect(createTask.payload.provider).toBe('coder');
     });
   });
 });

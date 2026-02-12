@@ -18,7 +18,7 @@ import * as path from 'path';
 import type { Stage } from '../types/task';
 import { parseTaskFile } from '../services/frontmatter';
 import type { Task } from '../types/task';
-import { migrateAgentsToModes } from '../services/migration';
+import { migrateToProviders } from '../services/migration';
 import type { RunnerPipelineStage } from '../runner/runner-engine';
 
 export function registerCommands(context: vscode.ExtensionContext, sidebarProvider: SidebarProvider) {
@@ -120,7 +120,7 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
       location?: 'inbox' | { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
       stage?: Stage;
       agent?: string;
-      mode?: string;
+      provider?: string;
       tags?: string[];
       parent?: string;
       content?: string;
@@ -176,8 +176,8 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
         frontmatterLines.push(`agent: ${options.agent}`);
       }
 
-      if (options?.mode) {
-        frontmatterLines.push(`mode: ${options.mode}`);
+      if (options?.provider) {
+        frontmatterLines.push(`provider: ${options.provider}`);
       }
 
       if (options?.tags && options.tags.length > 0) {
@@ -470,7 +470,7 @@ Describe the agent's role and expertise.
       }
     }),
 
-    // Migrate Agents to Modes command
+    // Migrate to Providers command
     vscode.commands.registerCommand('kanban2code.migrateAgentsModes', async () => {
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (!workspaceFolders || workspaceFolders.length === 0) {
@@ -483,25 +483,25 @@ Describe the agent's role and expertise.
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Kanban2Code: Migrating agents to modes…',
+          title: 'Kanban2Code: Migrating to providers…',
           cancellable: false,
         },
         async (progress) => {
           try {
             progress.report({ message: 'Scanning workspace…' });
-            const report = await migrateAgentsToModes(rootPath);
+            const report = await migrateToProviders(rootPath);
 
             progress.report({ message: 'Finalizing…' });
 
             const parts: string[] = [];
-            if (report.movedModes.length > 0) {
-              parts.push(`${report.movedModes.length} mode(s) created`);
-            }
-            if (report.createdAgents.length > 0) {
-              parts.push(`${report.createdAgents.length} agent config(s) created`);
+            if (report.createdProviders.length > 0) {
+              parts.push(`${report.createdProviders.length} provider(s) created`);
             }
             if (report.updatedTasks.length > 0) {
               parts.push(`${report.updatedTasks.length} task(s) updated`);
+            }
+            if (report.removedModes) {
+              parts.push('modes directory removed');
             }
             if (report.skipped.length > 0) {
               parts.push(`${report.skipped.length} skipped`);

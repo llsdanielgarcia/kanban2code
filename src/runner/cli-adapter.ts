@@ -1,4 +1,4 @@
-import type { AgentCliConfig } from '../types/agent';
+import type { ProviderConfig } from '../types/provider';
 
 /**
  * Structured response from a CLI adapter after parsing stdout.
@@ -59,7 +59,7 @@ export interface CliAdapter {
    * @returns A command descriptor ready for process spawning
    */
   buildCommand(
-    config: AgentCliConfig,
+    config: ProviderConfig,
     prompt: string,
     options?: CliAdapterOptions,
   ): CliCommandResult;

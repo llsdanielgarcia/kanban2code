@@ -48,13 +48,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   }, [task.agent, agents]);
 
   const footerLabel = useMemo(() => {
-    if (task.mode && task.agent) {
-      // Show mode | agent when both are set
-      return `${task.mode} | ${agentDisplayName}`;
+    if (task.provider && task.agent) {
+      // Show provider | agent when both are set
+      return `${task.provider} | ${agentDisplayName}`;
     }
     // Fallback: show agent only
     return agentDisplayName;
-  }, [task.mode, task.agent, agentDisplayName]);
+  }, [task.provider, task.agent, agentDisplayName]);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';

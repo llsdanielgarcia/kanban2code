@@ -88,7 +88,7 @@ class ConfigService {
       stages: { ...DEFAULT_CONFIG.stages, ...loaded.stages },
       preferences: { ...DEFAULT_CONFIG.preferences, ...loaded.preferences },
       personalities: loaded.personalities,
-      modeDefaults: { ...DEFAULT_CONFIG.modeDefaults, ...loaded.modeDefaults },
+      providerDefaults: { ...DEFAULT_CONFIG.providerDefaults, ...loaded.providerDefaults },
     };
   }
 
@@ -222,17 +222,17 @@ class ConfigService {
   }
 
   /**
-   * Get default agent for a mode
+   * Get default provider for an agent
    */
-  getModeDefault(modeName: string): string | undefined {
-    return this.config.modeDefaults?.[modeName];
+  getProviderDefault(agentName: string): string | undefined {
+    return this.config.providerDefaults?.[agentName];
   }
 
   /**
-   * Get all mode defaults
+   * Get all provider defaults
    */
-  getModeDefaults(): Record<string, string> {
-    return this.config.modeDefaults ?? {};
+  getProviderDefaults(): Record<string, string> {
+    return this.config.providerDefaults ?? {};
   }
 
   /**

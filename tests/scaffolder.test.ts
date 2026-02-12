@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { BUNDLED_AGENTS } from '../src/assets/agents';
-import { BUNDLED_MODES } from '../src/assets/modes';
+import { BUNDLED_PROVIDERS } from '../src/assets/providers';
 import { HOW_IT_WORKS } from '../src/assets/seed-content';
 
 let scaffoldWorkspace: typeof import('../src/services/scaffolder').scaffoldWorkspace;
@@ -62,12 +62,12 @@ test('scaffoldWorkspace creates expected structure', async () => {
   const aiGuide = await fs.readFile(path.join(kanbanRoot, '_context/ai-guide.md'), 'utf-8');
   expect(aiGuide).toContain('# Kanban2Code AI Guide');
 
-  // Verify _modes directory and bundled modes
-  const statsModes = await fs.stat(path.join(kanbanRoot, '_modes'));
-  expect(statsModes.isDirectory()).toBe(true);
+  // Verify _providers directory and bundled providers
+  const statsProviders = await fs.stat(path.join(kanbanRoot, '_providers'));
+  expect(statsProviders.isDirectory()).toBe(true);
 
-  const coderMode = await fs.readFile(path.join(kanbanRoot, '_modes/coder.md'), 'utf-8');
-  expect(coderMode).toContain('name: coder');
+  const opusProvider = await fs.readFile(path.join(kanbanRoot, '_providers/opus.md'), 'utf-8');
+  expect(opusProvider).toContain('cli: claude');
 });
 
 test('scaffoldWorkspace fails if already initialized', async () => {
@@ -166,55 +166,55 @@ describe('bundled agents scaffolding', () => {
   });
 });
 
-describe('bundled modes scaffolding', () => {
-  test('scaffoldWorkspace creates all bundled mode files', async () => {
+describe('bundled providers scaffolding', () => {
+  test('scaffoldWorkspace creates all bundled provider files', async () => {
     await scaffoldWorkspace(TEST_DIR);
 
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
-    const modesDir = path.join(kanbanRoot, '_modes');
+    const providersDir = path.join(kanbanRoot, '_providers');
 
-    // Check all bundled modes are created
-    for (const filename of Object.keys(BUNDLED_MODES)) {
-      const modePath = path.join(modesDir, filename);
-      const stat = await fs.stat(modePath);
+    // Check all bundled providers are created
+    for (const filename of Object.keys(BUNDLED_PROVIDERS)) {
+      const providerPath = path.join(providersDir, filename);
+      const stat = await fs.stat(providerPath);
       expect(stat.isFile()).toBe(true);
     }
 
-    // Verify content of modes
-    const coder = await fs.readFile(path.join(modesDir, 'coder.md'), 'utf-8');
-    expect(coder).toContain('name: coder');
+    // Verify content of providers
+    const opus = await fs.readFile(path.join(providersDir, 'opus.md'), 'utf-8');
+    expect(opus).toContain('cli: claude');
 
-    const auditor = await fs.readFile(path.join(modesDir, 'auditor.md'), 'utf-8');
-    expect(auditor).toContain('name: auditor');
+    const codex = await fs.readFile(path.join(providersDir, 'codex.md'), 'utf-8');
+    expect(codex).toContain('cli: codex');
   });
 
-  test('sync writes missing mode files without overwriting existing ones', async () => {
+  test('sync writes missing provider files without overwriting existing ones', async () => {
     const kanbanRoot = path.join(TEST_DIR, KANBAN_FOLDER);
     await fs.mkdir(kanbanRoot, { recursive: true });
 
-    // Pre-create a custom mode file
-    const modesDir = path.join(kanbanRoot, '_modes');
-    await fs.mkdir(modesDir, { recursive: true });
-    const customContent = '---\nname: coder\ncustom: true\n---\nCustom coder mode';
-    await fs.writeFile(path.join(modesDir, 'coder.md'), customContent);
+    // Pre-create a custom provider file
+    const providersDir = path.join(kanbanRoot, '_providers');
+    await fs.mkdir(providersDir, { recursive: true });
+    const customContent = '---\ncli: custom-claude\ncustom: true\n---\nCustom opus provider';
+    await fs.writeFile(path.join(providersDir, 'opus.md'), customContent);
 
     // Sync workspace
     const report = await syncWorkspace(TEST_DIR);
 
-    // coder.md should be skipped (already exists)
-    expect(report.skipped).toContain('_modes/coder.md');
+    // opus.md should be skipped (already exists)
+    expect(report.skipped).toContain('_providers/opus.md');
 
-    // Other modes should be created
-    expect(report.created).toContain('_modes/auditor.md');
-    expect(report.created).toContain('_modes/planner.md');
+    // Other providers should be created
+    expect(report.created).toContain('_providers/codex.md');
+    expect(report.created).toContain('_providers/kimi.md');
 
-    // Verify custom mode is preserved
-    const coder = await fs.readFile(path.join(modesDir, 'coder.md'), 'utf-8');
-    expect(coder).toContain('custom: true');
+    // Verify custom provider is preserved
+    const opus = await fs.readFile(path.join(providersDir, 'opus.md'), 'utf-8');
+    expect(opus).toContain('custom: true');
 
-    // Verify new modes are created correctly
-    const auditor = await fs.readFile(path.join(modesDir, 'auditor.md'), 'utf-8');
-    expect(auditor).toContain('name: auditor');
+    // Verify new providers are created correctly
+    const codex = await fs.readFile(path.join(providersDir, 'codex.md'), 'utf-8');
+    expect(codex).toContain('cli: codex');
   });
 });
 

@@ -66,23 +66,23 @@ describe('TaskContextMenu', () => {
     expect(postMessageSpy).not.toHaveBeenCalled();
   });
 
-  it('lists all available modes in Change Mode submenu', async () => {
+  it('lists all available providers in Change Provider submenu', async () => {
     const { TaskContextMenu } = await import('../../../src/webview/ui/components/TaskContextMenu');
 
     render(
       <TaskContextMenu
         task={makeTask('code')}
-        modes={[
-          { id: 'planner', name: 'Planner', description: 'Plan', path: '_modes/planner.md', stage: 'plan' },
-          { id: 'coder', name: 'Coder', description: 'Code', path: '_modes/coder.md', stage: 'code' },
-          { id: 'auditor', name: 'Auditor', description: 'Audit', path: '_modes/auditor.md', stage: 'audit' },
+        providers={[
+          { id: 'planner', name: 'Planner', description: 'Plan', path: '_providers/planner.md', stage: 'plan' },
+          { id: 'coder', name: 'Coder', description: 'Code', path: '_providers/coder.md', stage: 'code' },
+          { id: 'auditor', name: 'Auditor', description: 'Audit', path: '_providers/auditor.md', stage: 'audit' },
         ]}
         position={{ x: 16, y: 16 }}
         onClose={vi.fn()}
       />,
     );
 
-    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: /change mode/i }));
+    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: /change provider/i }));
 
     expect(screen.getByRole('menuitem', { name: 'Planner' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Coder' })).toBeInTheDocument();
@@ -110,5 +110,21 @@ describe('TaskContextMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Codex' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Claude' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'KIMI' })).toBeInTheDocument();
+  });
+
+  it('shows no-agents placeholder in Change Agent submenu when empty', async () => {
+    const { TaskContextMenu } = await import('../../../src/webview/ui/components/TaskContextMenu');
+
+    render(
+      <TaskContextMenu
+        task={makeTask('code')}
+        agents={[]}
+        position={{ x: 16, y: 16 }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: /change agent/i }));
+    expect(screen.getByRole('menuitem', { name: /no agents available/i })).toBeInTheDocument();
   });
 });

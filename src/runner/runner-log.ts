@@ -10,7 +10,7 @@ export interface RunnerTaskResult {
   taskId: string;
   title: string;
   status: RunnerTaskStatus;
-  mode?: string;
+  provider?: string;
   agent?: string;
   tokensIn?: number;
   tokensOut?: number;
@@ -139,7 +139,7 @@ export class RunnerLog {
       lines.push(`### ${task.title || task.taskId}`);
       lines.push(`- Task: ${task.taskId}`);
       lines.push(`- Status: ${task.status}`);
-      lines.push(`- Mode: ${task.mode ?? '-'}`);
+      lines.push(`- Provider: ${task.provider ?? '-'}`);
       lines.push(`- Agent: ${task.agent ?? '-'}`);
       lines.push(`- Tokens: ${formatTokens(task.tokensIn, task.tokensOut)}`);
       lines.push(`- Time: ${task.durationMs !== undefined ? formatDuration(task.durationMs) : '-'}`);

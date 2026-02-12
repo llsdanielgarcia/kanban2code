@@ -42,7 +42,7 @@ test('parseDeleteTaskPayload throws on invalid payload', () => {
 
 test('new HostToWebview message types validate through EnvelopeSchema', () => {
   expect(() =>
-    EnvelopeSchema.parse({ version: MESSAGE_VERSION, type: 'ModesLoaded', payload: { modes: [] } }),
+    EnvelopeSchema.parse({ version: MESSAGE_VERSION, type: 'ProvidersLoaded', payload: { providers: [] } }),
   ).not.toThrow();
   expect(() =>
     EnvelopeSchema.parse({
@@ -55,26 +55,26 @@ test('new HostToWebview message types validate through EnvelopeSchema', () => {
 
 test('new WebviewToHost message types validate through EnvelopeSchema', () => {
   expect(() =>
-    EnvelopeSchema.parse({ version: MESSAGE_VERSION, type: 'RequestModes', payload: {} }),
+    EnvelopeSchema.parse({ version: MESSAGE_VERSION, type: 'RequestProviders', payload: {} }),
   ).not.toThrow();
   expect(() =>
     EnvelopeSchema.parse({
       version: MESSAGE_VERSION,
-      type: 'CreateMode',
+      type: 'CreateProvider',
       payload: { name: 'test' },
     }),
   ).not.toThrow();
   expect(() =>
     EnvelopeSchema.parse({
       version: MESSAGE_VERSION,
-      type: 'UpdateMode',
+      type: 'UpdateProvider',
       payload: { name: 'test' },
     }),
   ).not.toThrow();
   expect(() =>
     EnvelopeSchema.parse({
       version: MESSAGE_VERSION,
-      type: 'DeleteMode',
+      type: 'DeleteProvider',
       payload: { name: 'test' },
     }),
   ).not.toThrow();

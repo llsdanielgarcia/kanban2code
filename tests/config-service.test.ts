@@ -72,7 +72,7 @@ test('loads config.json and merges with defaults', async () => {
   expect(configService.getAllowedTransitions('inbox')).toEqual(['plan']);
 });
 
-test('fills in default modeDefaults when config.json omits them', async () => {
+test('fills in default providerDefaults when config.json omits them', async () => {
   await fs.writeFile(
     path.join(KANBAN_ROOT, 'config.json'),
     JSON.stringify({ version: '1.0.0' }, null, 2)
@@ -80,16 +80,16 @@ test('fills in default modeDefaults when config.json omits them', async () => {
 
   await configService.initialize(KANBAN_ROOT);
 
-  expect(configService.getModeDefaults()).toEqual(DEFAULT_CONFIG.modeDefaults);
+  expect(configService.getProviderDefaults()).toEqual(DEFAULT_CONFIG.providerDefaults);
 });
 
-test('partial modeDefaults overrides merge with defaults', async () => {
+test('partial providerDefaults overrides merge with defaults', async () => {
   await fs.writeFile(
     path.join(KANBAN_ROOT, 'config.json'),
     JSON.stringify(
       {
         version: '1.0.0',
-        modeDefaults: { coder: 'codex' },
+        providerDefaults: { coder: 'codex' },
       },
       null,
       2
@@ -99,12 +99,12 @@ test('partial modeDefaults overrides merge with defaults', async () => {
   await configService.initialize(KANBAN_ROOT);
 
   // Overridden value takes effect
-  expect(configService.getModeDefault('coder')).toBe('codex');
+  expect(configService.getProviderDefault('coder')).toBe('codex');
   // Non-overridden defaults are preserved
-  expect(configService.getModeDefault('auditor')).toBe('opus');
-  expect(configService.getModeDefault('planner')).toBe('sonnet');
-  expect(configService.getModeDefault('contextBuilder')).toBe('sonnet');
-  expect(configService.getModeDefault('splitter')).toBe('glm');
+  expect(configService.getProviderDefault('auditor')).toBe('opus');
+  expect(configService.getProviderDefault('planner')).toBe('sonnet');
+  expect(configService.getProviderDefault('contextBuilder')).toBe('sonnet');
+  expect(configService.getProviderDefault('splitter')).toBe('glm');
 });
 
 test('falls back to defaults when config.json is invalid JSON', async () => {

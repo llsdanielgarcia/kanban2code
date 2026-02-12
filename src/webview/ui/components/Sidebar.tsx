@@ -39,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
     tasks,
     contexts,
     agents,
-    modes,
+    providers,
     projects,
     phasesByProject,
     isLoading,
@@ -320,7 +320,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
           tasks={tasks}
           contexts={contexts}
           agents={agents}
-          modes={modes}
+          providers={providers}
           projects={projects}
           phasesByProject={phasesByProject}
           onClose={() => setShowTaskModal(false)}
@@ -360,7 +360,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
       {contextMenuState && (
         <TaskContextMenu
           task={contextMenuState.task}
-          modes={modes}
+          providers={providers}
           agents={agents}
           isRunnerActive={isRunnerActive}
           position={contextMenuState.position}

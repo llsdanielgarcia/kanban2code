@@ -1,6 +1,6 @@
 ---
 name: Kanban2Code AI Guide
-description: Operational guide for AI agents and modes in a Kanban2Code workspace.
+description: Operational guide for AI agents and providers in a Kanban2Code workspace.
 scope: global
 created: 2025-12-14
 updated: 2026-02-12
@@ -13,23 +13,23 @@ This guide defines how to create, edit, and progress task files in Kanban2Code.
 ## 1) Core Concepts
 
 - `stage`: where the task is in the lifecycle (`inbox`, `plan`, `code`, `audit`, `completed`)
-- `mode`: behavioral role/instructions (`planner`, `coder`, `auditor`, etc.)
-- `agent`: LLM provider runtime config (CLI + model + flags)
+- `agent`: behavioral role/instructions (`planner`, `coder`, `auditor`, etc.)
+- `provider`: LLM provider runtime config (CLI + model + flags)
 
 Rule of thumb:
-- Mode controls **how** the assistant behaves.
-- Agent controls **what runtime** executes the prompt.
+- Agent controls **how** the assistant behaves.
+- Provider controls **what runtime** executes the prompt.
 
 ## 2) Workspace Layout
 
 Kanban2Code stores data under `.kanban2code/`:
 
 - `inbox/` and `projects/**`: task files
-- `_modes/`: mode instruction files
-- `_agents/`: agent CLI config files
+- `_agents/`: agent behavioral instructions
+- `_providers/`: provider CLI config files
 - `_context/`: shared context docs
 - `_archive/`: completed tasks
-- `config.json`: config and `modeDefaults`
+- `config.json`: config and `providerDefaults`
 
 ## 3) Task File Format
 
@@ -38,8 +38,8 @@ Task files are markdown with optional YAML frontmatter.
 ```md
 ---
 stage: plan
-mode: planner
-agent: sonnet
+agent: planner
+provider: sonnet
 tags: [feature, p1]
 contexts: [ai-guide]
 attempts: 0
@@ -53,8 +53,8 @@ Make retry behavior clearer and safer.
 
 Fields commonly used:
 - `stage`: `inbox | plan | code | audit | completed`
-- `mode`: behavior role (optional but recommended)
-- `agent`: provider/runtime identifier (optional)
+- `agent`: behavioral role (e.g. planner, coder, auditor)
+- `provider`: runtime/LLM config identifier (optional)
 - `attempts`: integer retry count for runner workflow
 - `tags`, `contexts`, `parent`, `order`, `created`
 
@@ -73,7 +73,7 @@ Audit outcomes:
 Prompt context is assembled in layers:
 
 1. global: `.kanban2code/how-it-works.md`, `.kanban2code/architecture.md`, `.kanban2code/project-details.md`
-2. mode/agent instructions: from `_modes/` first, then `_agents/` fallback
+2. agent/provider instructions: from `_agents/` first
 3. project context: `.kanban2code/projects/<project>/_context.md`
 4. phase context: `.kanban2code/projects/<project>/<phase>/_context.md`
 5. custom contexts: from `contexts:`
@@ -83,7 +83,7 @@ When runner mode is active, prompt context includes:
 
 ## 6) Dual-Mode Behavior (Manual vs Automated)
 
-Mode files must support two execution environments.
+Agent instructions must support two execution environments.
 
 ### Manual mode (default)
 - Assistant can edit task frontmatter directly for stage handoff.
@@ -133,24 +133,24 @@ Manual planner handoff (frontmatter edited directly):
 ```md
 ---
 stage: code
-mode: coder
-agent: opus
+agent: coder
+provider: opus
 tags: [feature, p1]
 ---
 
-# Add stage-aware mode picker
+# Add stage-aware provider picker
 
 ## Goal
-Implement UI mode picker behavior for plan/code/audit tasks.
+Implement UI provider picker behavior for plan/code/audit tasks.
 ```
 
 Automated coder output snippet:
 
 ```md
-Implemented mode picker and tests.
+Implemented provider picker and tests.
 
 <!-- STAGE_TRANSITION: audit -->
-<!-- FILES_CHANGED: src/webview/ui/components/ModePicker.tsx, tests/webview/components/ModePicker.test.tsx -->
+<!-- FILES_CHANGED: src/webview/ui/components/ProviderPicker.tsx, tests/webview/components/ProviderPicker.test.tsx -->
 ```
 
 Automated auditor output snippet:
@@ -164,7 +164,6 @@ No blocking issues found.
 
 ## 10) Common Mistakes To Avoid
 
-- Treating `agent` as behavior role instead of provider config
 - Editing frontmatter in automated mode
 - Omitting structured markers in automated mode
 - Writing architecture notes to `_context/architecture.md` instead of `.kanban2code/architecture.md`

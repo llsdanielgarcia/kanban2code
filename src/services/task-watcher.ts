@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as path from 'path';
-import { AGENTS_FOLDER, KANBAN_FOLDER, MODES_FOLDER } from '../core/constants';
+import { AGENTS_FOLDER, KANBAN_FOLDER, PROVIDERS_FOLDER } from '../core/constants';
 
 export type TaskWatcherEvent =
   | { type: 'created' | 'updated' | 'deleted'; path: string }
@@ -27,10 +27,10 @@ function isTaskFile(filePath: string): boolean {
   const fileName = path.basename(filePath);
   if (!isMarkdown || fileName === '_context.md') return false;
 
-  // Exclude config directories — _modes/ and _agents/ are not tasks
+  // Exclude config directories — _providers/ and _agents/ are not tasks
   const sep = path.sep;
   if (
-    filePath.includes(`${sep}${MODES_FOLDER}${sep}`) ||
+    filePath.includes(`${sep}${PROVIDERS_FOLDER}${sep}`) ||
     filePath.includes(`${sep}${AGENTS_FOLDER}${sep}`)
   ) {
     return false;

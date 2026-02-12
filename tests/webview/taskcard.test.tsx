@@ -227,7 +227,7 @@ describe('TaskCard', () => {
     expect(onDelete).toHaveBeenCalledWith(task);
   });
 
-  test('card shows mode name when set', async () => {
+  test('card shows provider name when set', async () => {
     const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
     const task = {
       id: 't1',
@@ -235,7 +235,7 @@ describe('TaskCard', () => {
       title: 'Task',
       stage: 'code',
       agent: 'opus',
-      mode: 'coder',
+      provider: 'coder',
       content: '',
     } as any;
 
@@ -244,7 +244,7 @@ describe('TaskCard', () => {
     expect(screen.getByText('coder | opus')).toBeInTheDocument();
   });
 
-  test('card shows agent only when mode is unset', async () => {
+  test('card shows agent only when provider is unset', async () => {
     const { TaskCard } = await import('../../src/webview/ui/components/TaskCard');
     const task = {
       id: 't1',

@@ -69,7 +69,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'inbox' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],
@@ -106,7 +106,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'project', project: 'proj', phase: 'phase-1' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],
@@ -122,7 +122,7 @@ describe('TaskEditorModal', () => {
     expect(getLocationTypeButton(/project/i)).toHaveClass('active');
   });
 
-  it('renders both agent and mode pickers in metadata panel', async () => {
+  it('renders both agent and provider pickers in metadata panel', async () => {
     const { TaskEditorModal } = await import('../../src/webview/ui/components/TaskEditorModal');
 
     render(
@@ -142,7 +142,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'inbox' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],
@@ -150,14 +150,14 @@ describe('TaskEditorModal', () => {
       contexts: [],
       skills: [],
       agents: [{ id: 'codex', name: 'Codex', description: 'Code model', path: '_agents/codex.md' }],
-      modes: [{ id: 'coder', name: 'Coder', description: 'Code mode', path: '_modes/coder.md' }],
+      providers: [{ id: 'coder', name: 'Coder', description: 'Code provider', path: '_providers/coder.md' }],
       projects: [],
       phasesByProject: {},
     }));
 
     await screen.findByDisplayValue('Loaded Title');
-    expect(screen.getByText('Agent (LLM Provider)')).toBeInTheDocument();
-    expect(screen.getByText('Mode (optional)')).toBeInTheDocument();
+    expect(screen.getByText('Agent')).toBeInTheDocument();
+    expect(screen.getByText('Provider')).toBeInTheDocument();
   });
 
   it('creates a project from LocationPicker and selects it', async () => {
@@ -180,7 +180,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'inbox' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],
@@ -230,7 +230,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'inbox' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],
@@ -252,7 +252,7 @@ describe('TaskEditorModal', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('posts SaveTaskWithMetadata with current content and mode/agent metadata', async () => {
+  it('posts SaveTaskWithMetadata with current content and provider/agent metadata', async () => {
     const { TaskEditorModal } = await import('../../src/webview/ui/components/TaskEditorModal');
 
     const task = { id: 't1', title: 'Task 1', filePath: '/tmp/t1.md', stage: 'inbox', content: '' } as any;
@@ -268,7 +268,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'inbox' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],
@@ -276,17 +276,17 @@ describe('TaskEditorModal', () => {
       contexts: [],
       skills: [],
       agents: [{ id: 'codex', name: 'Codex', description: 'Code model', path: '_agents/codex.md' }],
-      modes: [{ id: 'coder', name: 'Coder', description: 'Code mode', path: '_modes/coder.md' }],
+      providers: [{ id: 'coder', name: 'Coder', description: 'Code provider', path: '_providers/coder.md' }],
       projects: [],
       phasesByProject: {},
     }));
 
     await screen.findByDisplayValue('Loaded Title');
     const agentSelect = screen.getByRole('option', { name: 'Codex' }).closest('select');
-    const modeSelect = screen.getByRole('option', { name: 'Coder' }).closest('select');
-    if (!agentSelect || !modeSelect) throw new Error('Expected mode and agent selects to be rendered');
+    const providerSelect = screen.getByRole('option', { name: 'Coder' }).closest('select');
+    if (!agentSelect || !providerSelect) throw new Error('Expected provider and agent selects to be rendered');
     fireEvent.change(agentSelect, { target: { value: 'codex' } });
-    fireEvent.change(modeSelect, { target: { value: 'coder' } });
+    fireEvent.change(providerSelect, { target: { value: 'coder' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -297,11 +297,11 @@ describe('TaskEditorModal', () => {
       expect(last.payload.metadata.title).toBe('Loaded Title');
       expect(last.payload.metadata.location).toEqual({ type: 'inbox' });
       expect(last.payload.metadata.agent).toBe('codex');
-      expect(last.payload.metadata.mode).toBe('coder');
+      expect(last.payload.metadata.provider).toBe('coder');
     });
   });
 
-  it('saves missing mode as null for backward compatibility', async () => {
+  it('saves missing provider as null', async () => {
     const { TaskEditorModal } = await import('../../src/webview/ui/components/TaskEditorModal');
 
     const task = { id: 't1', title: 'Task 1', filePath: '/tmp/t1.md', stage: 'inbox', content: '' } as any;
@@ -334,7 +334,7 @@ describe('TaskEditorModal', () => {
     await waitFor(() => {
       const last = postMessageSpy.mock.calls.at(-1)![0] as any;
       expect(last.type).toBe('SaveTaskWithMetadata');
-      expect(last.payload.metadata.mode).toBeNull();
+      expect(last.payload.metadata.provider).toBeNull();
     });
   });
 
@@ -354,7 +354,7 @@ describe('TaskEditorModal', () => {
         title: 'Loaded Title',
         location: { type: 'inbox' },
         agent: null,
-        mode: null,
+        provider: null,
         contexts: [],
         skills: [],
         tags: [],

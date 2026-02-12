@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { ClaudeAdapter } from '../src/runner/adapters/claude-adapter';
-import type { AgentCliConfig } from '../src/types/agent';
+import type { ProviderConfig } from '../src/types/provider';
 import type { CliResponse } from '../src/runner/cli-adapter';
 
 /**
  * Builds a realistic opus-style AgentCliConfig for test use.
  */
-function makeOpusConfig(overrides?: Partial<AgentCliConfig>): AgentCliConfig {
+function makeOpusConfig(overrides?: Partial<ProviderConfig>): ProviderConfig {
   return {
     cli: 'claude',
     model: 'opus-4',

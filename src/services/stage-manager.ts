@@ -6,7 +6,7 @@ import { parseTaskFile, stringifyTaskFile } from './frontmatter';
 import { isTransitionAllowed } from '../core/rules';
 import { findTaskById } from './scanner';
 import { WorkspaceState } from '../workspace/state';
-import { INBOX_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER, MODES_FOLDER } from '../core/constants';
+import { INBOX_FOLDER, PROJECTS_FOLDER, AGENTS_FOLDER } from '../core/constants';
 import { movePath } from './fs-move';
 import { configService } from './config';
 
@@ -68,69 +68,11 @@ export async function getDefaultAgentForStage(
   return match?.id;
 }
 
-interface ModeInfo {
-  id: string;
-  name: string;
-  stage?: string;
-}
-
-async function listModesWithStage(kanbanRoot: string): Promise<ModeInfo[]> {
-  const modesDir = path.join(kanbanRoot, MODES_FOLDER);
-  const modes: ModeInfo[] = [];
-
-  try {
-    const entries = await fs.readdir(modesDir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-
-      const filePath = path.join(modesDir, entry.name);
-      const id = path.basename(entry.name, '.md');
-
-      try {
-        const content = await fs.readFile(filePath, 'utf-8');
-        const parsed = matter(content);
-        modes.push({
-          id,
-          name: typeof parsed.data.name === 'string' ? parsed.data.name : id,
-          stage: typeof parsed.data.stage === 'string' ? parsed.data.stage : undefined,
-        });
-      } catch {
-        modes.push({ id, name: id });
-      }
-    }
-  } catch {
-    return [];
-  }
-
-  return modes.sort((a, b) => a.id.localeCompare(b.id));
-}
-
-export async function getDefaultModeForStage(
-  kanbanRoot: string,
-  stage: Stage,
-): Promise<string | undefined> {
-  if (stage === 'inbox' || stage === 'completed') {
-    return undefined;
-  }
-
-  const modes = await listModesWithStage(kanbanRoot);
-  const match = modes.find((m) => m.stage === stage);
-  return match?.id;
-}
-
-export function getDefaultAgentForMode(modeName: string): string | undefined {
-  return configService.getModeDefault(modeName);
-}
-
-async function shouldAutoUpdateMode(
-  kanbanRoot: string,
-  currentMode: string | undefined,
-  currentStage: Stage,
-): Promise<boolean> {
-  if (!currentMode) return true;
-
-  const currentDefault = await getDefaultModeForStage(kanbanRoot, currentStage);
-  return currentMode === currentDefault;
+/**
+ * Get the default provider for an agent name from providerDefaults config.
+ */
+export function getDefaultProviderForAgent(agentName: string): string | undefined {
+  return configService.getProviderDefault(agentName);
 }
 
 /**
@@ -181,33 +123,17 @@ export async function updateTaskStage(
   // 3. Update Stage
   freshTask.stage = newStage;
 
-  // 4. Auto-update mode and agent if we have kanbanRoot
+  // 4. Auto-update agent and provider if we have kanbanRoot
   const root = kanbanRoot ?? WorkspaceState.kanbanRoot;
   if (root) {
-    const shouldUpdateMode = await shouldAutoUpdateMode(root, freshTask.mode, oldStage);
-    if (shouldUpdateMode) {
-      const newMode = await getDefaultModeForStage(root, newStage);
-      if (newMode) {
-        freshTask.mode = newMode;
-        const modeDefaultAgent = getDefaultAgentForMode(newMode);
-        if (modeDefaultAgent) {
-          freshTask.agent = modeDefaultAgent;
-        }
-      } else {
-        const shouldUpdateAgent = await shouldAutoUpdateAgent(root, freshTask.agent, oldStage);
-        if (shouldUpdateAgent) {
-          const newAgent = await getDefaultAgentForStage(root, newStage);
-          if (newAgent) {
-            freshTask.agent = newAgent;
-          }
-        }
-      }
-    } else {
-      const shouldUpdateAgent = await shouldAutoUpdateAgent(root, freshTask.agent, oldStage);
-      if (shouldUpdateAgent) {
-        const newAgent = await getDefaultAgentForStage(root, newStage);
-        if (newAgent) {
-          freshTask.agent = newAgent;
+    const shouldUpdate = await shouldAutoUpdateAgent(root, freshTask.agent, oldStage);
+    if (shouldUpdate) {
+      const newAgent = await getDefaultAgentForStage(root, newStage);
+      if (newAgent) {
+        freshTask.agent = newAgent;
+        const defaultProvider = getDefaultProviderForAgent(newAgent);
+        if (defaultProvider) {
+          freshTask.provider = defaultProvider;
         }
       }
     }

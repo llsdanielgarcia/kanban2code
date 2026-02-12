@@ -1,4 +1,4 @@
-import type { AgentCliConfig } from '../../types/agent';
+import type { ProviderConfig } from '../../types/provider';
 import type {
   CliAdapter,
   CliAdapterOptions,
@@ -32,7 +32,7 @@ export class ClaudeAdapter implements CliAdapter {
    *          --output-format json --max-turns 10 --append-system-prompt "..."
    */
   buildCommand(
-    config: AgentCliConfig,
+    config: ProviderConfig,
     prompt: string,
     options?: CliAdapterOptions,
   ): CliCommandResult {

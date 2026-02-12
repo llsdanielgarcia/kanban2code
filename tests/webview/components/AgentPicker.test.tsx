@@ -57,7 +57,7 @@ describe('AgentPicker', () => {
     expect(select).toHaveValue('');
   });
 
-  it('displays label as "Agent (LLM Provider)"', () => {
+  it('displays label as "Agent"', () => {
     const onChange = vi.fn();
 
     render(
@@ -68,7 +68,7 @@ describe('AgentPicker', () => {
       />
     );
 
-    const label = screen.getByText(/agent \(llm provider\)/i);
+    const label = screen.getByText(/^agent$/i);
     expect(label).toBeInTheDocument();
   });
 

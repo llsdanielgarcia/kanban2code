@@ -3,8 +3,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import matter from 'gray-matter';
-import { migrateAgentsToModes } from '../src/services/migration';
-import { AgentCliConfigSchema } from '../src/types/agent';
+import { migrateToProviders } from '../src/services/migration';
+import { ProviderConfigSchema } from '../src/types/provider';
 
 let TEST_DIR: string;
 let WORKSPACE_ROOT: string;
@@ -22,6 +22,7 @@ beforeEach(async () => {
 
   await fs.writeFile(path.join(KANBAN_ROOT, '.gitignore'), '_archive/\n', 'utf-8');
 
+  // Old-style agent files (pre-migration)
   await fs.writeFile(
     path.join(KANBAN_ROOT, '_agents', '05-⚙️coder.md'),
     `---
@@ -52,11 +53,13 @@ Update .kanban2code/_context/architecture.md on accept.
     'utf-8',
   );
 
+  // Tasks with old 'mode' and 'agent' fields
   await fs.writeFile(
     path.join(KANBAN_ROOT, 'inbox', 'task-coder.md'),
     `---
 stage: code
 agent: coder
+mode: coder
 tags: [feature]
 ---
 
@@ -70,6 +73,7 @@ tags: [feature]
     `---
 stage: audit
 agent: 06-✅auditor
+mode: auditor
 tags: [audit]
 ---
 
@@ -83,52 +87,59 @@ afterEach(async () => {
   await fs.rm(TEST_DIR, { recursive: true, force: true });
 });
 
-describe('migrateAgentsToModes', () => {
-  test('creates _modes files, strips emoji prefix, removes type: robot, updates tasks, and creates new agent configs', async () => {
-    const report = await migrateAgentsToModes(WORKSPACE_ROOT);
+describe('migrateToProviders', () => {
+  test('creates _providers files, removes mode from tasks, adds provider, and deletes _modes', async () => {
+    // Pre-create a _modes/ directory to test removal
+    await fs.mkdir(path.join(KANBAN_ROOT, '_modes'), { recursive: true });
+    await fs.writeFile(
+      path.join(KANBAN_ROOT, '_modes', 'coder.md'),
+      '---\nname: coder\nstage: code\n---\n# Coder Mode\n',
+    );
 
-    const modesDir = path.join(KANBAN_ROOT, '_modes');
-    const modeFiles = await fs.readdir(modesDir);
-    expect(modeFiles).toContain('coder.md');
-    expect(modeFiles).toContain('auditor.md');
-    expect(modeFiles).not.toContain('05-⚙️coder.md');
+    const report = await migrateToProviders(WORKSPACE_ROOT);
 
-    const coderModeRaw = await fs.readFile(path.join(modesDir, 'coder.md'), 'utf-8');
-    const coderMode = matter(coderModeRaw);
-    expect(coderMode.data.name).toBe('coder');
-    expect(coderMode.data.description).toBe('coding');
-    expect(coderMode.data.stage).toBe('code');
-    expect(coderMode.data.created).toBe('2025-12-17');
-    expect(coderMode.data.type).toBeUndefined();
+    // 1. Provider configs should be created
+    const providersDir = path.join(KANBAN_ROOT, '_providers');
+    const providerFiles = await fs.readdir(providersDir);
+    expect(providerFiles).toContain('opus.md');
+    expect(providerFiles).toContain('codex.md');
+    expect(providerFiles).toContain('kimi.md');
+    expect(providerFiles).toContain('glm.md');
 
-    const auditorModeRaw = await fs.readFile(path.join(modesDir, 'auditor.md'), 'utf-8');
-    expect(auditorModeRaw).toContain('.kanban2code/architecture.md');
-    expect(auditorModeRaw).not.toContain('_context/architecture.md');
+    // Validate provider configs parse correctly
+    const opusRaw = await fs.readFile(path.join(providersDir, 'opus.md'), 'utf-8');
+    const opusParsed = matter(opusRaw);
+    const schemaResult = ProviderConfigSchema.safeParse(opusParsed.data);
+    expect(schemaResult.success).toBe(true);
 
-    const inboxTask = matter(await fs.readFile(path.join(KANBAN_ROOT, 'inbox', 'task-coder.md'), 'utf-8'));
-    expect(inboxTask.data.mode).toBe('coder');
-    expect(inboxTask.data.agent).toBe('opus');
+    // 2. Tasks should have mode removed and provider added
+    const inboxTask = matter(
+      await fs.readFile(path.join(KANBAN_ROOT, 'inbox', 'task-coder.md'), 'utf-8'),
+    );
+    expect(inboxTask.data.mode).toBeUndefined();
+    expect(inboxTask.data.provider).toBeDefined();
 
     const projectTask = matter(
-      await fs.readFile(path.join(KANBAN_ROOT, 'projects', 'demo', 'phase1', 'task-prefixed.md'), 'utf-8'),
+      await fs.readFile(
+        path.join(KANBAN_ROOT, 'projects', 'demo', 'phase1', 'task-prefixed.md'),
+        'utf-8',
+      ),
     );
-    expect(projectTask.data.mode).toBe('auditor');
-    expect(projectTask.data.agent).toBe('opus');
+    expect(projectTask.data.mode).toBeUndefined();
+    expect(projectTask.data.provider).toBeDefined();
 
-    expect(await fileExists(path.join(KANBAN_ROOT, '_agents', '05-⚙️coder.md'))).toBe(false);
-    expect(await fileExists(path.join(KANBAN_ROOT, '_agents', '06-✅auditor.md'))).toBe(false);
+    // 3. _modes/ directory should be deleted
+    expect(report.removedModes).toBe(true);
+    await expect(fs.stat(path.join(KANBAN_ROOT, '_modes'))).rejects.toThrow();
 
-    const createdAgents = ['opus.md', 'codex.md', 'kimi.md', 'glm.md'];
-    for (const fileName of createdAgents) {
-      const raw = await fs.readFile(path.join(KANBAN_ROOT, '_agents', fileName), 'utf-8');
-      const parsed = matter(raw);
-      const schemaResult = AgentCliConfigSchema.safeParse(parsed.data);
-      expect(schemaResult.success).toBe(true);
-    }
-
-    expect(report.movedModes).toEqual(expect.arrayContaining(['_modes/coder.md', '_modes/auditor.md']));
-    expect(report.createdAgents).toEqual(
-      expect.arrayContaining(['_agents/opus.md', '_agents/codex.md', '_agents/kimi.md', '_agents/glm.md']),
+    // 4. Report should contain created providers and updated tasks
+    expect(report.createdProviders).toEqual(
+      expect.arrayContaining([
+        '_providers/opus.md',
+        '_providers/codex.md',
+        '_providers/kimi.md',
+        '_providers/glm.md',
+      ]),
     );
     expect(report.updatedTasks).toEqual(
       expect.arrayContaining(['inbox/task-coder.md', 'projects/demo/phase1/task-prefixed.md']),
@@ -136,42 +147,35 @@ describe('migrateAgentsToModes', () => {
   });
 
   test('is idempotent when run twice', async () => {
-    const first = await migrateAgentsToModes(WORKSPACE_ROOT);
-    const second = await migrateAgentsToModes(WORKSPACE_ROOT);
+    const first = await migrateToProviders(WORKSPACE_ROOT);
+    const second = await migrateToProviders(WORKSPACE_ROOT);
 
-    expect(first.movedModes.length).toBeGreaterThan(0);
-    expect(first.createdAgents.length).toBe(4);
-    expect(second.movedModes).toEqual([]);
-    expect(second.createdAgents).toEqual([]);
+    expect(first.createdProviders.length).toBeGreaterThan(0);
+    expect(first.removedModes).toBe(false);
+    expect(second.createdProviders).toEqual([]);
     expect(second.updatedTasks).toEqual([]);
+    expect(second.removedModes).toBe(false);
   });
 
-  test('rolls back copied modes and restores _agents if task update fails in step 2', async () => {
-    await fs.writeFile(
-      path.join(KANBAN_ROOT, 'inbox', 'broken.md'),
-      `---
-stage: code
-agent: coder
-tags: [feature
----
+  test('skips existing provider files', async () => {
+    const providersDir = path.join(KANBAN_ROOT, '_providers');
+    await fs.mkdir(providersDir, { recursive: true });
+    const customContent = '---\ncli: custom-claude\nmodel: custom-model\n---\nCustom opus';
+    await fs.writeFile(path.join(providersDir, 'opus.md'), customContent);
 
-# Broken
-`,
-      'utf-8',
-    );
+    const report = await migrateToProviders(WORKSPACE_ROOT);
 
-    await expect(migrateAgentsToModes(WORKSPACE_ROOT)).rejects.toThrow();
+    // opus.md should be skipped
+    expect(report.skipped).toContain('_providers/opus.md');
+    expect(report.createdProviders).not.toContain('_providers/opus.md');
 
-    expect(await fileExists(path.join(KANBAN_ROOT, '_modes', 'coder.md'))).toBe(false);
-    expect(await fileExists(path.join(KANBAN_ROOT, '_modes', 'auditor.md'))).toBe(false);
-
-    expect(await fileExists(path.join(KANBAN_ROOT, '_agents', '05-⚙️coder.md'))).toBe(true);
-    expect(await fileExists(path.join(KANBAN_ROOT, '_agents', '06-✅auditor.md'))).toBe(true);
-    expect(await fileExists(path.join(KANBAN_ROOT, '_agents', 'opus.md'))).toBe(false);
+    // Custom content should be preserved
+    const opusContent = await fs.readFile(path.join(providersDir, 'opus.md'), 'utf-8');
+    expect(opusContent).toContain('custom-claude');
   });
 
   test('adds _logs/ to .kanban2code/.gitignore', async () => {
-    await migrateAgentsToModes(WORKSPACE_ROOT);
+    await migrateToProviders(WORKSPACE_ROOT);
     const gitignore = await fs.readFile(path.join(KANBAN_ROOT, '.gitignore'), 'utf-8');
     expect(gitignore).toContain('_archive/');
     expect(gitignore).toContain('_logs/');

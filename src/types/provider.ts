@@ -7,30 +7,30 @@ export const PromptStyleSchema = z.enum(['flag', 'positional', 'stdin']);
 export type PromptStyle = z.infer<typeof PromptStyleSchema>;
 
 /**
- * Safety limits for agent execution
+ * Safety limits for provider execution
  */
-export const AgentSafetySchema = z.object({
+export const ProviderSafetySchema = z.object({
   max_turns: z.number().int().positive().optional(),
   max_budget_usd: z.number().positive().optional(),
   timeout: z.number().int().positive().optional(),
 }).optional();
 
-export type AgentSafety = z.infer<typeof AgentSafetySchema>;
+export type ProviderSafety = z.infer<typeof ProviderSafetySchema>;
 
 /**
- * Agent CLI configuration for LLM providers (opus, codex, kimi, glm)
- * Loaded from YAML frontmatter in `_agents/` files
+ * Provider CLI configuration for LLM providers (opus, codex, kimi, glm)
+ * Loaded from YAML frontmatter in `_providers/` files
  */
-export const AgentCliConfigSchema = z.object({
+export const ProviderConfigSchema = z.object({
   cli: z.string(),
   model: z.string(),
   subcommand: z.string().optional(),
   unattended_flags: z.array(z.string()),
   output_flags: z.array(z.string()),
   prompt_style: PromptStyleSchema,
-  safety: AgentSafetySchema,
+  safety: ProviderSafetySchema,
   provider: z.string().optional(),
   config_overrides: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type AgentCliConfig = z.infer<typeof AgentCliConfigSchema>;
+export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;

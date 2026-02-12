@@ -34,7 +34,7 @@ import {
   saveTaskContentById,
   saveTaskWithMetadata,
 } from '../services/task-content';
-import { listAvailableModes, createModeFile } from '../services/mode-service';
+import { listAvailableProviders, createProviderConfigFile } from '../services/provider-service';
 import { getRunnerState, onRunnerStateChanged, type RunnerStateSnapshot } from '../runner/runner-state';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
@@ -172,7 +172,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             const contexts = await listAvailableContexts(root);
             const skills = await listAvailableSkills(root);
             const agents = await listAvailableAgents(root);
-            const modes = await listAvailableModes(root);
+            const providers = await listAvailableProviders(root);
             const listing = await listProjectsAndPhases(root);
 
             this._postMessage(
@@ -185,7 +185,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     ? { type: 'project', project: task.project, phase: task.phase }
                     : { type: 'inbox' },
                   agent: task.agent || null,
-                  mode: task.mode || null,
+                  provider: task.provider || null,
                   contexts: task.contexts || [],
                   skills: task.skills || [],
                   tags: task.tags || [],
@@ -193,7 +193,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 contexts,
                 skills,
                 agents,
-                modes,
+                providers,
                 projects: listing.projects,
                 phasesByProject: listing.phasesByProject,
               }),
@@ -213,7 +213,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               title: string;
               location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
               agent: string | null;
-              mode: string | null;
+              provider: string | null;
               contexts: string[];
               skills: string[];
               tags: string[];
@@ -330,40 +330,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           break;
         }
 
-        case 'RequestModes': {
+        case 'RequestProviders': {
           const root = WorkspaceState.kanbanRoot;
           if (root) {
-            const modes = await listAvailableModes(root);
-            this._postMessage(createEnvelope('ModesLoaded', { modes }));
-          }
-          break;
-        }
-
-        case 'CreateMode': {
-          const modePayload = payload as {
-            name?: string;
-            description?: string;
-            stage?: string;
-            content?: string;
-          };
-          const root = WorkspaceState.kanbanRoot;
-          if (root && modePayload.name && modePayload.description !== undefined) {
-            try {
-              await createModeFile(root, {
-                name: modePayload.name,
-                description: modePayload.description,
-                stage: modePayload.stage,
-                content: modePayload.content || '',
-              });
-              const modes = await listAvailableModes(root);
-              this._postMessage(createEnvelope('ModesLoaded', { modes }));
-              await this._sendInitialState();
-              await KanbanPanel.currentPanel?.refresh();
-            } catch (error) {
-              vscode.window.showErrorMessage(
-                `Failed to create mode: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              );
-            }
+            const providers = await listAvailableProviders(root);
+            this._postMessage(createEnvelope('ProvidersLoaded', { providers }));
           }
           break;
         }
@@ -527,21 +498,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const runnerState = getRunnerState();
     let projects: string[] = [];
     let phasesByProject: Record<string, string[]> = {};
-    let modes: Array<{ id: string; name: string; description: string; path: string; stage?: string }> = [];
+    let providers: Array<{ id: string; name: string; path: string }> = [];
 
     if (hasKanban && kanbanRoot) {
       try {
-        const [tasks, contexts, agents, loadedModes, listing] = await Promise.all([
+        const [tasks, contexts, agents, loadedProviders, listing] = await Promise.all([
           loadAllTasks(kanbanRoot),
           listAvailableContexts(kanbanRoot),
           listAvailableAgents(kanbanRoot),
-          listAvailableModes(kanbanRoot),
+          listAvailableProviders(kanbanRoot),
           listProjectsAndPhases(kanbanRoot),
         ]);
         this._tasks = tasks;
         this._contexts = contexts;
         this._agents = agents;
-        modes = loadedModes;
+        providers = loadedProviders;
         projects = listing.projects;
         phasesByProject = listing.phasesByProject;
       } catch (error) {
@@ -549,7 +520,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this._tasks = [];
         this._contexts = [];
         this._agents = [];
-        modes = [];
+        providers = [];
         projects = [];
         phasesByProject = {};
       }
@@ -557,7 +528,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this._tasks = [];
       this._contexts = [];
       this._agents = [];
-      modes = [];
+      providers = [];
       projects = [];
       phasesByProject = {};
     }
@@ -569,7 +540,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         tasks: this._tasks,
         contexts: this._contexts,
         agents: this._agents,
-        modes,
+        providers,
         projects,
         phasesByProject,
         workspaceRoot: kanbanRoot,

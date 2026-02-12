@@ -1,20 +1,20 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import matter from 'gray-matter';
-import { AGENTS_FOLDER } from '../core/constants';
+import { PROVIDERS_FOLDER } from '../core/constants';
 import { ensureSafePath } from '../workspace/validation';
-import { AgentCliConfigSchema, type AgentCliConfig } from '../types/agent';
+import { ProviderConfigSchema, type ProviderConfig } from '../types/provider';
 
-export interface AgentConfigFile {
+export interface ProviderConfigFile {
   id: string;
   name: string;
   path: string;
-  config?: AgentCliConfig;
+  config?: ProviderConfig;
 }
 
-export async function listAvailableAgentConfigs(kanbanRoot: string): Promise<AgentConfigFile[]> {
-  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
-  const agents: AgentConfigFile[] = [];
+export async function listAvailableProviders(kanbanRoot: string): Promise<ProviderConfigFile[]> {
+  const providersDir = path.join(kanbanRoot, PROVIDERS_FOLDER);
+  const providers: ProviderConfigFile[] = [];
 
   try {
     const filePaths: string[] = [];
@@ -32,34 +32,34 @@ export async function listAvailableAgentConfigs(kanbanRoot: string): Promise<Age
       }
     };
 
-    await walk(agentsDir);
+    await walk(providersDir);
 
     for (const filePath of filePaths) {
-      const relativeFromAgentsDir = normalizeSlashes(path.relative(agentsDir, filePath));
+      const relativeFromProvidersDir = normalizeSlashes(path.relative(providersDir, filePath));
       const relativeFromKanbanRoot = normalizeSlashes(path.relative(kanbanRoot, filePath));
       const baseId = path.basename(filePath, '.md');
 
-      const isTopLevel = !relativeFromAgentsDir.includes('/');
+      const isTopLevel = !relativeFromProvidersDir.includes('/');
       const id = isTopLevel ? baseId : relativeFromKanbanRoot;
 
       try {
         const content = await fs.readFile(filePath, 'utf-8');
         const parsed = matter(content);
         const name =
-          typeof parsed.data.name === 'string' ? parsed.data.name : formatAgentName(baseId);
+          typeof parsed.data.name === 'string' ? parsed.data.name : formatProviderName(baseId);
 
-        const configResult = AgentCliConfigSchema.safeParse(parsed.data);
+        const configResult = ProviderConfigSchema.safeParse(parsed.data);
 
-        agents.push({
+        providers.push({
           id,
           name,
           path: relativeFromKanbanRoot,
           config: configResult.success ? configResult.data : undefined,
         });
       } catch {
-        agents.push({
+        providers.push({
           id,
-          name: formatAgentName(baseId),
+          name: formatProviderName(baseId),
           path: relativeFromKanbanRoot,
           config: undefined,
         });
@@ -69,42 +69,42 @@ export async function listAvailableAgentConfigs(kanbanRoot: string): Promise<Age
     return [];
   }
 
-  return agents.sort((a, b) => a.name.localeCompare(b.name));
+  return providers.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function resolveAgentConfig(
+export async function resolveProviderConfig(
   kanbanRoot: string,
-  agentIdentifier: string,
-): Promise<AgentCliConfig | undefined> {
-  const agents = await listAvailableAgentConfigs(kanbanRoot);
+  providerIdentifier: string,
+): Promise<ProviderConfig | undefined> {
+  const providers = await listAvailableProviders(kanbanRoot);
 
-  const match = agents.find((a) => a.id === agentIdentifier || a.name === agentIdentifier);
+  const match = providers.find((a) => a.id === providerIdentifier || a.name === providerIdentifier);
 
   return match?.config;
 }
 
-export async function resolveAgentConfigFile(
+export async function resolveProviderConfigFile(
   kanbanRoot: string,
-  agentIdentifier: string,
-): Promise<AgentConfigFile | undefined> {
-  const agents = await listAvailableAgentConfigs(kanbanRoot);
+  providerIdentifier: string,
+): Promise<ProviderConfigFile | undefined> {
+  const providers = await listAvailableProviders(kanbanRoot);
 
-  return agents.find((a) => a.id === agentIdentifier || a.name === agentIdentifier);
+  return providers.find((a) => a.id === providerIdentifier || a.name === providerIdentifier);
 }
 
-export async function createAgentConfigFile(
+export async function createProviderConfigFile(
   kanbanRoot: string,
   data: {
     name: string;
-    config: AgentCliConfig;
+    config: ProviderConfig;
     content?: string;
   },
 ): Promise<string> {
   const fileName = `${data.name.toLowerCase().replace(/\s+/g, '-')}.md`;
-  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
-  await fs.mkdir(agentsDir, { recursive: true });
+  const providersDir = path.join(kanbanRoot, PROVIDERS_FOLDER);
+  await fs.mkdir(providersDir, { recursive: true });
 
-  const targetPath = path.join(agentsDir, fileName);
+  const targetPath = path.join(providersDir, fileName);
   await ensureSafePath(kanbanRoot, targetPath);
 
   const frontmatter: Record<string, unknown> = {
@@ -119,21 +119,21 @@ export async function createAgentConfigFile(
   return path.relative(kanbanRoot, targetPath);
 }
 
-export async function updateAgentConfigFile(
+export async function updateProviderConfigFile(
   kanbanRoot: string,
-  agentId: string,
+  providerId: string,
   data: {
     name?: string;
-    config: AgentCliConfig;
+    config: ProviderConfig;
     content?: string;
   },
 ): Promise<string> {
-  const agent = await resolveAgentConfigFile(kanbanRoot, agentId);
-  if (!agent) {
-    throw new Error(`Agent config not found: ${agentId}`);
+  const provider = await resolveProviderConfigFile(kanbanRoot, providerId);
+  if (!provider) {
+    throw new Error(`Provider config not found: ${providerId}`);
   }
 
-  const targetPath = path.join(kanbanRoot, agent.path);
+  const targetPath = path.join(kanbanRoot, provider.path);
   await ensureSafePath(kanbanRoot, targetPath);
 
   let existingContent = '';
@@ -146,7 +146,7 @@ export async function updateAgentConfigFile(
   }
 
   const frontmatter: Record<string, unknown> = {
-    name: data.name || agent.name,
+    name: data.name || provider.name,
     updated: new Date().toISOString().split('T')[0],
     ...data.config,
   };
@@ -154,16 +154,16 @@ export async function updateAgentConfigFile(
   const fileContent = matter.stringify(data.content ?? existingContent, frontmatter);
   await fs.writeFile(targetPath, fileContent, 'utf-8');
 
-  return agent.path;
+  return provider.path;
 }
 
-export async function deleteAgentConfigFile(kanbanRoot: string, agentId: string): Promise<boolean> {
-  const agent = await resolveAgentConfigFile(kanbanRoot, agentId);
-  if (!agent) {
+export async function deleteProviderConfigFile(kanbanRoot: string, providerId: string): Promise<boolean> {
+  const provider = await resolveProviderConfigFile(kanbanRoot, providerId);
+  if (!provider) {
     return false;
   }
 
-  const targetPath = path.join(kanbanRoot, agent.path);
+  const targetPath = path.join(kanbanRoot, provider.path);
   await ensureSafePath(kanbanRoot, targetPath);
 
   try {
@@ -174,19 +174,19 @@ export async function deleteAgentConfigFile(kanbanRoot: string, agentId: string)
   }
 }
 
-export async function loadAgentConfigContent(
+export async function loadProviderConfigContent(
   kanbanRoot: string,
-  agentName?: string | null,
+  providerName?: string | null,
 ): Promise<string> {
-  if (!agentName) return '';
+  if (!providerName) return '';
 
-  const agent = await resolveAgentConfigFile(kanbanRoot, agentName);
-  if (!agent) return '';
+  const provider = await resolveProviderConfigFile(kanbanRoot, providerName);
+  if (!provider) return '';
 
-  return readFileIfExists(kanbanRoot, agent.path);
+  return readFileIfExists(kanbanRoot, provider.path);
 }
 
-function formatAgentName(id: string): string {
+function formatProviderName(id: string): string {
   return id
     .split(/[-_]/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -203,7 +203,7 @@ async function readFileIfExists(root: string, relativePath: string): Promise<str
     if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
       return '';
     }
-    console.warn(`Failed to read agent config file ${targetPath}:`, error);
+    console.warn(`Failed to read provider config file ${targetPath}:`, error);
     return '';
   }
 }

@@ -82,7 +82,7 @@ export async function saveTaskWithMetadata(
     title: string;
     location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
     agent: string | null;
-    mode: string | null;
+    provider: string | null;
     contexts: string[];
     skills: string[];
     tags: string[];
@@ -128,7 +128,7 @@ export async function saveTaskWithMetadata(
     ...task,
     title: metadata.title,
     agent: metadata.agent || undefined,
-    mode: metadata.mode || undefined,
+    provider: metadata.provider || undefined,
     contexts: metadata.contexts.length > 0 ? metadata.contexts : undefined,
     skills: metadata.skills.length > 0 ? metadata.skills : undefined,
     tags: metadata.tags.length > 0 ? metadata.tags : undefined,
