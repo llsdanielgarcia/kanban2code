@@ -1,5 +1,5 @@
 ---
-stage: audit
+stage: completed
 tags: [feature, p1]
 agent: auditor
 contexts: [skills/react-core-skills]
@@ -36,3 +36,39 @@ When runner is active on a specific task, show a progress indicator (spinner or 
 - `src/webview/ui/components/BoardHorizontal.tsx`
 - `src/webview/ui/styles/main.css`
 - `tests/webview/taskcard.test.tsx`
+
+---
+
+## Review
+
+**Rating: 9/10**
+
+**Verdict: ACCEPTED**
+
+### Summary
+TaskCard now correctly shows `mode | agent`, preserves backward compatibility when `mode` is missing, and exposes per-card runner state/controls for Plan/Code/Audit with passing component tests.
+
+### Findings
+
+#### Blockers
+- [ ] None.
+
+#### High Priority
+- [ ] None.
+
+#### Medium Priority
+- [ ] None.
+
+#### Low Priority / Nits
+- [ ] Add a TaskCard test that clicks the new `Run task` button and asserts `onRunTask(task)` is called (current tests cover visibility/state but not callback wiring) - `tests/webview/taskcard.test.tsx`
+
+### Test Assessment
+- Coverage: Adequate
+- Missing tests: `Run task` button callback invocation from TaskCard
+
+### What's Good
+- Runner state plumbing is cleanly threaded (`BoardHorizontal` -> `Column` -> `TaskCard`) and scoped correctly to the active task via `runningTaskId`.
+- Styling and accessibility are sensible (`aria-label` on spinner and action button, disabled state styling for run action).
+
+### Recommendations
+- Add the callback test above to lock in behavior and prevent future regressions in button wiring.

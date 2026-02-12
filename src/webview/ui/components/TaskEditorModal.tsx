@@ -8,6 +8,7 @@ import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { SkillPicker, type SkillFile } from './SkillPicker';
 import { AgentPicker, type LlmProvider } from './AgentPicker';
+import { ModePicker, type Mode } from './ModePicker';
 import { ProjectModal } from './ProjectModal';
 
 const MonacoEditor = React.lazy(async () => {
@@ -86,6 +87,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
   const [availableContexts, setAvailableContexts] = useState<ContextFile[]>([]);
   const [availableSkills, setAvailableSkills] = useState<SkillFile[]>([]);
   const [providers, setProviders] = useState<LlmProvider[]>([]);
+  const [availableModes, setAvailableModes] = useState<Mode[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -166,6 +168,12 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
     setTags([]);
     setTagInput('');
     setOriginalMetadata(null);
+    setAvailableContexts([]);
+    setAvailableSkills([]);
+    setProviders([]);
+    setAvailableModes([]);
+    setProjects([]);
+    setPhasesByProject({});
     // Request full task data
     postMessage('RequestFullTaskData', { taskId: task.id });
   }, [isOpen, task.id]);
@@ -201,23 +209,33 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
           contexts: ContextFile[];
           skills: SkillFile[];
           agents: LlmProvider[];
+          modes?: Mode[];
           projects: string[];
           phasesByProject: Record<string, string[]>;
         };
         if (payload.taskId !== currentTaskId) return;
+        const normalizedMetadata: TaskMetadata = {
+          ...payload.metadata,
+          agent: payload.metadata.agent ?? null,
+          mode: payload.metadata.mode ?? null,
+          contexts: payload.metadata.contexts ?? [],
+          skills: payload.metadata.skills ?? [],
+          tags: payload.metadata.tags ?? [],
+        };
         setOriginal(payload.content);
         setValue(payload.content);
-        setTitle(payload.metadata.title);
-        setLocation(payload.metadata.location);
-        setAgent(payload.metadata.agent);
-        setMode(payload.metadata.mode);
-        setContexts(payload.metadata.contexts);
-        setSkills(payload.metadata.skills);
-        setTags(payload.metadata.tags);
-        setOriginalMetadata(payload.metadata);
+        setTitle(normalizedMetadata.title);
+        setLocation(normalizedMetadata.location);
+        setAgent(normalizedMetadata.agent);
+        setMode(normalizedMetadata.mode);
+        setContexts(normalizedMetadata.contexts);
+        setSkills(normalizedMetadata.skills);
+        setTags(normalizedMetadata.tags);
+        setOriginalMetadata(normalizedMetadata);
         setAvailableContexts(payload.contexts);
         setAvailableSkills(payload.skills);
         setProviders(payload.agents);
+        setAvailableModes(payload.modes ?? []);
         setProjects(payload.projects);
         setPhasesByProject(payload.phasesByProject);
         setIsLoading(false);
@@ -260,7 +278,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [isOpen, onClose, onSave, value, title, location, agent, contexts, skills, tags]);
+  }, [isOpen, onClose, onSave, value, title, location, agent, mode, contexts, skills, tags]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -371,6 +389,12 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                     providers={providers}
                     value={agent}
                     onChange={setAgent}
+                  />
+                  <ModePicker
+                    modes={availableModes}
+                    value={mode}
+                    onChange={setMode}
+                    onCreateNew={() => {}}
                   />
                 </div>
 

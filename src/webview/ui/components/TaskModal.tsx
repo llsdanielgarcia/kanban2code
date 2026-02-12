@@ -5,6 +5,7 @@ import { LocationPicker } from './LocationPicker';
 import { ContextPicker, type ContextFile } from './ContextPicker';
 import { SkillPicker, type SkillFile } from './SkillPicker';
 import { AgentPicker, type LlmProvider } from './AgentPicker';
+import { ModePicker, type Mode } from './ModePicker';
 import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
 
@@ -20,6 +21,7 @@ interface TaskModalProps {
   contexts?: ContextFile[];
   skills?: SkillFile[];
   agents?: LlmProvider[];
+  modes?: Mode[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
   onClose: () => void;
@@ -34,6 +36,7 @@ interface TaskFormData {
   location: { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
   stage: Stage;
   agent: string | null;
+  mode: string | null;
   tags: string[];
   contexts: string[];
   skills: string[];
@@ -53,6 +56,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   contexts = [],
   skills = [],
   agents = [],
+  modes = [],
   projects = [],
   phasesByProject = {},
   onClose,
@@ -71,6 +75,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
     stage: 'inbox',
     agent: null,
+    mode: null,
     tags: [],
     contexts: [],
     skills: [],
@@ -90,6 +95,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
         stage: 'inbox',
         agent: null,
+        mode: null,
         tags: [],
         contexts: [],
         skills: [],
@@ -160,6 +166,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       location: formData.location,
       stage: formData.stage,
       agent: formData.agent || undefined,
+      mode: formData.mode || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
       contexts: formData.contexts.length > 0 ? formData.contexts : undefined,
       skills: formData.skills.length > 0 ? formData.skills : undefined,
@@ -279,6 +286,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             providers={agents}
             value={formData.agent}
             onChange={(agent) => setFormData((prev) => ({ ...prev, agent }))}
+          />
+
+          {/* Mode */}
+          <ModePicker
+            modes={modes}
+            value={formData.mode}
+            onChange={(mode) => setFormData((prev) => ({ ...prev, mode }))}
+            onCreateNew={() => {}}
           />
 
           {/* Context Files */}

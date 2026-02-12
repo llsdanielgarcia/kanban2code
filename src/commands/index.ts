@@ -120,6 +120,7 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
       location?: 'inbox' | { type: 'inbox' } | { type: 'project'; project: string; phase?: string };
       stage?: Stage;
       agent?: string;
+      mode?: string;
       tags?: string[];
       parent?: string;
       content?: string;
@@ -173,6 +174,10 @@ export function registerCommands(context: vscode.ExtensionContext, sidebarProvid
 
       if (options?.agent) {
         frontmatterLines.push(`agent: ${options.agent}`);
+      }
+
+      if (options?.mode) {
+        frontmatterLines.push(`mode: ${options.mode}`);
       }
 
       if (options?.tags && options.tags.length > 0) {

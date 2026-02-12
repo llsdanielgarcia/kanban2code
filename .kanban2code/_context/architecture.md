@@ -210,3 +210,29 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `src/webview/ui/styles/main.css` (styles for runner controls and buttons)
     - `tests/webview/column.test.tsx` (added 6 tests for runner control visibility, behavior, and callbacks)
   - new-files-created: none
+
+- date: 2026-02-12
+  - task: `task5.4-update-taskcard-for-mode-runner-status`
+  - files-updated:
+    - `src/webview/ui/components/TaskCard.tsx` (footer now renders `mode | agent` when both exist, shows agent-only fallback, adds per-card run action and running-state indicator)
+    - `src/webview/ui/components/Icons.tsx` (added `PlayIcon` for card-level run action)
+    - `src/webview/ui/components/Column.tsx` (threads `runningTaskId` and `onRunTask` into TaskCard)
+    - `src/webview/ui/components/BoardHorizontal.tsx` (threads `runningTaskId` and `onRunTask` into Column)
+    - `src/webview/ui/styles/main.css` (added running card pulse border, spinner, and disabled action styling)
+    - `tests/webview/taskcard.test.tsx` (added tests for mode+agent footer display, run button stage visibility, and active runner indicator)
+  - new-files-created: none
+
+- date: 2026-02-12
+  - task: `task5.5-update-taskmodal-and-taskeditormodal-for-mode-field`
+  - files-updated:
+    - `src/webview/ui/components/TaskModal.tsx` (added ModePicker below AgentPicker, `mode` in form data and CreateTask payload)
+    - `src/webview/ui/components/TaskEditorModal.tsx` (added ModePicker to Assignment section, `mode` in metadata state, dirty checking, and SaveTaskWithMetadata payload)
+    - `src/webview/ui/components/Sidebar.tsx` (threads `modes` from `useTaskData` to `TaskModal`)
+    - `src/webview/ui/components/Board.tsx` (threads `modes` from `useTaskData` to `TaskModal`)
+    - `src/webview/ui/hooks/useTaskData.ts` (exposes `modes` in return value, handles `InitState` modes payload)
+    - `src/webview/SidebarProvider.ts` (loads modes via `listAvailableModes`, sends in `InitState` and `FullTaskDataLoaded`)
+    - `src/webview/KanbanPanel.ts` (loads modes via `listAvailableModes`, sends in `InitState` and `FullTaskDataLoaded`)
+    - `src/commands/index.ts` (writes `mode` to frontmatter in `newTask` command)
+    - `tests/webview/task-modal-create-project.test.tsx` (added tests for mode+agent picker rendering and CreateTask payload)
+    - `tests/webview/task-editor-modal.test.tsx` (added tests for mode+agent picker rendering, SaveTaskWithMetadata payload with mode, null mode backward compat)
+  - new-files-created: none

@@ -35,7 +35,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcutsNonce = 0, openTaskModalNonce = 0 }) => {
-  const { tasks, contexts, agents, projects, phasesByProject, isLoading } = useTaskData();
+  const { tasks, contexts, agents, modes, projects, phasesByProject, isLoading } = useTaskData();
   const {
     filterState,
     toggleStage,
@@ -311,6 +311,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasKanban, showKeyboardShortcu
           tasks={tasks}
           contexts={contexts}
           agents={agents}
+          modes={modes}
           projects={projects}
           phasesByProject={phasesByProject}
           onClose={() => setShowTaskModal(false)}

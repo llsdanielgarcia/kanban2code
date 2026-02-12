@@ -19,10 +19,19 @@ export interface Agent {
   path: string;
 }
 
+export interface Mode {
+  id: string;
+  name: string;
+  description: string;
+  path: string;
+  stage?: string;
+}
+
 interface InitStatePayload {
   tasks: Task[];
   contexts?: ContextFile[];
   agents?: Agent[];
+  modes?: Mode[];
   projects?: string[];
   phasesByProject?: Record<string, string[]>;
   workspaceRoot: string;
@@ -42,6 +51,7 @@ interface UseTaskDataResult {
   tasks: Task[];
   contexts: ContextFile[];
   agents: Agent[];
+  modes: Mode[];
   projects: string[];
   phasesByProject: Record<string, string[]>;
   workspaceRoot: string | null;
@@ -55,6 +65,7 @@ export function useTaskData(): UseTaskDataResult {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [contexts, setContexts] = useState<ContextFile[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [modes, setModes] = useState<Mode[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [phasesByProject, setPhasesByProject] = useState<Record<string, string[]>>({});
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
@@ -77,6 +88,7 @@ export function useTaskData(): UseTaskDataResult {
           setTasks(payload.tasks || []);
           setContexts(payload.contexts || []);
           setAgents(payload.agents || []);
+          setModes(payload.modes || []);
           setProjects(payload.projects || []);
           setPhasesByProject(payload.phasesByProject || {});
           setWorkspaceRoot(payload.workspaceRoot || null);
@@ -130,6 +142,7 @@ export function useTaskData(): UseTaskDataResult {
     tasks,
     contexts,
     agents,
+    modes,
     projects,
     phasesByProject,
     workspaceRoot,

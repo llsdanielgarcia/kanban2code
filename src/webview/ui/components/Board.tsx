@@ -69,7 +69,17 @@ export const Board: React.FC<BoardProps> = ({
   showKeyboardShortcutsNonce = 0,
   toggleLayoutNonce = 0,
 }) => {
-  const { tasks, contexts, agents, projects, phasesByProject, isLoading, error, filterState } = useTaskData();
+  const {
+    tasks,
+    contexts,
+    agents,
+    modes,
+    projects,
+    phasesByProject,
+    isLoading,
+    error,
+    filterState,
+  } = useTaskData();
   const { layout, setLayout } = useBoardLayout('columns');
   const [search, setSearch] = useState('');
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -306,6 +316,7 @@ export const Board: React.FC<BoardProps> = ({
           tasks={tasks}
           contexts={contexts}
           agents={agents}
+          modes={modes}
           projects={projects}
           phasesByProject={phasesByProject}
           onClose={() => setShowTaskModal(false)}

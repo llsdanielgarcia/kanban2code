@@ -34,6 +34,7 @@ import {
   saveTaskContentById,
   saveTaskWithMetadata,
 } from '../services/task-content';
+import { listAvailableModes } from '../services/mode-service';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
@@ -159,6 +160,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             const contexts = await listAvailableContexts(root);
             const skills = await listAvailableSkills(root);
             const agents = await listAvailableAgents(root);
+            const modes = await listAvailableModes(root);
             const listing = await listProjectsAndPhases(root);
 
             this._postMessage(
@@ -179,6 +181,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 contexts,
                 skills,
                 agents,
+                modes,
                 projects: listing.projects,
                 phasesByProject: listing.phasesByProject,
               }),
@@ -453,18 +456,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const hasKanban = !!kanbanRoot;
     let projects: string[] = [];
     let phasesByProject: Record<string, string[]> = {};
+    let modes: Array<{ id: string; name: string; description: string; path: string; stage?: string }> = [];
 
     if (hasKanban && kanbanRoot) {
       try {
-        const [tasks, contexts, agents, listing] = await Promise.all([
+        const [tasks, contexts, agents, loadedModes, listing] = await Promise.all([
           loadAllTasks(kanbanRoot),
           listAvailableContexts(kanbanRoot),
           listAvailableAgents(kanbanRoot),
+          listAvailableModes(kanbanRoot),
           listProjectsAndPhases(kanbanRoot),
         ]);
         this._tasks = tasks;
         this._contexts = contexts;
         this._agents = agents;
+        modes = loadedModes;
         projects = listing.projects;
         phasesByProject = listing.phasesByProject;
       } catch (error) {
@@ -472,6 +478,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this._tasks = [];
         this._contexts = [];
         this._agents = [];
+        modes = [];
         projects = [];
         phasesByProject = {};
       }
@@ -479,6 +486,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this._tasks = [];
       this._contexts = [];
       this._agents = [];
+      modes = [];
       projects = [];
       phasesByProject = {};
     }
@@ -490,6 +498,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         tasks: this._tasks,
         contexts: this._contexts,
         agents: this._agents,
+        modes,
         projects,
         phasesByProject,
         workspaceRoot: kanbanRoot,
