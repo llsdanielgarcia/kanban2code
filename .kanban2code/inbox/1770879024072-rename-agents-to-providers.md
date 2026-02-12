@@ -10,6 +10,7 @@ contexts:
 agent: 05-⚙️coder
 skills: []
 mode: coder
+provider: codex
 ---
 
 # Rename Agent-as-LLM to Provider + Restore Agents as Behavior

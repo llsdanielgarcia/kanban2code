@@ -9,6 +9,6 @@ output_flags:
 prompt_style: stdin
 provider: openai
 config_overrides:
-  model_reasoning_effort: high
+  model_reasoning_effort: medium
 ---
 
