@@ -105,3 +105,48 @@ test('Handles zero-task run gracefully', async () => {
   const persisted = await fs.readFile(savedPath, 'utf-8');
   expect(persisted).toContain('# Night Shift Report');
 });
+
+test('getRunDirectoryName() returns expected format', () => {
+  const now = fixedNowFactory(['2026-02-13T14:30:52.000Z']);
+  const log = new RunnerLog({ now });
+  log.startRun();
+  expect(log.getRunDirectoryName()).toMatch(/^run-\d{8}-\d{6}$/);
+});
+
+test('toMarkdown() includes per-stage details when stages are provided', () => {
+  const now = fixedNowFactory(['2026-02-11T02:30:00.000Z', '2026-02-11T02:40:00.000Z']);
+  const log = new RunnerLog({ now });
+
+  log.startRun();
+  log.recordTask({
+    taskId: 'task-x',
+    title: 'Stage Test',
+    status: 'failed',
+    stages: [
+      { stage: 'plan', stageTransition: 'code' },
+      { stage: 'code', stageTransition: 'audit', filesChanged: ['src/a.ts'] },
+      { stage: 'audit', auditRating: 4, auditVerdict: 'NEEDS_WORK', outputFile: 'task-x-audit.md' },
+    ],
+  });
+  log.finishRun('failed');
+
+  const md = log.toMarkdown();
+  expect(md).toContain('**Stages:**');
+  expect(md).toContain('rating=4');
+  expect(md).toContain('verdict=NEEDS_WORK');
+  expect(md).toContain('transition=code');
+  expect(md).toContain('files=src/a.ts');
+  expect(md).toContain('task-x-audit.md');
+});
+
+test('toMarkdown() omits stages section when no stages provided', () => {
+  const now = fixedNowFactory(['2026-02-11T02:30:00.000Z', '2026-02-11T02:40:00.000Z']);
+  const log = new RunnerLog({ now });
+
+  log.startRun();
+  log.recordTask({ taskId: 'task-y', title: 'No Stages', status: 'completed' });
+  log.finishRun('completed');
+
+  const md = log.toMarkdown();
+  expect(md).not.toContain('**Stages:**');
+});

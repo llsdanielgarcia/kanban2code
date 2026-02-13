@@ -1,8 +1,11 @@
 ---
 stage: code
-created: 2026-02-12T21:58:55.170Z
-agent: 05-⚙️coder
+agent: 06-✅auditor
 provider: kimi
+tags: []
+contexts: []
+skills: []
+attempts: 1
 ---
 
 # Create a coming soon page

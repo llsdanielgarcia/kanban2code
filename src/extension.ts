@@ -8,9 +8,13 @@ import { TaskWatcher } from './services/task-watcher';
 import { loadAllTasks } from './services/scanner';
 import { setSidebarProvider } from './webview/viewRegistry';
 import { configService } from './services/config';
-import { RunnerEngine, type RunnerPipelineStage, type RunnerRunResult } from './runner/runner-engine';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import { RunnerEngine, type RunnerPipelineStage, type RunnerRunResult, type RunnerStageCompletedEvent, type RunnerTaskFailedEvent } from './runner/runner-engine';
 import type { Task } from './types/task';
 import { setRunnerState } from './runner/runner-state';
+import { RunnerLog, type RunnerStageRecord } from './runner/runner-log';
+import { LOGS_FOLDER } from './core/constants';
 
 let taskWatcher: TaskWatcher | null = null;
 let sidebarProvider: SidebarProvider | null = null;
@@ -160,6 +164,103 @@ function attachRunnerProgress(
   };
 }
 
+function attachRunnerLogging(
+  runner: RunnerEngine,
+  log: RunnerLog,
+  kanbanRoot: string,
+): () => void {
+  const stageRecordsByTask = new Map<string, RunnerStageRecord[]>();
+  const taskStartTimes = new Map<string, number>();
+
+  const runDirName = log.getRunDirectoryName();
+  const runOutputDir = path.join(kanbanRoot, LOGS_FOLDER, runDirName);
+
+  const onTaskStarted = (event: { task: Task }) => {
+    stageRecordsByTask.set(event.task.id, []);
+    taskStartTimes.set(event.task.id, Date.now());
+  };
+
+  const onStageCompleted = async (event: RunnerStageCompletedEvent) => {
+    const fileName = `${event.task.id}-${event.stage}.md`;
+    const outputFilePath = path.join(runOutputDir, fileName);
+
+    const header = [
+      `# ${event.task.title} — ${event.stage}`,
+      '',
+      `- Audit Rating: ${event.auditRating ?? '-'}`,
+      `- Audit Verdict: ${event.auditVerdict ?? '-'}`,
+      `- Stage Transition: ${event.stageTransition ?? '-'}`,
+      `- Files Changed: ${event.filesChanged?.join(', ') ?? '-'}`,
+      '',
+      '---',
+      '',
+    ].join('\n');
+
+    try {
+      await fs.mkdir(runOutputDir, { recursive: true });
+      await fs.writeFile(outputFilePath, header + event.output, 'utf-8');
+    } catch (err) {
+      console.error('Failed to save stage output:', err);
+    }
+
+    const records = stageRecordsByTask.get(event.task.id) ?? [];
+    records.push({
+      stage: event.stage,
+      auditRating: event.auditRating,
+      auditVerdict: event.auditVerdict,
+      stageTransition: event.stageTransition,
+      filesChanged: event.filesChanged,
+      outputFile: fileName,
+    });
+    stageRecordsByTask.set(event.task.id, records);
+  };
+
+  const onTaskCompleted = (event: { task: Task }) => {
+    const startTime = taskStartTimes.get(event.task.id);
+    const durationMs = startTime ? Date.now() - startTime : undefined;
+
+    log.recordTask({
+      taskId: event.task.id,
+      title: event.task.title,
+      status: 'completed',
+      provider: event.task.provider,
+      agent: event.task.agent,
+      attempts: event.task.attempts,
+      durationMs,
+      stages: stageRecordsByTask.get(event.task.id),
+    });
+  };
+
+  const onTaskFailed = (event: RunnerTaskFailedEvent) => {
+    const startTime = taskStartTimes.get(event.task.id);
+    const durationMs = startTime ? Date.now() - startTime : undefined;
+
+    log.recordTask({
+      taskId: event.task.id,
+      title: event.task.title,
+      status: event.hardStop ? 'crashed' : 'failed',
+      provider: event.task.provider,
+      agent: event.task.agent,
+      attempts: event.task.attempts,
+      error: event.error,
+      durationMs,
+      stages: stageRecordsByTask.get(event.task.id),
+    });
+  };
+
+  runner.on('taskStarted', onTaskStarted);
+  runner.on('stageCompleted', onStageCompleted);
+  runner.on('taskCompleted', onTaskCompleted);
+  runner.on('taskFailed', onTaskFailed);
+
+  return () => {
+    runner.off('taskStarted', onTaskStarted);
+    runner.off('stageCompleted', onStageCompleted);
+    runner.off('taskCompleted', onTaskCompleted);
+    runner.off('taskFailed', onTaskFailed);
+  };
+}
+
 async function executeRunner(
   title: string,
   run: (runner: RunnerEngine) => Promise<RunnerRunResult>,
@@ -177,6 +278,9 @@ async function executeRunner(
   activeRunner = runner;
   setRunnerState({ isRunning: true });
 
+  const log = new RunnerLog();
+  log.startRun();
+
   const runPromise = Promise.resolve(vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -184,12 +288,14 @@ async function executeRunner(
       cancellable: true,
     },
     async (progress, token) => {
-      const detach = attachRunnerProgress(runner, progress);
+      const detachProgress = attachRunnerProgress(runner, progress);
+      const detachLogging = attachRunnerLogging(runner, log, kanbanRoot);
       token?.onCancellationRequested?.(() => runner.stop());
       try {
         return await run(runner);
       } finally {
-        detach();
+        detachProgress();
+        detachLogging();
       }
     },
   ));
@@ -197,7 +303,20 @@ async function executeRunner(
   activeRunnerRun = runPromise;
 
   try {
-    return await runPromise;
+    const result = await runPromise;
+
+    const reason = result.status === 'completed' ? 'completed'
+      : result.status === 'stopped' ? 'stopped'
+      : 'failed';
+    log.finishRun(reason);
+    try {
+      const reportPath = await log.save(kanbanRoot);
+      console.log(`Runner report saved to: ${reportPath}`);
+    } catch (err) {
+      console.error('Failed to save runner report:', err);
+    }
+
+    return result;
   } finally {
     activeRunnerRun = null;
     activeRunner = null;

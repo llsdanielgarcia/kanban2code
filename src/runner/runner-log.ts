@@ -6,6 +6,15 @@ export type RunnerTaskStatus = 'completed' | 'failed' | 'crashed';
 
 export type RunnerStopReason = 'completed' | 'stopped' | 'failed';
 
+export interface RunnerStageRecord {
+  stage: string;
+  auditRating?: number;
+  auditVerdict?: string;
+  stageTransition?: string;
+  filesChanged?: string[];
+  outputFile?: string;
+}
+
 export interface RunnerTaskResult {
   taskId: string;
   title: string;
@@ -18,6 +27,7 @@ export interface RunnerTaskResult {
   commit?: string;
   attempts?: number;
   error?: string;
+  stages?: RunnerStageRecord[];
 }
 
 interface RunnerLogOptions {
@@ -92,6 +102,11 @@ export class RunnerLog {
     this.tasks.length = 0;
   }
 
+  getRunDirectoryName(): string {
+    const start = this.startedAt ?? this.now();
+    return `run-${formatFileTimestamp(start)}`;
+  }
+
   recordTask(result: RunnerTaskResult): void {
     this.tasks.push(result);
   }
@@ -146,6 +161,20 @@ export class RunnerLog {
       lines.push(`- Commit: ${task.commit ?? '-'}`);
       lines.push(`- Attempts: ${task.attempts ?? 0}`);
       lines.push(`- Error: ${task.error ?? '-'}`);
+
+      if (task.stages && task.stages.length > 0) {
+        lines.push('');
+        lines.push('**Stages:**');
+        for (const s of task.stages) {
+          const parts = [`  - ${s.stage}`];
+          if (s.auditRating !== undefined) parts.push(`rating=${s.auditRating}`);
+          if (s.auditVerdict) parts.push(`verdict=${s.auditVerdict}`);
+          if (s.stageTransition) parts.push(`transition=${s.stageTransition}`);
+          if (s.filesChanged?.length) parts.push(`files=${s.filesChanged.join(', ')}`);
+          if (s.outputFile) parts.push(`[output](${s.outputFile})`);
+          lines.push(parts.join(' | '));
+        }
+      }
     }
 
     lines.push('');

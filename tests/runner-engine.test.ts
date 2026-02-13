@@ -230,6 +230,47 @@ describe('RunnerEngine', () => {
     expect(result.error).toContain('git working tree is dirty');
   });
 
+  it('Audit failure error includes rating, verdict, and output snippet', async () => {
+    const task = { ...mockTask, stage: 'audit', attempts: 0 } as Task;
+    (parseTaskFile as Mock).mockResolvedValue(task);
+    (getDefaultAgentForStage as Mock).mockResolvedValue('auditor');
+
+    const events: { error: string }[] = [];
+    runner.on('taskFailed', (e) => events.push(e));
+
+    const runPromise = runner.runTask(task);
+    await completeProcess(''); // git
+    await completeProcess('The code has issues and needs rework. <!-- AUDIT_RATING: 4 --> <!-- AUDIT_VERDICT: NEEDS_WORK -->');
+
+    await runPromise;
+
+    expect(events).toHaveLength(1);
+    expect(events[0].error).toContain('rating: 4');
+    expect(events[0].error).toContain('verdict: NEEDS_WORK');
+    expect(events[0].error).toContain('Output:');
+    expect(events[0].error).toContain('The code has issues');
+  });
+
+  it('Audit failure error shows unknown when markers are missing', async () => {
+    const task = { ...mockTask, stage: 'audit', attempts: 0 } as Task;
+    (parseTaskFile as Mock).mockResolvedValue(task);
+    (getDefaultAgentForStage as Mock).mockResolvedValue('auditor');
+
+    const events: { error: string }[] = [];
+    runner.on('taskFailed', (e) => events.push(e));
+
+    const runPromise = runner.runTask(task);
+    await completeProcess(''); // git
+    await completeProcess('Some output with no markers at all.');
+
+    await runPromise;
+
+    expect(events).toHaveLength(1);
+    expect(events[0].error).toContain('rating: unknown');
+    expect(events[0].error).toContain('verdict: unknown');
+    expect(events[0].error).toContain('Some output with no markers');
+  });
+
   it('falls back to global default provider when stage mapping is missing', async () => {
     const task = { ...mockTask, stage: 'audit', provider: undefined } as Task;
     (parseTaskFile as Mock).mockResolvedValue(task);

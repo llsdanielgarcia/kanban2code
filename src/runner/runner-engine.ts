@@ -261,15 +261,16 @@ export class RunnerEngine extends EventEmitter {
         }
 
         const attempts = (task.attempts ?? 0) + 1;
+        const snippet = parsed.result.slice(0, 300).replace(/\n/g, ' ');
         if (attempts >= 2) {
           await this.persistTask(task, { attempts, stage: 'audit' });
-          const error = `Audit failed with rating ${auditRating ?? 'unknown'} at attempt ${attempts}`;
+          const error = `Audit failed (rating: ${auditRating ?? 'unknown'}, verdict: ${auditVerdict ?? 'unknown'}, attempt ${attempts}). Output: ${snippet}`;
           this.emit('taskFailed', { task, error, hardStop: true } satisfies RunnerTaskFailedEvent);
           return { status: 'failed', error, hardStop: true };
         }
 
         await this.persistTask(task, { attempts, stage: 'code' });
-        const error = `Audit failed with rating ${auditRating ?? 'unknown'} (attempt ${attempts})`;
+        const error = `Audit failed (rating: ${auditRating ?? 'unknown'}, verdict: ${auditVerdict ?? 'unknown'}, attempt ${attempts}). Output: ${snippet}`;
         this.emit('taskFailed', { task, error, hardStop: false } satisfies RunnerTaskFailedEvent);
         return { status: 'failed', error, hardStop: false };
       }
