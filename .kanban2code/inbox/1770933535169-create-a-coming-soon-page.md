@@ -7,7 +7,7 @@ contexts:
   - ai-guide
 skills: []
 attempts: 1
-provider: kimi
+provider: codex
 ---
 
 # Create a coming soon page
