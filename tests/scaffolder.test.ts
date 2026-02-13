@@ -206,6 +206,9 @@ describe('bundled providers scaffolding', () => {
 
     // Other providers should be created
     expect(report.created).toContain('_providers/codex.md');
+    expect(report.created).toContain('_providers/codex-low.md');
+    expect(report.created).toContain('_providers/codex-high.md');
+    expect(report.created).toContain('_providers/codex-xhigh.md');
     expect(report.created).toContain('_providers/kimi.md');
 
     // Verify custom provider is preserved
@@ -215,6 +218,15 @@ describe('bundled providers scaffolding', () => {
     // Verify new providers are created correctly
     const codex = await fs.readFile(path.join(providersDir, 'codex.md'), 'utf-8');
     expect(codex).toContain('cli: codex');
+
+    const codexLow = await fs.readFile(path.join(providersDir, 'codex-low.md'), 'utf-8');
+    expect(codexLow).toContain('model_reasoning_effort: low');
+
+    const codexHigh = await fs.readFile(path.join(providersDir, 'codex-high.md'), 'utf-8');
+    expect(codexHigh).toContain('model_reasoning_effort: high');
+
+    const codexXhigh = await fs.readFile(path.join(providersDir, 'codex-xhigh.md'), 'utf-8');
+    expect(codexXhigh).toContain('model_reasoning_effort: xhigh');
   });
 });
 

@@ -161,6 +161,34 @@ prompt_style: flag
     expect(providers[0].name).toBe('Alpha Provider');
     expect(providers[1].name).toBe('Zebra Provider');
   });
+
+  test('parses codex reasoning effort overrides from config_overrides', async () => {
+    const providersDir = path.join(KANBAN_ROOT, PROVIDERS_FOLDER);
+    await fs.mkdir(providersDir, { recursive: true });
+
+    await fs.writeFile(
+      path.join(providersDir, 'codex-xhigh.md'),
+      `---
+cli: codex
+subcommand: exec
+model: gpt-5.3-codex
+unattended_flags:
+  - '--yolo'
+output_flags:
+  - '--json'
+prompt_style: stdin
+provider: openai
+config_overrides:
+  model_reasoning_effort: xhigh
+---
+`,
+    );
+
+    const providers = await listAvailableProviders(KANBAN_ROOT);
+    expect(providers).toHaveLength(1);
+    expect(providers[0].id).toBe('codex-xhigh');
+    expect(providers[0].config?.config_overrides?.model_reasoning_effort).toBe('xhigh');
+  });
 });
 
 describe('resolveProviderConfig', () => {

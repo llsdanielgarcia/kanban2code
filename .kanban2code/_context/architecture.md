@@ -288,3 +288,14 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
   - files-updated: none
   - new-files-created:
     - `docs/design/coming-soon.html` - Standalone modern glassmorphic landing page with hero, 6-feature teaser grid, preview placeholder, CTA, and footer
+
+- date: 2026-02-13
+  - task: `1771012835226-add-more-codex-providers`
+  - files-updated:
+    - `src/assets/providers.ts` (regenerated bundled providers now include codex reasoning-effort variants)
+    - `tests/provider-service.test.ts` (added coverage for parsing `config_overrides.model_reasoning_effort`)
+    - `tests/scaffolder.test.ts` (added assertions that new codex variant provider files scaffold correctly)
+  - new-files-created:
+    - `.kanban2code/_providers/codex-low.md` - Codex provider preset with `model_reasoning_effort: low`
+    - `.kanban2code/_providers/codex-high.md` - Codex provider preset with `model_reasoning_effort: high`
+    - `.kanban2code/_providers/codex-xhigh.md` - Codex provider preset with `model_reasoning_effort: xhigh`
