@@ -622,6 +622,109 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 - Tag validation used during task creation modal (future enhancement)
 - Keyboard shortcuts integrated into board and sidebar components
 
+## Phase 6 - Runner Logging System Improvements
+
+Phase 6 enhances the automated runner's diagnostic capabilities with multi-level visibility into task execution failures.
+
+### Problem Statement
+
+When the runner executed tasks and encountered audit failures, users received minimal diagnostic feedback:
+- Error message: `"Audit failed with rating unknown (attempt 1)"`
+- No visibility into what the model actually returned
+- No raw output saved for investigation
+- Parsed marker values (rating, verdict) never exposed to users
+
+### Solution: Three-Level Logging
+
+**Level 1: Notification (Immediate Feedback)**
+- Audit failure errors now include: `"Audit failed (rating: 4, verdict: NEEDS_WORK, attempt 1). Output: <first 300 chars>"`
+- Both parsed markers and output snippet visible in VS Code progress notification
+- Implemented in [`src/runner/runner-engine.ts:264-275`](../src/runner/runner-engine.ts#L264-L275)
+
+**Level 2: Run Report (Summary)**
+- RunnerLog now integrates into the actual runner pipeline (was test-only before)
+- Every execution saves a markdown report to `.kanban2code/_logs/run-YYYYMMDD-HHmmss.md`
+- Per-task entries now include per-stage diagnostics: rating, verdict, stage transition, files changed
+- Implemented in [`src/extension.ts:163-258`](../src/extension.ts#L163-L258) with `attachRunnerLogging` function
+
+**Level 3: Raw Output Files (Full Diagnostic)**
+- Each stage's complete model output saved to individual markdown files:
+  - `.kanban2code/_logs/run-TIMESTAMP/{taskId}-{stage}.md`
+  - Each file includes a diagnostic header with parsed marker values
+  - User can inspect exactly what the model returned, unparsed
+- Implemented in [`src/extension.ts:179-212`](../src/extension.ts#L179-L212)
+
+### Implementation Details
+
+**Files Modified:**
+
+1. **`src/runner/runner-engine.ts`**
+   - Improved audit failure error messages at lines 264-275
+   - Include auditVerdict alongside auditRating
+   - Add truncated output snippet (300 chars, newlines collapsed to spaces)
+
+2. **`src/runner/runner-log.ts`**
+   - New `RunnerStageRecord` interface for per-stage diagnostics
+   - Extended `RunnerTaskResult` with optional `stages?: RunnerStageRecord[]`
+   - Added `getRunDirectoryName(): string` public method
+   - Updated `toMarkdown()` to render per-stage details with rating/verdict/transition/files links
+
+3. **`src/extension.ts`**
+   - New `attachRunnerLogging()` function (mirrors `attachRunnerProgress` pattern)
+   - Listens to `stageCompleted`, `taskStarted`, `taskCompleted`, `taskFailed` events
+   - Saves raw output per stage with diagnostic header
+   - Records stage metadata in RunnerTaskResult for the summary report
+   - Modified `executeRunner()` to create RunnerLog, start/finish/save it
+
+**Tests Added:**
+
+- `tests/runner-log.test.ts`: `getRunDirectoryName()`, per-stage detail rendering
+- `tests/runner-engine.test.ts`: Audit error format includes rating/verdict/snippet
+
+### Output Directory Structure
+
+```
+.kanban2code/_logs/
+├── run-20260213-143052.md          # Summary report (markdown table + task sections)
+│   # Tasks processed | 3 |
+│   # Completed | 1 | Failed | 1 | Crashed | 1 | Total time | 2m 34s |
+│   # Finish reason | failed |
+│   # Task 1: title
+│   # - Status: completed
+│   # - Stages: [stage details with links to raw output files]
+│
+└── run-20260213-143052/             # Per-stage raw outputs
+    ├── task-abc-plan.md             # Raw model output for plan stage
+    ├── task-abc-code.md             # Raw model output for code stage
+    ├── task-abc-audit.md            # Raw model output for audit stage (with rating/verdict header)
+    ├── task-def-code.md
+    └── task-def-audit.md
+```
+
+### Event Flow
+
+```
+RunnerEngine.runTask()
+  ↓
+For each stage (plan, code, audit):
+  ↓
+  Executes: adapter.parseResponse(stdout) → CliResponse { success, result, ... }
+  ↓
+  Parses markers: auditRating, auditVerdict, etc. from result
+  ↓
+  Emits: stageCompleted { task, stage, output, auditRating, auditVerdict, ... }
+           ↓
+           attachRunnerLogging listens:
+             - Saves raw output to file: run-dir/{taskId}-{stage}.md
+             - Records stage metadata: { stage, rating, verdict, outputFile, ... }
+
+  On audit failure → includeOutput snippet in error message → emit taskFailed
+  ↓
+  On taskCompleted/taskFailed → log.recordTask() with stages metadata
+  ↓
+After run → log.finishRun() + log.save() → writes run-TIMESTAMP.md report
+```
+
 ### MVP Status
 
 **Phase 5 Completion Criteria:**
@@ -633,23 +736,18 @@ package.json                        # ENHANCED: Commands, keybindings, scripts
 ✅ All code compiles without errors
 ✅ E2E tests covering core workflows
 
-**Next Phase: Phase 6 - Bug Fixes and Feature Completion**
+**Phase 6 Completion Criteria:**
+✅ Runner logging system integrated (16+ new tests passing)
+✅ Three-level diagnostic visibility (notification + report + raw files)
+✅ Per-stage output files saved with diagnostic headers
+✅ Audit failure errors include rating, verdict, and output snippet
+✅ RunnerLog properly wired to actual runner pipeline
+✅ All 347 tests passing
 
-Phase 6 addresses critical bugs and implements remaining design features:
+**Next Phase: Phase 7 - Additional Features**
 
-- Fix delete button in Board view (Task 6.0)
-- Implement fixed Navy Night Gradient color palette (Task 6.1)
-- Fix swimlane layout: Rows = Stages, Columns = Projects (Task 6.2)
-- Add context file selection to Task Modal (Task 6.3)
-- Implement Context creation modal (Task 6.4)
-- Implement Agent selection and creation modal (Task 6.5)
-- Implement Template creation/editing modal (Task 6.6)
-- Add Monaco Editor for in-place task editing (Task 6.7)
-
-Design references in `docs/design/`:
-
-- `forms/task.html` - Task modal with context selection
-- `forms/context.html` - Context creation modal
-- `forms/agent.html` - Agent creation modal
-- `board-swimlane.html` - Swimlane layout reference
-- `styles/variables.css` - Navy Night Gradient color palette
+Future enhancements:
+- Night shift batch runner with comprehensive logging
+- Provider CLI configuration UI
+- Custom prompt templates per provider
+- More detailed cost/token tracking in reports
