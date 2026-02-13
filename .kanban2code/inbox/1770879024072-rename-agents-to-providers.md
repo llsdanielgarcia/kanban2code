@@ -1,5 +1,5 @@
 ---
-stage: plan
+stage: inbox
 tags:
   - refactor
   - p0
