@@ -80,6 +80,7 @@ export const Board: React.FC<BoardProps> = ({
     error,
     filterState,
     isRunnerActive,
+    activeRunnerTaskId,
   } = useTaskData();
   const { layout, setLayout } = useBoardLayout('columns');
   const [search, setSearch] = useState('');
@@ -195,6 +196,24 @@ export const Board: React.FC<BoardProps> = ({
     setEditorTask(task);
   };
 
+  const handleRunTask = useCallback((task: Task) => {
+    postMessage('RunTask', { taskId: task.id });
+  }, []);
+
+  const handleRunTopTask = useCallback((stage: Stage) => {
+    const topTask = tasksByStage[stage]?.[0];
+    if (!topTask) return;
+    postMessage('RunTask', { taskId: topTask.id });
+  }, [tasksByStage]);
+
+  const handleRunColumn = useCallback((stage: Stage) => {
+    postMessage('RunColumn', { stage });
+  }, []);
+
+  const handleStopRunner = useCallback(() => {
+    postMessage('StopRunner', {});
+  }, []);
+
   const toggleBoardLayout = () => {
     setLayout(layout === 'columns' ? 'swimlanes' : 'columns');
   };
@@ -288,6 +307,12 @@ export const Board: React.FC<BoardProps> = ({
         <BoardHorizontal
           tasksByStage={tasksByStage}
           agents={agents}
+          isRunnerActive={isRunnerActive}
+          runningTaskId={activeRunnerTaskId}
+          onRunTopTask={handleRunTopTask}
+          onRunColumn={handleRunColumn}
+          onStopRunner={handleStopRunner}
+          onRunTask={handleRunTask}
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}
@@ -302,6 +327,9 @@ export const Board: React.FC<BoardProps> = ({
           rows={swimlaneRows}
           projects={swimlaneProjects}
           agents={agents}
+          isRunnerActive={isRunnerActive}
+          runningTaskId={activeRunnerTaskId}
+          onRunTask={handleRunTask}
           onMoveTask={handleMoveTask}
           onOpenTask={handleOpenTask}
           onFocusTask={(task) => setFocusedTaskId(task.id)}

@@ -1,5 +1,5 @@
 ---
-stage: code
+stage: plan
 tags:
   - refactor
   - p0
@@ -7,7 +7,7 @@ tags:
 contexts:
   - architecture
   - ai-guide
-agent: 05-⚙️coder
+agent: "04-\U0001F4CBplanner"
 skills: []
 mode: coder
 provider: codex

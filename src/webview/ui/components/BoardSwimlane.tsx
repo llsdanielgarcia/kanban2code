@@ -13,6 +13,9 @@ interface BoardSwimlaneProps {
   rows: SwimlaneRow[];
   projects: string[];
   agents?: Agent[];
+  isRunnerActive?: boolean;
+  runningTaskId?: string | null;
+  onRunTask?: (task: Task) => void;
   onMoveTask: (taskId: string, toStage: Stage, toProject?: string) => void;
   onOpenTask: (task: Task) => void;
   onFocusTask?: (task: Task) => void;
@@ -35,6 +38,9 @@ export const BoardSwimlane: React.FC<BoardSwimlaneProps> = ({
   rows,
   projects,
   agents,
+  isRunnerActive,
+  runningTaskId,
+  onRunTask,
   onMoveTask,
   onOpenTask,
   onFocusTask,
@@ -122,12 +128,15 @@ export const BoardSwimlane: React.FC<BoardSwimlaneProps> = ({
                         key={task.id}
                         task={task}
                         agents={agents}
+                        isRunnerActive={isRunnerActive}
+                        runningTaskId={runningTaskId}
                         onOpen={onOpenTask}
                         onEdit={onOpenTask}
                         onFocusTask={onFocusTask}
                         onDelete={onDeleteTask ? () => onDeleteTask(task) : undefined}
                         onCopyXml={onCopyXml ? () => onCopyXml(task) : undefined}
                         onShowMenu={onShowMenu}
+                        onRunTask={onRunTask}
                       />
                     ))
                   )}

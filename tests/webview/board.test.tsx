@@ -232,3 +232,48 @@ test('Board shows inbox tasks even when all projects are hidden', async () => {
   expect(screen.queryByText('Task 2')).not.toBeInTheDocument();
   expect(screen.queryByText('Task 3')).not.toBeInTheDocument();
 });
+
+test('Runner controls in board column post RunTask and RunColumn messages', async () => {
+  const { Board } = await import('../../src/webview/ui/components/Board');
+  render(<Board hasKanban={true} />);
+
+  const tasksWithPlanAndCode = [
+    ...mockTasks,
+    {
+      id: '3',
+      filePath: '/tmp/3.md',
+      title: 'Task 3',
+      stage: 'plan',
+      content: 'plan me',
+    },
+  ];
+
+  await act(async () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          version: 1,
+          type: 'InitState',
+          payload: {
+            context: 'board',
+            hasKanban: true,
+            tasks: tasksWithPlanAndCode,
+            workspaceRoot: '/tmp',
+            filterState: { stages: ['inbox', 'plan', 'code', 'audit', 'completed'] },
+            isRunnerActive: false,
+          },
+        },
+      }),
+    );
+  });
+
+  const codeColumn = await screen.findByLabelText('Code column');
+  within(codeColumn).getByRole('button', { name: 'Run top task' }).click();
+  within(codeColumn).getByRole('button', { name: 'Run column' }).click();
+
+  const runTaskMessage = postMessageSpy.mock.calls.find((c) => c[0]?.type === 'RunTask');
+  expect(runTaskMessage?.[0]?.payload).toMatchObject({ taskId: '2' });
+
+  const runColumnMessage = postMessageSpy.mock.calls.find((c) => c[0]?.type === 'RunColumn');
+  expect(runColumnMessage?.[0]?.payload).toMatchObject({ stage: 'code' });
+});
