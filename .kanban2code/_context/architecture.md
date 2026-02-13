@@ -282,3 +282,9 @@ See: [docs/architecture.md](docs/architecture.md) for the full architecture docu
     - `.kanban2code/_providers/` (moved from defunct modes)
     - `src/assets/providers.ts` (replaced `modes.ts`)
   - status: completed
+
+- date: 2026-02-13
+  - task: `1770933535169-create-a-coming-soon-page`
+  - files-updated: none
+  - new-files-created:
+    - `docs/design/coming-soon.html` - Standalone modern glassmorphic landing page with hero, 6-feature teaser grid, preview placeholder, CTA, and footer
