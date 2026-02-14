@@ -1,10 +1,10 @@
 ---
 cli: kilo
 subcommand: run
-model: openrouter/z-ai/glm-4.7
+model: zai/glm-5
 unattended_flags:
   - '--auto'
 output_flags: []
 prompt_style: positional
-provider: openrouter
+provider: zai
 ---

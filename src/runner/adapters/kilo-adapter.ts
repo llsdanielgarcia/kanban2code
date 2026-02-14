@@ -86,12 +86,14 @@ export class KiloAdapter implements CliAdapter {
     // Kilo model syntax is a combined provider/model via -m.
     args.push('-m', config.model);
 
+    // Kilo does not support --append-system-prompt. Prepend system prompt to main prompt.
+    let finalPrompt = prompt;
     if (options?.systemPrompt) {
-      args.push('--append-system-prompt', options.systemPrompt);
+      finalPrompt = `${options.systemPrompt}\n\n${prompt}`;
     }
 
     // Positional prompt text.
-    args.push(prompt);
+    args.push(finalPrompt);
 
     return {
       command: config.cli,
