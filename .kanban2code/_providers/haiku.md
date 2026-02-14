@@ -1,6 +1,6 @@
 ---
 cli: claude
-model: claude-opus-4-6
+model: claude-haiku-4-5
 unattended_flags:
   - '--dangerously-skip-permissions'
 output_flags:
@@ -9,7 +9,7 @@ output_flags:
 prompt_style: flag
 safety:
   max_turns: 20
-  max_budget_usd: 5
+  max_budget_usd: 2
 provider: anthropic
 ---
 
