@@ -17,6 +17,7 @@ This guide defines how to create, edit, and progress task files in Kanban2Code.
 - `provider`: LLM provider runtime config (CLI + model + flags)
 
 Rule of thumb:
+
 - Agent controls **how** the assistant behaves.
 - Provider controls **what runtime** executes the prompt.
 
@@ -48,10 +49,12 @@ attempts: 0
 # Improve runner retry handling
 
 ## Goal
+
 Make retry behavior clearer and safer.
 ```
 
 Fields commonly used:
+
 - `stage`: `inbox | plan | code | audit | completed`
 - `agent`: behavioral role (e.g. planner, coder, auditor)
 - `provider`: runtime/LLM config identifier (optional)
@@ -61,9 +64,11 @@ Fields commonly used:
 ## 4) Stage Progression
 
 Default execution path:
+
 - `inbox -> plan -> code -> audit -> completed`
 
 Audit outcomes:
+
 - accepted audit -> `completed`
 - failed audit -> `code` with incremented `attempts`
 - failed audit with `attempts >= 2` -> runner hard stop for human review
@@ -79,6 +84,7 @@ Prompt context is assembled in layers:
 5. custom contexts: from `contexts:`
 
 When runner mode is active, prompt context includes:
+
 - `<runner automated="true" />`
 
 ## 6) Dual-Mode Behavior (Manual vs Automated)
@@ -86,10 +92,12 @@ When runner mode is active, prompt context includes:
 Agent instructions must support two execution environments.
 
 ### Manual mode (default)
+
 - Assistant can edit task frontmatter directly for stage handoff.
 - Assistant can follow legacy manual workflow actions.
 
 ### Automated mode (runner flag present)
+
 - Assistant must **not** edit frontmatter.
 - Assistant must **not** commit.
 - Assistant outputs structured markers only.
@@ -114,15 +122,20 @@ Use HTML comment markers so runner parser can detect outcomes.
 
 - Planner:
   - Produce implementation-ready plan and clear tests
-  - Transition to code (manual edit or stage marker depending on mode)
+  - When done, MUST change task stage to `code` and agent to `coder`
+  - In manual mode: edit frontmatter directly
+  - In automated mode: output `<!-- STAGE_TRANSITION: code -->`
 
 - Coder:
   - Implement requested changes and tests
+  - When done, MUST change task stage to `audit` and agent to `auditor`
   - In automated mode output both stage transition and files changed markers
 
 - Auditor:
   - Prioritize correctness, regressions, and missing tests
   - Use `.kanban2code/architecture.md` (root-level) for architecture updates
+  - When done with rating 8+: MUST change to `completed`
+  - When done with rating <8: MUST change to `code` with agent `coder`
   - In automated mode output `AUDIT_RATING` + `AUDIT_VERDICT`
   - Retry-awareness in automated mode: be slightly more lenient on attempt 2+, while keeping standards
 
@@ -141,6 +154,7 @@ tags: [feature, p1]
 # Add stage-aware provider picker
 
 ## Goal
+
 Implement UI provider picker behavior for plan/code/audit tasks.
 ```
 
