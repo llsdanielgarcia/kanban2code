@@ -522,6 +522,68 @@ export class KanbanPanel {
           }
           break;
         }
+
+        case 'SearchFiles': {
+          const { query, requestId } = payload as { query?: string; requestId?: string };
+          const root = WorkspaceState.kanbanRoot;
+          if (!root) {
+            this._postMessage(createEnvelope('FilesSearched', { files: [], requestId }));
+            break;
+          }
+          const excludePatterns = [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/dist/**',
+            '**/out/**',
+            '**/.kanban2code/**',
+            '**/coverage/**',
+            '**/.next/**',
+            '**/build/**',
+          ];
+          const files = await vscode.workspace.findFiles(
+            new vscode.RelativePattern(root, '**/*'),
+            `{${excludePatterns.join(',')}}`,
+            500,
+          );
+          const queryLower = (query ?? '').toLowerCase();
+          const queryChars = queryLower.split('');
+          const allPaths = files.map((uri) => vscode.workspace.asRelativePath(uri, false));
+          const scoredFiles = queryChars.length === 0
+            ? allPaths.slice(0, 20)
+            : allPaths
+                .map((path) => {
+                  const pathLower = path.toLowerCase();
+                  let score = 0;
+                  let lastIndex = -1;
+                  for (const char of queryChars) {
+                    const idx = pathLower.indexOf(char, lastIndex + 1);
+                    if (idx === -1) {
+                      score = -1;
+                      break;
+                    }
+                    if (idx === lastIndex + 1) {
+                      score += 3;
+                    } else if (
+                      idx === 0 ||
+                      pathLower[idx - 1] === '/' ||
+                      pathLower[idx - 1] === '-' ||
+                      pathLower[idx - 1] === '_'
+                    ) {
+                      score += 2;
+                    } else {
+                      score += 1;
+                    }
+                    lastIndex = idx;
+                  }
+                  return { path, score };
+                })
+                .filter((item) => item.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 20)
+                .map((item) => item.path);
+          this._postMessage(createEnvelope('FilesSearched', { files: scoredFiles, requestId }));
+          break;
+        }
       }
     } catch (error) {
       console.error('Error handling board webview message:', error);
