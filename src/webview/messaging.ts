@@ -25,6 +25,7 @@ export const HostToWebviewMessageTypes = [
   'TaskMetadataSaveFailed',
   'ProvidersLoaded',
   'RunnerStateChanged',
+  'FilesSearched',
 ] as const;
 
 export const WebviewToHostMessageTypes = [
@@ -65,6 +66,8 @@ export const WebviewToHostMessageTypes = [
   'RunTask',
   'RunColumn',
   'StopRunner',
+  // File search for @-mentions
+  'SearchFiles',
 ] as const;
 
 export type HostToWebviewType = (typeof HostToWebviewMessageTypes)[number];

@@ -67,6 +67,10 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
 
   const taskIdRef = useRef<string>('');
   const folderPickRequestIdRef = useRef<string | null>(null);
+  const mentionFilesRef = useRef<string[]>([]);
+  const mentionSearchResolveRef = useRef<((files: string[]) => void) | null>(null);
+  const mentionSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mentionSearchRequestIdRef = useRef<string | null>(null);
 
   // Metadata state
   const [title, setTitle] = useState<string>('');
@@ -274,6 +278,17 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
         const folderRef = `folder:${payload.path}`;
         setContexts((prev) => (prev.includes(folderRef) ? prev : [...prev, folderRef]));
       }
+
+      if (message.type === 'FilesSearched') {
+        const payload = message.payload as { requestId?: string; files?: string[] };
+        if (!payload.requestId || payload.requestId !== mentionSearchRequestIdRef.current) return;
+        mentionSearchRequestIdRef.current = null;
+        mentionFilesRef.current = payload.files || [];
+        if (mentionSearchResolveRef.current) {
+          mentionSearchResolveRef.current(payload.files || []);
+          mentionSearchResolveRef.current = null;
+        }
+      }
     };
 
     window.addEventListener('message', handler);
@@ -385,13 +400,11 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                 {/* Agent */}
                 <div className="task-editor-section">
                   <div className="task-editor-section-title">Assignment</div>
-                  <AgentPicker
-                    providers={providers}
-                    value={agent}
-                    onChange={setAgent}
-                  />
+                  <AgentPicker providers={providers} value={agent} onChange={setAgent} />
                   <div className="form-group">
-                    <label className="form-label" htmlFor="task-editor-provider">Provider</label>
+                    <label className="form-label" htmlFor="task-editor-provider">
+                      Provider
+                    </label>
                     <select
                       id="task-editor-provider"
                       className="form-select"
@@ -400,7 +413,9 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                     >
                       <option value="">No selection</option>
                       {availableProviders.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -479,7 +494,53 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                       value={value}
                       height="100%"
                       theme={NAVY_NIGHT_MONACO_THEME}
-                      beforeMount={(monaco) => defineNavyNightTheme(monaco as any)}
+                      beforeMount={(monaco) => {
+                        defineNavyNightTheme(monaco as any);
+                        monaco.languages.registerCompletionItemProvider('markdown', {
+                          triggerCharacters: ['@'],
+                          provideCompletionItems: async (model, position) => {
+                            const textUntilPosition = model.getValueInRange({
+                              startLineNumber: position.lineNumber,
+                              startColumn: 1,
+                              endLineNumber: position.lineNumber,
+                              endColumn: position.column,
+                            });
+                            const atIndex = textUntilPosition.lastIndexOf('@');
+                            if (atIndex === -1) return { suggestions: [] };
+                            const charBeforeAt = atIndex > 0 ? textUntilPosition[atIndex - 1] : ' ';
+                            const wordCharRegex = /[a-zA-Z0-9_/\\]/;
+                            if (wordCharRegex.test(charBeforeAt)) return { suggestions: [] };
+                            const query = textUntilPosition.substring(atIndex + 1);
+                            if (query.includes(' ')) return { suggestions: [] };
+                            const range = {
+                              startLineNumber: position.lineNumber,
+                              startColumn: atIndex + 1,
+                              endLineNumber: position.lineNumber,
+                              endColumn: position.column,
+                            };
+                            const files = await new Promise<string[]>((resolve) => {
+                              if (mentionSearchTimeoutRef.current) {
+                                clearTimeout(mentionSearchTimeoutRef.current);
+                              }
+                              mentionSearchTimeoutRef.current = setTimeout(() => {
+                                const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+                                mentionSearchRequestIdRef.current = requestId;
+                                mentionSearchResolveRef.current = resolve;
+                                postMessage('SearchFiles', { query, requestId });
+                              }, 150);
+                            });
+                            return {
+                              suggestions: files.map((filePath) => ({
+                                label: filePath,
+                                kind: monaco.languages.CompletionItemKind.File,
+                                insertText: filePath,
+                                range,
+                                detail: filePath,
+                              })),
+                            };
+                          },
+                        });
+                      }}
                       onChange={(next) => setValue(next ?? '')}
                       options={{
                         minimap: { enabled: false },

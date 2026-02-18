@@ -35,7 +35,11 @@ import {
   saveTaskWithMetadata,
 } from '../services/task-content';
 import { listAvailableProviders, createProviderConfigFile } from '../services/provider-service';
-import { getRunnerState, onRunnerStateChanged, type RunnerStateSnapshot } from '../runner/runner-state';
+import {
+  getRunnerState,
+  onRunnerStateChanged,
+  type RunnerStateSnapshot,
+} from '../runner/runner-state';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'kanban2code.sidebar';
@@ -402,6 +406,66 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
               : folderUri[0].fsPath.replace(/[/\\]$/, '');
             this._postMessage(createEnvelope('FolderPicked', { path: relativePath, requestId }));
           }
+          break;
+        }
+
+        case 'SearchFiles': {
+          const { query, requestId } = payload as { query?: string; requestId?: string };
+          const root = WorkspaceState.kanbanRoot;
+          if (!root || !query) {
+            this._postMessage(createEnvelope('FilesSearched', { files: [], requestId }));
+            break;
+          }
+          const excludePatterns = [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/dist/**',
+            '**/out/**',
+            '**/.kanban2code/**',
+            '**/coverage/**',
+            '**/.next/**',
+            '**/build/**',
+          ];
+          const files = await vscode.workspace.findFiles(
+            new vscode.RelativePattern(root, '**/*'),
+            `{${excludePatterns.join(',')}}`,
+            500,
+          );
+          const queryLower = query.toLowerCase();
+          const queryChars = queryLower.split('');
+          const scoredFiles = files
+            .map((uri) => {
+              const path = vscode.workspace.asRelativePath(uri, false);
+              const pathLower = path.toLowerCase();
+              let score = 0;
+              let lastIndex = -1;
+              for (const char of queryChars) {
+                const idx = pathLower.indexOf(char, lastIndex + 1);
+                if (idx === -1) {
+                  score = -1;
+                  break;
+                }
+                if (idx === lastIndex + 1) {
+                  score += 3;
+                } else if (
+                  idx === 0 ||
+                  pathLower[idx - 1] === '/' ||
+                  pathLower[idx - 1] === '-' ||
+                  pathLower[idx - 1] === '_'
+                ) {
+                  score += 2;
+                } else {
+                  score += 1;
+                }
+                lastIndex = idx;
+              }
+              return { path, score };
+            })
+            .filter((item) => item.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 20)
+            .map((item) => item.path);
+          this._postMessage(createEnvelope('FilesSearched', { files: scoredFiles, requestId }));
           break;
         }
 

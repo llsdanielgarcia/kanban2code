@@ -8,6 +8,7 @@ import { AgentPicker, type LlmProvider } from './AgentPicker';
 import type { Provider } from '../hooks/useTaskData';
 import { ProjectModal } from './ProjectModal';
 import { vscode } from '../vscodeApi';
+import { MentionsTextarea } from './MentionsTextarea';
 
 function postMessage(type: string, payload: unknown) {
   if (vscode) {
@@ -70,9 +71,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [localProjects, setLocalProjects] = useState<string[]>(projects);
   const [formData, setFormData] = useState<TaskFormData>({
     title: '',
-    location: typeof defaultLocation === 'string'
-      ? { type: 'inbox' }
-      : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
+    location:
+      typeof defaultLocation === 'string'
+        ? { type: 'inbox' }
+        : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
     stage: 'inbox',
     agent: null,
     provider: null,
@@ -90,9 +92,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setShowProjectModal(false);
       setFormData({
         title: '',
-        location: typeof defaultLocation === 'string'
-          ? { type: 'inbox' }
-          : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
+        location:
+          typeof defaultLocation === 'string'
+            ? { type: 'inbox' }
+            : { type: 'project', project: defaultLocation.project, phase: defaultLocation.phase },
         stage: 'inbox',
         agent: null,
         provider: null,
@@ -205,7 +208,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
-
   const handleProjectCreated = (projectName: string) => {
     setLocalProjects((prev) => {
       const merged = new Set([...prev, projectName]);
@@ -224,11 +226,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       <div className="glass-modal task-modal" role="dialog" aria-labelledby="task-modal-title">
         <div className="modal-header">
           <h2 id="task-modal-title">New Task</h2>
-          <button
-            className="modal-close-btn"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -268,7 +266,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Stage */}
           <div className="form-group">
-            <label className="form-label" htmlFor="task-stage">Stage</label>
+            <label className="form-label" htmlFor="task-stage">
+              Stage
+            </label>
             <select
               id="task-stage"
               className="form-select"
@@ -276,7 +276,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               onChange={(e) => setFormData((prev) => ({ ...prev, stage: e.target.value as Stage }))}
             >
               {STAGES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </select>
           </div>
@@ -290,16 +292,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Provider */}
           <div className="form-group">
-            <label className="form-label" htmlFor="task-provider">Provider</label>
+            <label className="form-label" htmlFor="task-provider">
+              Provider
+            </label>
             <select
               id="task-provider"
               className="form-select"
               value={formData.provider || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, provider: e.target.value || null }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, provider: e.target.value || null }))
+              }
             >
               <option value="">No selection</option>
               {providers.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
             </select>
           </div>
@@ -308,7 +316,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           <ContextPicker
             contexts={contexts}
             selected={formData.contexts}
-            onChange={(selectedContexts) => setFormData((prev) => ({ ...prev, contexts: selectedContexts }))}
+            onChange={(selectedContexts) =>
+              setFormData((prev) => ({ ...prev, contexts: selectedContexts }))
+            }
             onCreateNew={handleCreateContext}
             onPickFolder={handlePickFolder}
           />
@@ -317,7 +327,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           <SkillPicker
             skills={skills}
             selected={formData.skills}
-            onChange={(selectedSkills) => setFormData((prev) => ({ ...prev, skills: selectedSkills }))}
+            onChange={(selectedSkills) =>
+              setFormData((prev) => ({ ...prev, skills: selectedSkills }))
+            }
           />
 
           {/* Tags */}
@@ -361,12 +373,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             <label className="form-label" htmlFor="task-content">
               Content (optional)
             </label>
-            <textarea
+            <MentionsTextarea
               id="task-content"
-              className="form-textarea"
               value={formData.content}
-              onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-              placeholder="Task description or notes..."
+              onChange={(content) => setFormData((prev) => ({ ...prev, content }))}
+              placeholder="Task description or notes... (type @ to mention files)"
               rows={4}
             />
           </div>
