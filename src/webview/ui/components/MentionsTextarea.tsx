@@ -39,6 +39,19 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
   const searchRequestIdRef = useRef<string | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const closeDropdown = useCallback(() => {
+    setShowDropdown(false);
+    setMentionStartIndex(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedIndex(0);
+    searchRequestIdRef.current = null;
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+  }, []);
+
   const findMentionTrigger = useCallback(
     (text: string, cursorPos: number): { start: number; query: string } | null => {
       const beforeCursor = text.substring(0, cursorPos);
@@ -90,6 +103,7 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
   }, [showDropdown, updateDropdownPosition]);
 
   const debouncedSearch = useCallback((query: string) => {
+    searchRequestIdRef.current = null;
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
@@ -98,6 +112,14 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
       searchRequestIdRef.current = requestId;
       postMessage('SearchFiles', { query, requestId });
     }, 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -119,7 +141,7 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
       }
       if (e.key === 'Escape') {
         e.preventDefault();
-        setShowDropdown(false);
+        closeDropdown();
         return;
       }
     }
@@ -127,17 +149,15 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
 
   const selectFile = (filePath: string) => {
     if (mentionStartIndex === null || !textareaRef.current) return;
+    const startIndex = mentionStartIndex;
     const cursorPos = textareaRef.current.selectionStart;
-    const before = value.substring(0, mentionStartIndex);
+    const before = value.substring(0, startIndex);
     const after = value.substring(cursorPos);
     const newValue = before + filePath + after;
     onChange(newValue);
-    setShowDropdown(false);
-    setMentionStartIndex(null);
-    setSearchQuery('');
-    setSearchResults([]);
+    closeDropdown();
     setTimeout(() => {
-      const newPos = mentionStartIndex + filePath.length;
+      const newPos = startIndex + filePath.length;
       textareaRef.current?.setSelectionRange(newPos, newPos);
       textareaRef.current?.focus();
     }, 0);
@@ -155,16 +175,13 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
       setSelectedIndex(0);
       debouncedSearch(trigger.query);
     } else {
-      setShowDropdown(false);
-      setMentionStartIndex(null);
-      setSearchQuery('');
-      setSearchResults([]);
+      closeDropdown();
     }
   };
 
   const handleBlur = () => {
     setTimeout(() => {
-      setShowDropdown(false);
+      closeDropdown();
     }, 200);
   };
 
@@ -172,12 +189,12 @@ export const MentionsTextarea: React.FC<MentionsTextareaProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('.mentions-dropdown') && !target.closest('.mentions-textarea-wrapper')) {
-        setShowDropdown(false);
+        closeDropdown();
       }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  }, [closeDropdown]);
 
   return (
     <div className="mentions-textarea-wrapper">

@@ -18,7 +18,7 @@ import * as path from 'path';
 import type { Stage } from '../types/task';
 import { parseTaskFile } from '../services/frontmatter';
 import type { Task } from '../types/task';
-import { migrateToProviders } from '../services/migration';
+import { migrateToProviders, normalizeTaskAgents } from '../services/migration';
 import type { RunnerPipelineStage } from '../runner/runner-engine';
 
 export function registerCommands(context: vscode.ExtensionContext, sidebarProvider: SidebarProvider) {
@@ -520,6 +520,53 @@ Describe the agent's role and expertise.
           } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unknown error';
             vscode.window.showErrorMessage(`Migration failed: ${message}`);
+          }
+        },
+      );
+    }),
+
+    // Normalize task agent values to canonical _agents IDs
+    vscode.commands.registerCommand('kanban2code.normalizeTaskAgents', async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders || workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage('No workspace open. Please open a folder first.');
+        return;
+      }
+
+      const rootPath = workspaceFolders[0].uri.fsPath;
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Kanban2Code: Normalizing task agents…',
+          cancellable: false,
+        },
+        async (progress) => {
+          try {
+            progress.report({ message: 'Scanning tasks…' });
+            const report = await normalizeTaskAgents(rootPath);
+
+            const parts: string[] = [];
+            if (report.updatedTasks.length > 0) {
+              parts.push(`${report.updatedTasks.length} task(s) updated`);
+            }
+            if (report.unresolvedAgents.length > 0) {
+              parts.push(`${report.unresolvedAgents.length} unresolved agent reference(s)`);
+            }
+
+            const summary =
+              parts.length > 0
+                ? `Normalization complete: ${parts.join(', ')}.`
+                : 'Normalization complete: no changes needed.';
+
+            vscode.window.showInformationMessage(summary);
+
+            if (WorkspaceState.kanbanRoot) {
+              await sidebarProvider.refresh();
+            }
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Agent normalization failed: ${message}`);
           }
         },
       );

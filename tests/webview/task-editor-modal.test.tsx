@@ -6,18 +6,70 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createEnvelope } from '../../src/webview/messaging';
 
+interface MonacoCompletionProvider {
+  triggerCharacters?: string[];
+  provideCompletionItems: (
+    model: { getValueInRange: (range: unknown) => string },
+    position: { lineNumber: number; column: number },
+  ) => Promise<{
+    suggestions: Array<{
+      label: string;
+      insertText: string;
+      range: {
+        startLineNumber: number;
+        startColumn: number;
+        endLineNumber: number;
+        endColumn: number;
+      };
+    }>;
+  }>;
+}
+
+const monacoMentionTestState = vi.hoisted(() => ({
+  completionProvider: null as MonacoCompletionProvider | null,
+}));
+
 vi.mock('@monaco-editor/loader', () => ({
   default: { config: vi.fn() },
 }));
 
 vi.mock('@monaco-editor/react', () => ({
-  default: (props: { value: string; onChange?: (next: string) => void }) => (
-    <textarea
-      data-testid="monaco"
-      value={props.value}
-      onChange={(e) => props.onChange?.((e.target as HTMLTextAreaElement).value)}
-    />
-  ),
+  default: (props: {
+    value: string;
+    onChange?: (next: string) => void;
+    beforeMount?: (monaco: {
+      editor: {
+        defineTheme: (name: string, theme: unknown) => void;
+      };
+      languages: {
+        CompletionItemKind: { File: number };
+        registerCompletionItemProvider: (
+          language: string,
+          provider: MonacoCompletionProvider,
+        ) => { dispose: () => void };
+      };
+    }) => void;
+  }) => {
+    props.beforeMount?.({
+      editor: {
+        defineTheme: vi.fn(),
+      },
+      languages: {
+        CompletionItemKind: { File: 17 },
+        registerCompletionItemProvider: (_language: string, provider: MonacoCompletionProvider) => {
+          monacoMentionTestState.completionProvider = provider;
+          return { dispose: vi.fn() };
+        },
+      },
+    });
+    return (
+      <textarea
+        data-testid="monaco"
+        value={props.value}
+        onChange={(e) => props.onChange?.((e.target as HTMLTextAreaElement).value)}
+      />
+    );
+  },
 }));
 
 let postMessageSpy = vi.fn();
@@ -30,6 +82,8 @@ afterEach(() => {
   postMessageSpy.mockClear();
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
+  monacoMentionTestState.completionProvider = null;
 });
 
 function dispatchMessage(data: unknown) {
@@ -45,6 +99,42 @@ function getLocationTypeButton(name: RegExp) {
     throw new Error(`Expected to find location type button matching ${name}`);
   }
   return match;
+}
+
+async function openEditorWithLoadedTask(content = '@'): Promise<void> {
+  const { TaskEditorModal } = await import('../../src/webview/ui/components/TaskEditorModal');
+
+  render(
+    <TaskEditorModal
+      isOpen
+      task={{ id: 't1', title: 'Task 1', filePath: '/tmp/t1.md', stage: 'inbox', content: '' } as any}
+      onClose={vi.fn()}
+    />,
+  );
+
+  await waitFor(() => expect(postMessageSpy).toHaveBeenCalled());
+  dispatchMessage(createEnvelope('FullTaskDataLoaded', {
+    taskId: 't1',
+    content,
+    metadata: {
+      title: 'Loaded Title',
+      location: { type: 'inbox' },
+      agent: null,
+      provider: null,
+      contexts: [],
+      skills: [],
+      tags: [],
+    },
+    contexts: [],
+    skills: [],
+    agents: [],
+    projects: [],
+    phasesByProject: {},
+  }));
+  await screen.findByDisplayValue('Loaded Title');
+  await waitFor(() => {
+    expect(monacoMentionTestState.completionProvider).not.toBeNull();
+  });
 }
 
 describe('TaskEditorModal', () => {
@@ -336,6 +426,85 @@ describe('TaskEditorModal', () => {
       expect(last.type).toBe('SaveTaskWithMetadata');
       expect(last.payload.metadata.provider).toBeNull();
     });
+  });
+
+  it('Monaco mention completion uses requestId correlation and replaces active @query range only', async () => {
+    await openEditorWithLoadedTask('@');
+    vi.useFakeTimers();
+    postMessageSpy.mockClear();
+
+    const provider = monacoMentionTestState.completionProvider;
+    if (!provider) throw new Error('Expected Monaco completion provider to be registered');
+
+    const completionPromise = provider.provideCompletionItems(
+      { getValueInRange: () => '@' },
+      { lineNumber: 1, column: 2 },
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(160);
+    });
+
+    const searchCall = postMessageSpy.mock.calls.find((call) => (call[0] as any).type === 'SearchFiles')?.[0] as any;
+    expect(searchCall).toBeTruthy();
+    expect(searchCall.payload.query).toBe('');
+
+    let resolved = false;
+    void completionPromise.then(() => {
+      resolved = true;
+    });
+
+    dispatchMessage(
+      createEnvelope('FilesSearched', { requestId: 'stale-request', files: ['src/stale.ts'] }),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(resolved).toBe(false);
+
+    dispatchMessage(
+      createEnvelope('FilesSearched', {
+        requestId: searchCall.payload.requestId,
+        files: ['src/real.ts'],
+      }),
+    );
+
+    const completions = await completionPromise;
+    expect(completions.suggestions).toEqual([
+      expect.objectContaining({
+        label: 'src/real.ts',
+        insertText: 'src/real.ts',
+        range: {
+          startLineNumber: 1,
+          startColumn: 1,
+          endLineNumber: 1,
+          endColumn: 2,
+        },
+      }),
+    ]);
+  });
+
+  it('Monaco mention completion ignores word-prefixed @ and queries with spaces', async () => {
+    await openEditorWithLoadedTask('text');
+    postMessageSpy.mockClear();
+
+    const provider = monacoMentionTestState.completionProvider;
+    if (!provider) throw new Error('Expected Monaco completion provider to be registered');
+
+    const prefixedResult = await provider.provideCompletionItems(
+      { getValueInRange: () => 'foo@bar' },
+      { lineNumber: 1, column: 8 },
+    );
+    const spacedResult = await provider.provideCompletionItems(
+      { getValueInRange: () => '@foo bar' },
+      { lineNumber: 1, column: 9 },
+    );
+
+    expect(prefixedResult.suggestions).toEqual([]);
+    expect(spacedResult.suggestions).toEqual([]);
+    expect(postMessageSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SearchFiles' }),
+    );
   });
 
   it('adds and removes tags via input', async () => {

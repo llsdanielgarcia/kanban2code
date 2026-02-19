@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2025-12-26",
+  "last_updated": "2026-02-19",
   "framework_detection": {
     "nextjs": {
       "files": ["next.config.js", "next.config.ts", "next.config.mjs"],
@@ -15,6 +15,10 @@
     "python": {
       "files": ["*.py", "pyproject.toml", "setup.py", "requirements.txt"],
       "keywords": ["python", "pandas", "numpy", "greykite", "sklearn", "fastapi", "flask", "django"]
+    },
+    "greykite": {
+      "files": ["*.py", "pyproject.toml", "setup.py", "requirements.txt"],
+      "keywords": ["greykite", "silverkite", "time series forecast", "anomaly detection", "changepoint detection", "linkedin forecasting"]
     }
   },
   "core_skills": [
@@ -484,6 +488,43 @@
         ]
       },
       "description": "next.config.ts (typed config), Promise prop type patterns, React 19 type compatibility, server-only module protection, module resolution settings."
+    },
+    {
+      "name": "Greykite (Time Series Forecasting)",
+      "file": "_context/skills/skill-greykite.md",
+      "framework": "greykite",
+      "triggers": {
+        "keywords": [
+          "greykite",
+          "silverkite",
+          "time series forecast",
+          "anomaly detection",
+          "changepoint detection",
+          "linkedin forecasting",
+          "forecast",
+          "forecasting",
+          "changepoint",
+          "trend changepoint",
+          "adaptive lasso"
+        ],
+        "files": [
+          "**/forecast*.py",
+          "**/anomaly*.py",
+          "**/changepoint*.py",
+          "**/greykite*.py"
+        ],
+        "task_patterns": [
+          "time series forecast",
+          "forecast model",
+          "anomaly detection",
+          "detect anomalies",
+          "changepoint detection",
+          "trend analysis",
+          "business metric forecast",
+          "monitoring alert"
+        ]
+      },
+      "description": "Greykite time series forecasting and anomaly detection: Forecaster.run_forecast_config, ChangepointDetector, GreykiteDetector, model templates (AUTO/SILVERKITE/PROPHET/ARIMA), evaluation metrics, and visualization patterns."
     }
   ]
 }

@@ -14,7 +14,6 @@ triggers:
   - django
   - pandas
   - numpy
-  - greykite
   - sklearn
   - pytorch
   - tensorflow

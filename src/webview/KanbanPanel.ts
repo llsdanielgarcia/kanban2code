@@ -547,7 +547,9 @@ export class KanbanPanel {
           );
           const queryLower = (query ?? '').toLowerCase();
           const queryChars = queryLower.split('');
-          const allPaths = files.map((uri) => vscode.workspace.asRelativePath(uri, false));
+          const allPaths = files
+            .map((uri) => vscode.workspace.asRelativePath(uri, false))
+            .sort((a, b) => a.localeCompare(b));
           const scoredFiles = queryChars.length === 0
             ? allPaths.slice(0, 20)
             : allPaths

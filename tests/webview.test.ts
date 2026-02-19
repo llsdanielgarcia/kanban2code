@@ -51,6 +51,13 @@ test('new HostToWebview message types validate through EnvelopeSchema', () => {
       payload: { isRunning: true },
     }),
   ).not.toThrow();
+  expect(() =>
+    EnvelopeSchema.parse({
+      version: MESSAGE_VERSION,
+      type: 'FilesSearched',
+      payload: { requestId: 'req-1', files: ['src/a.ts'] },
+    }),
+  ).not.toThrow();
 });
 
 test('new WebviewToHost message types validate through EnvelopeSchema', () => {
@@ -90,6 +97,13 @@ test('new WebviewToHost message types validate through EnvelopeSchema', () => {
   ).not.toThrow();
   expect(() =>
     EnvelopeSchema.parse({ version: MESSAGE_VERSION, type: 'StopRunner', payload: {} }),
+  ).not.toThrow();
+  expect(() =>
+    EnvelopeSchema.parse({
+      version: MESSAGE_VERSION,
+      type: 'SearchFiles',
+      payload: { query: '', requestId: 'req-1' },
+    }),
   ).not.toThrow();
 });
 

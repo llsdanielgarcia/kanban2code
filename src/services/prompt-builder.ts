@@ -4,6 +4,7 @@ import {
   loadGlobalContext,
   loadPhaseContext,
   loadProjectContext,
+  listAvailableAgents,
   loadSkills,
   readFileIfExists,
 } from './context';
@@ -52,15 +53,42 @@ function buildMetadata(task: Task): string {
   return `<metadata>${parts.join('')}</metadata>`;
 }
 
+function normalizeAgentKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\.md$/g, '')
+    .replace(/^\d+[-_.\s]*/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function matchesAgent(requestedAgent: string, candidate?: string): boolean {
+  if (!candidate) return false;
+  if (requestedAgent === candidate) return true;
+  return normalizeAgentKey(requestedAgent) === normalizeAgentKey(candidate);
+}
+
 async function loadAgentInstructions(
   root: string,
   task: Task,
 ): Promise<{ content: string; sectionName: 'agent' }> {
-  if (task.agent) {
-    const agentPath = path.join(AGENTS_FOLDER, `${task.agent}.md`);
+  const requestedAgent = task.agent?.trim();
+  if (requestedAgent) {
+    const agentPath = path.join(AGENTS_FOLDER, `${requestedAgent}.md`);
     const content = await readFileIfExists(root, agentPath);
     if (content) {
       return { content, sectionName: 'agent' };
+    }
+
+    const availableAgents = await listAvailableAgents(root);
+    const matchedAgent = availableAgents.find(
+      (agent) => matchesAgent(requestedAgent, agent.id) || matchesAgent(requestedAgent, agent.name),
+    );
+
+    if (matchedAgent) {
+      const matchedContent = await readFileIfExists(root, matchedAgent.path);
+      if (matchedContent) {
+        return { content: matchedContent, sectionName: 'agent' };
+      }
     }
   }
 

@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import './setup-dom';
 import './setup-matchers';
-import React from 'react';
+import React, { act } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { createEnvelope } from '../../src/webview/messaging';
 
 let postMessageSpy = vi.fn();
 
@@ -15,7 +16,14 @@ afterEach(() => {
   postMessageSpy.mockClear();
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
+
+function dispatchMessage(data: unknown) {
+  act(() => {
+    window.dispatchEvent(new MessageEvent('message', { data }));
+  });
+}
 
 function getLocationTypeButton(name: RegExp) {
   const buttons = screen.getAllByRole('button', { name });
@@ -113,5 +121,57 @@ describe('TaskModal', () => {
       expect(createTask.payload.agent).toBe('codex');
       expect(createTask.payload.provider).toBe('coder');
     });
+  });
+
+  it('inserts selected mention file and ignores stale FilesSearched responses', async () => {
+    vi.useFakeTimers();
+    const { TaskModal } = await import('../../src/webview/ui/components/TaskModal');
+
+    render(
+      <TaskModal
+        isOpen
+        tasks={[] as any}
+        projects={[]}
+        phasesByProject={{}}
+        contexts={[]}
+        agents={[]}
+        providers={[]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const contentInput = screen.getByPlaceholderText(
+      /task description or notes\.\.\. \(type @ to mention files\)/i,
+    ) as HTMLTextAreaElement;
+
+    fireEvent.change(contentInput, {
+      target: { value: 'See @', selectionStart: 5, selectionEnd: 5 },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(160);
+    });
+
+    const searchRequest = postMessageSpy.mock.calls.find((call) => (call[0] as any).type === 'SearchFiles')?.[0] as any;
+    expect(searchRequest).toBeTruthy();
+    expect(searchRequest.payload.query).toBe('');
+    vi.useRealTimers();
+
+    dispatchMessage(
+      createEnvelope('FilesSearched', { requestId: 'stale-request', files: ['src/stale.ts'] }),
+    );
+    expect(screen.queryByText('src/stale.ts')).not.toBeInTheDocument();
+
+    dispatchMessage(
+      createEnvelope('FilesSearched', {
+        requestId: searchRequest.payload.requestId,
+        files: ['src/real.ts'],
+      }),
+    );
+
+    const suggestion = await screen.findByText('src/real.ts');
+    fireEvent.click(suggestion);
+
+    expect(contentInput.value).toBe('See src/real.ts');
   });
 });

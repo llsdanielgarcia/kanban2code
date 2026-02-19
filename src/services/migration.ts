@@ -19,6 +19,11 @@ export interface MigrationReport {
   skipped: string[];
 }
 
+export interface AgentNormalizationReport {
+  updatedTasks: string[];
+  unresolvedAgents: Array<{ task: string; agent: string }>;
+}
+
 interface ResolvedConfig {
   providerDefaults: Record<string, string>;
   defaultProvider: string;
@@ -60,11 +65,118 @@ export async function migrateToProviders(root: string): Promise<MigrationReport>
   return report;
 }
 
+/**
+ * Normalize task `agent` values to canonical `_agents` file IDs.
+ *
+ * Example:
+ * - task frontmatter `agent: auditor`
+ * - file in `_agents/` is `06-✅auditor.md`
+ * - result: task agent becomes `06-✅auditor`
+ */
+export async function normalizeTaskAgents(root: string): Promise<AgentNormalizationReport> {
+  const report: AgentNormalizationReport = {
+    updatedTasks: [],
+    unresolvedAgents: [],
+  };
+
+  const kanbanRoot = resolveKanbanRoot(root);
+  const taskFiles = await listTaskFiles(kanbanRoot);
+  const resolver = await buildAgentResolver(kanbanRoot);
+
+  for (const filePath of taskFiles) {
+    const raw = await fs.readFile(filePath, 'utf-8');
+    const parsed = matter(raw);
+
+    const currentAgent =
+      typeof parsed.data.agent === 'string' ? parsed.data.agent.trim() : undefined;
+    if (!currentAgent) continue;
+
+    const canonicalAgent = resolver.resolve(currentAgent);
+    if (!canonicalAgent) {
+      report.unresolvedAgents.push({
+        task: path.relative(kanbanRoot, filePath).replace(/\\/g, '/'),
+        agent: currentAgent,
+      });
+      continue;
+    }
+
+    if (canonicalAgent === currentAgent) continue;
+
+    parsed.data.agent = canonicalAgent;
+    const next = matter.stringify(parsed.content, parsed.data);
+    await fs.writeFile(filePath, next, 'utf-8');
+    report.updatedTasks.push(path.relative(kanbanRoot, filePath).replace(/\\/g, '/'));
+  }
+
+  return report;
+}
+
 function resolveKanbanRoot(root: string): string {
   if (path.basename(root) === KANBAN_FOLDER) {
     return root;
   }
   return path.join(root, KANBAN_FOLDER);
+}
+
+interface AgentResolver {
+  resolve: (agentValue: string) => string | undefined;
+}
+
+async function buildAgentResolver(kanbanRoot: string): Promise<AgentResolver> {
+  const agentsDir = path.join(kanbanRoot, AGENTS_FOLDER);
+  const exactLookup = new Map<string, string>();
+  const normalizedLookup = new Map<string, string>();
+
+  const entries = await safeReadDir(agentsDir);
+  const markdownFiles = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  for (const fileName of markdownFiles) {
+    const filePath = path.join(agentsDir, fileName);
+    const raw = await fs.readFile(filePath, 'utf-8');
+    const parsed = matter(raw);
+
+    const id = path.basename(fileName, '.md');
+    const name = typeof parsed.data.name === 'string' ? parsed.data.name.trim() : undefined;
+
+    setAlias(exactLookup, id, id);
+    setAlias(normalizedLookup, normalizeAgentKey(id), id);
+
+    if (name) {
+      setAlias(exactLookup, name, id);
+      setAlias(normalizedLookup, normalizeAgentKey(name), id);
+    }
+  }
+
+  return {
+    resolve: (agentValue: string) => {
+      const trimmed = agentValue.trim();
+      if (!trimmed) return undefined;
+
+      const exact = exactLookup.get(trimmed.toLowerCase());
+      if (exact) return exact;
+
+      return normalizedLookup.get(normalizeAgentKey(trimmed));
+    },
+  };
+}
+
+function setAlias(lookup: Map<string, string>, alias: string, canonicalId: string): void {
+  const key = alias.trim().toLowerCase();
+  if (!key) return;
+  if (!lookup.has(key)) {
+    lookup.set(key, canonicalId);
+  }
+}
+
+function normalizeAgentKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\.md$/g, '')
+    .replace(/^\d+[-_.\s]*/g, '')
+    .replace(/[^a-z0-9]+/g, '');
 }
 
 async function ensureLogsGitignoreEntry(kanbanRoot: string): Promise<void> {

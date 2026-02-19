@@ -72,6 +72,19 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
   const mentionSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mentionSearchRequestIdRef = useRef<string | null>(null);
 
+  const cancelPendingMentionSearch = () => {
+    if (mentionSearchTimeoutRef.current) {
+      clearTimeout(mentionSearchTimeoutRef.current);
+      mentionSearchTimeoutRef.current = null;
+    }
+    mentionSearchRequestIdRef.current = null;
+    mentionFilesRef.current = [];
+    if (mentionSearchResolveRef.current) {
+      mentionSearchResolveRef.current([]);
+      mentionSearchResolveRef.current = null;
+    }
+  };
+
   // Metadata state
   const [title, setTitle] = useState<string>('');
   const [location, setLocation] = useState<
@@ -154,9 +167,16 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
   };
 
   useEffect(() => {
+    if (!isOpen) {
+      cancelPendingMentionSearch();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen) return;
     taskIdRef.current = task.id;
     folderPickRequestIdRef.current = null;
+    cancelPendingMentionSearch();
     ensureMonacoConfigured();
     setIsLoading(true);
     setIsSaving(false);
@@ -283,6 +303,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
         const payload = message.payload as { requestId?: string; files?: string[] };
         if (!payload.requestId || payload.requestId !== mentionSearchRequestIdRef.current) return;
         mentionSearchRequestIdRef.current = null;
+        mentionSearchTimeoutRef.current = null;
         mentionFilesRef.current = payload.files || [];
         if (mentionSearchResolveRef.current) {
           mentionSearchResolveRef.current(payload.files || []);
@@ -506,12 +527,21 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                               endColumn: position.column,
                             });
                             const atIndex = textUntilPosition.lastIndexOf('@');
-                            if (atIndex === -1) return { suggestions: [] };
+                            if (atIndex === -1) {
+                              cancelPendingMentionSearch();
+                              return { suggestions: [] };
+                            }
                             const charBeforeAt = atIndex > 0 ? textUntilPosition[atIndex - 1] : ' ';
                             const wordCharRegex = /[a-zA-Z0-9_/\\]/;
-                            if (wordCharRegex.test(charBeforeAt)) return { suggestions: [] };
+                            if (wordCharRegex.test(charBeforeAt)) {
+                              cancelPendingMentionSearch();
+                              return { suggestions: [] };
+                            }
                             const query = textUntilPosition.substring(atIndex + 1);
-                            if (query.includes(' ')) return { suggestions: [] };
+                            if (query.includes(' ')) {
+                              cancelPendingMentionSearch();
+                              return { suggestions: [] };
+                            }
                             const range = {
                               startLineNumber: position.lineNumber,
                               startColumn: atIndex + 1,
@@ -519,9 +549,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                               endColumn: position.column,
                             };
                             const files = await new Promise<string[]>((resolve) => {
-                              if (mentionSearchTimeoutRef.current) {
-                                clearTimeout(mentionSearchTimeoutRef.current);
-                              }
+                              cancelPendingMentionSearch();
                               mentionSearchTimeoutRef.current = setTimeout(() => {
                                 const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
                                 mentionSearchRequestIdRef.current = requestId;

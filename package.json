@@ -29,6 +29,7 @@
     "onCommand:kanban2code.showKeyboardShortcuts",
     "onCommand:kanban2code.newProject",
     "onCommand:kanban2code.newAgent",
+    "onCommand:kanban2code.normalizeTaskAgents",
     "onCommand:kanban2code.openSettings"
   ],
   "main": "./dist/extension.js",
@@ -95,6 +96,10 @@
       {
         "command": "kanban2code.newAgent",
         "title": "Kanban2Code: New Agent"
+      },
+      {
+        "command": "kanban2code.normalizeTaskAgents",
+        "title": "Kanban2Code: Normalize Task Agents"
       },
       {
         "command": "kanban2code.openSettings",

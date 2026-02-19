@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import matter from 'gray-matter';
-import { migrateToProviders } from '../src/services/migration';
+import { migrateToProviders, normalizeTaskAgents } from '../src/services/migration';
 import { ProviderConfigSchema } from '../src/types/provider';
 
 let TEST_DIR: string;
@@ -11,7 +11,7 @@ let WORKSPACE_ROOT: string;
 let KANBAN_ROOT: string;
 
 beforeEach(async () => {
-  TEST_DIR = path.join(os.tmpdir(), `kanban-migration-${Date.now()}`);
+  TEST_DIR = await fs.mkdtemp(path.join(os.tmpdir(), 'kanban-migration-'));
   WORKSPACE_ROOT = TEST_DIR;
   KANBAN_ROOT = path.join(WORKSPACE_ROOT, '.kanban2code');
 
@@ -88,7 +88,7 @@ afterEach(async () => {
 });
 
 describe('migrateToProviders', () => {
-  test('creates _providers files, removes mode from tasks, adds provider, and deletes _modes', async () => {
+  test.sequential('creates _providers files, removes mode from tasks, adds provider, and deletes _modes', async () => {
     // Pre-create a _modes/ directory to test removal
     await fs.mkdir(path.join(KANBAN_ROOT, '_modes'), { recursive: true });
     await fs.writeFile(
@@ -146,7 +146,7 @@ describe('migrateToProviders', () => {
     );
   });
 
-  test('is idempotent when run twice', async () => {
+  test.sequential('is idempotent when run twice', async () => {
     const first = await migrateToProviders(WORKSPACE_ROOT);
     const second = await migrateToProviders(WORKSPACE_ROOT);
 
@@ -157,7 +157,7 @@ describe('migrateToProviders', () => {
     expect(second.removedModes).toBe(false);
   });
 
-  test('skips existing provider files', async () => {
+  test.sequential('skips existing provider files', async () => {
     const providersDir = path.join(KANBAN_ROOT, '_providers');
     await fs.mkdir(providersDir, { recursive: true });
     const customContent = '---\ncli: custom-claude\nmodel: custom-model\n---\nCustom opus';
@@ -174,7 +174,7 @@ describe('migrateToProviders', () => {
     expect(opusContent).toContain('custom-claude');
   });
 
-  test('adds _logs/ to .kanban2code/.gitignore', async () => {
+  test.sequential('adds _logs/ to .kanban2code/.gitignore', async () => {
     await migrateToProviders(WORKSPACE_ROOT);
     const gitignore = await fs.readFile(path.join(KANBAN_ROOT, '.gitignore'), 'utf-8');
     expect(gitignore).toContain('_archive/');
@@ -182,11 +182,71 @@ describe('migrateToProviders', () => {
   });
 });
 
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.stat(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
+describe('normalizeTaskAgents', () => {
+  test.sequential('normalizes legacy agent names to canonical _agents file IDs', async () => {
+    const report = await normalizeTaskAgents(WORKSPACE_ROOT);
+
+    const coderTask = matter(
+      await fs.readFile(path.join(KANBAN_ROOT, 'inbox', 'task-coder.md'), 'utf-8'),
+    );
+    expect(coderTask.data.agent).toBe('05-⚙️coder');
+
+    const prefixedTask = matter(
+      await fs.readFile(
+        path.join(KANBAN_ROOT, 'projects', 'demo', 'phase1', 'task-prefixed.md'),
+        'utf-8',
+      ),
+    );
+    expect(prefixedTask.data.agent).toBe('06-✅auditor');
+
+    expect(report.updatedTasks).toEqual(['inbox/task-coder.md']);
+    expect(report.unresolvedAgents).toEqual([]);
+  });
+
+  test.sequential('is idempotent and reports unresolved agent values', async () => {
+    // Explicitly reset this fixture in-test so this assertion remains stable
+    // even if future setup changes.
+    await fs.writeFile(
+      path.join(KANBAN_ROOT, 'inbox', 'task-coder.md'),
+      `---
+stage: code
+agent: coder
+mode: coder
+tags: [feature]
+---
+
+# Task Coder
+`,
+      'utf-8',
+    );
+
+    await fs.writeFile(
+      path.join(KANBAN_ROOT, 'inbox', 'task-unknown.md'),
+      `---
+stage: plan
+agent: unknown-agent
+---
+
+# Unknown
+`,
+      'utf-8',
+    );
+
+    const first = await normalizeTaskAgents(WORKSPACE_ROOT);
+    const second = await normalizeTaskAgents(WORKSPACE_ROOT);
+
+    const coderTask = matter(
+      await fs.readFile(path.join(KANBAN_ROOT, 'inbox', 'task-coder.md'), 'utf-8'),
+    );
+    expect(coderTask.data.agent).toBe('05-⚙️coder');
+
+    expect(first.unresolvedAgents).toEqual([
+      { task: 'inbox/task-unknown.md', agent: 'unknown-agent' },
+    ]);
+
+    expect(second.updatedTasks).toEqual([]);
+    expect(second.unresolvedAgents).toEqual([
+      { task: 'inbox/task-unknown.md', agent: 'unknown-agent' },
+    ]);
+  });
+});

@@ -165,6 +165,33 @@ test('task with agent loads instructions from _agents/{agent}.md', async () => {
   expect(xml).toContain('name="agent"');
 });
 
+test('task agent name resolves prefixed agent filename for copy XML prompts', async () => {
+  await seedContextFiles();
+
+  const agentsDir = path.join(KANBAN_ROOT, AGENTS_FOLDER);
+  await fs.writeFile(
+    path.join(agentsDir, '06-✅auditor.md'),
+    `---
+name: auditor
+---
+
+AUDITOR_INSTRUCTIONS`,
+  );
+
+  const task: Task = {
+    id: 'task-6b',
+    filePath: path.join(KANBAN_ROOT, 'inbox', 'task-6b.md'),
+    title: 'Task 6b',
+    stage: 'audit',
+    agent: 'auditor',
+    content: 'BODY',
+  };
+
+  const xml = await buildXMLPrompt(task, KANBAN_ROOT);
+  expect(xml).toContain('AUDITOR_INSTRUCTIONS');
+  expect(xml).toContain('name="agent"');
+});
+
 test('task without agent skips agent section', async () => {
   await seedContextFiles();
 
@@ -199,6 +226,33 @@ test('buildRunnerPrompt returns both xmlPrompt and agentInstructions', async () 
   expect(result.xmlPrompt).toContain('<system>');
   expect(result.xmlPrompt).toContain('AGENT_INSTRUCTIONS_RAW');
   expect(result.agentInstructions).toBe('AGENT_INSTRUCTIONS_RAW');
+});
+
+test('buildRunnerPrompt resolves agent instructions by frontmatter agent name', async () => {
+  await seedContextFiles();
+
+  const agentsDir = path.join(KANBAN_ROOT, AGENTS_FOLDER);
+  await fs.writeFile(
+    path.join(agentsDir, '06-✅auditor.md'),
+    `---
+name: auditor
+---
+
+RUNNER_AUDITOR_INSTRUCTIONS`,
+  );
+
+  const task: Task = {
+    id: 'task-9b',
+    filePath: path.join(KANBAN_ROOT, 'inbox', 'task-9b.md'),
+    title: 'Task 9b',
+    stage: 'audit',
+    agent: 'auditor',
+    content: 'BODY',
+  };
+
+  const result = await buildRunnerPrompt(task, KANBAN_ROOT);
+  expect(result.xmlPrompt).toContain('RUNNER_AUDITOR_INSTRUCTIONS');
+  expect(result.agentInstructions).toContain('RUNNER_AUDITOR_INSTRUCTIONS');
 });
 
 test('runner prompt includes automated flag', async () => {
